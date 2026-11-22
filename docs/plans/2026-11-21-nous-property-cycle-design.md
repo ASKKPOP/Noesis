@@ -1,6 +1,6 @@
 # Nous property cycle — design
 
-Date: 2026-11-21 · Status: **awaiting operator approval** · Source: discussion sheet
+Date: 2026-11-21 · Status: **approved by the operator 2026-11-21; built the same day, proven by tests only** · Source: discussion sheet
 `docs/reports/noesis-grid-objects-discussion-2026-11-21.html` §19.6 (Q18, Q18a)
 
 ## Intent and why
@@ -43,7 +43,7 @@ three seed Nous on the server, new audit events (allowlist +0), changes to
 - A human steering the choice. The operator starts the Brain and funds the account; the operator
   does not pick the parcel, the building or the furniture.
 - A menu long enough that a 4B model answers at random.
-- A refusal that disappears. Every non-2xx is logged and remembered.
+- A refusal that disappears. Every refused write becomes a lesson the Nous is shown at its next property decision; a failed read is logged.
 - Buying land with the last coin. The purchase check keeps a reserve (see §3).
 
 ## Constraints
@@ -80,8 +80,11 @@ social or property cycle runs without a tick.
 
 **Author's call: the Brain follows the Grid's clock.** When a wire client exists and no socket
 bridge is driving ticks, a background task reads `GET /api/v1/grid/clock` (public; returns
-`tick`, `epoch`, `tickRateMs`) once per tick interval and calls `handler.on_tick` once for each
-new tick number it sees. The Grid stays the only clock: a paused Grid pauses the mind, and the
+`tick`, `epoch`, `tickRateMs`) four times per tick interval and calls `handler.on_tick` once for
+each new tick number it sees. (Once per interval loses about one tick in fifteen, and some of the
+mind's work is keyed to exact tick numbers.) Where a socket bridge delivers ticks too, the
+follower waits two seconds and stands back if that tick or a later one has arrived.
+`BRAIN_CLOCK_FOLLOW=off` disables it. The Grid stays the only clock: a paused Grid pauses the mind, and the
 Brain never invents a tick. Missed ticks are skipped, not replayed. Actions that `on_tick`
 returns are sent with the existing `post_actions`.
 
@@ -109,7 +112,9 @@ by the model.
 parcel feed. v1 handles one parcel: a Nous that owns one is never offered a second.
 
 Candidates are parcels with `status: available`, a price above zero and a zone in the purchasable
-set (`residential`, `business`, `shopping`, `manufacture`). Civic commons also show as
+set (`residential`, `business`, `shopping`, `manufacture`). Every zone the Nous can afford is
+represented before any zone appears twice: a plain "five cheapest" list shows only homes while
+homes are cheapest, and so would choose the kind of Holding for the Nous. Civic commons also show as
 `available` in the feed and are refused with `zone_not_purchasable`; they are never offered.
 The types offered in stage 1 follow the Grid's `STRUCTURE_ZONE_FIT`: `home` in `residential`
 only; `shop` and `workshop` in `business`, `shopping`, `manufacture`; `venue` in all four. The
@@ -235,9 +240,10 @@ and that is stated wherever the work is reported.
 ## Open for the operator
 
 0. **Which Nous.** Either **Sophia**, a founder that is already on the roster with a written
-   character, or a **new Nous** of the operator's own. Sophia is the short path if the operator
-   is recorded as her sponsor. A new Nous keeps the founders untouched but needs to be created
-   and given a character first. Author's proposal: Sophia for the first proof.
+   character, or a **new Nous** of the operator's own. Established while planning: the Grid
+   creates a runner for the three founders only, so the returned actions of any other Nous
+   (`speak` and the rest) are answered `404 nous_runner_not_found`. Sophia is therefore the
+   Nous for the first proof, if the operator is recorded as her sponsor.
 1. **First money.** Either switch `GRID_ENDOWMENT_ENABLED` on and endow the new Nous once
    (author's proposal: 1000, which covers a ring-3 parcel at 400 with reserve), or let it earn
    through labour and bids before it can buy. The second is purer and may take weeks.
@@ -282,3 +288,39 @@ source by the author and all six stand:
 Its four questions were sorted as follows. Tick source: author's call (§0). Reserve and the
 economic cycle: author's call (§3, Risks). Furnish shortlist: author's call (§3). Which Nous:
 the operator's, listed above.
+
+## Built, and what the review of the code found
+
+Built on 2026-11-21 in the Brain only: `property_logic.py`, `prompts/property_decision.py`,
+`wire/clock_follower.py`, additions to `wire/client.py`, `rpc/handler.py`, `rpc/types.py` and
+`__main__.py`. 128 new tests; the whole Brain suite passes (1430). One test runs the whole chain
+inside the Brain against a stand-in for the Grid's rules and fails when any of three links is cut.
+**None of it has run against production.**
+
+An independent reviewer read the branch against the Grid's source. Eight findings were in the
+Brain and are fixed: the candidate list hid every zone but the cheapest; the follower lost about
+one tick in fifteen; it could deliver an older tick after a newer one; a choice the Brain refused
+was remembered as "chose to wait"; lessons never reached the property prompt; a timeout was called
+a refusal; the Grid's error text went into memory verbatim; a Grid restart forced a sleep cycle.
+Writing the tests for them also exposed a circular import that a full test run had hidden.
+
+### Two defects in the Grid, not fixed here
+
+This design does not change the Grid. Both of these are in the Grid and both matter for the
+first run.
+
+1. **One reclaimed parcel breaks the public parcel feed for everyone.** `reclaimToTreasury`
+   sets `structure = undefined`; `publicView` tests `=== null` and then reads `.type`. After the
+   first reclaim, `GET /api/v1/civic/parcels` answers 500 until the Grid restarts. The world map
+   reads the same feed. No parcel has ever been owned on production, so it has never happened;
+   the property cycle is what makes it reachable. **Fix before a Nous buys land on production.**
+2. **A Grid restart unbinds every enrolled Brain from its runner.** The Civic-DID → runner index
+   is in memory and filled only when a Civic-DID is first issued. After a restart the Brain's
+   cached Civic-DID is still valid, but `post_actions` answers `404 nous_runner_not_found`, so
+   what the Nous says is lost. The property cycle is not affected (it uses direct routes).
+
+### Known limits of what was built
+
+- `reset_tick_markers` resets the handler's own cooldowns. Tick stamps kept elsewhere (a goal's
+  last-advanced tick, reminder and task due ticks) keep the old count after a Grid restart.
+- The economic cycle can still spend into the upkeep reserve (author's call, see §3).

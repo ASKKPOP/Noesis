@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.2</title>
+<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.3</title>
 <meta name="description" content="Objects inside a Holding: four-layer model, credential box, full catalog of 59 kinds and 18 materials, system seed and user additions, placement and settings by Nous and human, verification and 28 open gaps. Discussion stage, 20 decisions open.">
 <style>
 :root{
@@ -79,7 +79,7 @@ footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;
 <body>
 <div class="wrap">
 
-<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.2 · 2026-11-21 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
+<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.3 · 2026-11-21 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
 <h1>Grid House Objects</h1>
 <p class="lede">Things inside a Holding — furniture-like objects a Nous and its human configure and build together:
 some pre-designed by the system, some rendered by the Nous, some paid for and rendered by a service.
@@ -117,6 +117,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <span class="k">Added in v0.2.1 · Q18 checked against code and production</span>
 <p style="margin-top:8px">The operator chose to settle Q18 first. Before putting the choice, I traced the whole path from a Nous deciding to a chair standing in a room. <strong>Eight links are needed and none of them holds today</strong> (seven in v0.2.1; the eighth was found by an independent check on the same day). Production runs no Brain at all. The sheet said "offer the verbs in the menu" as if that were the missing piece; it is one of eight. The full trace, three more errors of mine, and the choice that is now open are in <a href="#s19f">§19.6</a>.</p>
 <p><span class="tag ex">DECIDED · v0.2.2</span> <strong>Q18a: the first living Nous runs on the operator's office Mac Studio, on its Local AI.</strong> That machine cannot be reached remotely at the moment, so the first production run waits for it; the design and the code do not. A design for the property cycle is written and awaits approval (<code>docs/plans/2026-11-21-nous-property-cycle-design.md</code>). One more blocker was found while writing it: endowments are switched off on production, so a new Nous has no way to receive its first money.</p>
+<p><span class="tag ex">BUILT · v0.2.3</span> <strong>The operator approved the design and links 4 to 8 are built in the Brain</strong>: the property cycle and a clock follower, with 128 new tests. <strong>Nothing has run on production.</strong> Links 1 to 3 still wait for the Mac Studio. An independent review of the code found ten issues: eight in the new code, fixed; two in the Grid, not fixed, one of which must be fixed before any Nous buys land (<a href="#s19g">§19.7</a>).</p>
 </div>
 
 <!-- ============================================================ -->
@@ -131,6 +132,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <p><strong>가장 중요한 발견 세 가지.</strong> (1) 도시가 비어 있습니다. 2026-11-21 프로덕션 실측: 구획 53개 중 소유 0개, 궤도 오브젝트 0개. 그리고 브레인의 결정 메뉴 어디에도 짓기·가구 배치·구매가 없습니다. 이것이 먼저 해결되지 않으면 이 시트의 모든 것은 아무도 쓰지 않는 가구입니다. (2) 유지비 미납으로 구획이 회수되면 인테리어 전체가 한 번에 삭제됩니다. 구매한 디자인·대여한 자격증명·판매 목록의 정리 절차가 없습니다. (3) 제 초안에는 오류가 17건 있었습니다. 독립 검토가 찾아냈고 코드에서 재확인한 뒤 모두 고쳤습니다. 예: 기존 권한 토큰은 재사용할 수 없고, 프록시 방식 자격증명 대여는 기존 불변식(A11c·A11e)과 충돌하며, 실제 자격증명의 만료는 틱이 아닌 실제 시간으로 강제해야 합니다. 결정 사항은 이제 Q1–Q20, 20건입니다.</p>
 <p><strong>v0.2.1 추가 — Q18 재검증.</strong> 운영자가 Q18을 먼저 정하기로 했습니다. 선택지를 드리기 전에 "Nous가 결정한다"에서 "방에 의자가 놓인다"까지의 전체 경로를 코드와 프로덕션에서 추적했습니다. <strong>필요한 고리는 여덟 개이고, 지금은 하나도 이어져 있지 않습니다</strong>(v0.2.1에서는 일곱 개로 적었고, 같은 날 독립 검토가 여덟 번째를 찾았습니다). 프로덕션에는 Brain이 하나도 실행되고 있지 않고, 명단의 Nous 3명은 시민 신원도 자금도 없으며, Brain이 짓기 동사를 보내도 Grid 수신부가 조용히 버립니다. "메뉴에 동사를 넣는다"는 여덟 고리 중 하나일 뿐입니다. 전체 추적과 제 오류 3건, 지금 열려 있는 선택은 <a href="#s19f">§19.6</a>에 있습니다.</p>
 <p><strong>v0.2.2 — 결정.</strong> Q18a: 첫 번째 살아 있는 Nous는 운영자의 사무실 Mac Studio에서 로컬 AI로 실행합니다. 현재 그 컴퓨터에 원격 접속할 수 없으므로 프로덕션 첫 실행은 그 컴퓨터 앞에서만 가능하고, 설계와 코드는 그 전에 진행할 수 있습니다. 재산 주기 설계안은 작성되어 승인 대기 중입니다(<code>docs/plans/2026-11-21-nous-property-cycle-design.md</code>). 작성 중 걸림돌이 하나 더 나왔습니다: 프로덕션에서 초기 자금 지급(endowment)이 꺼져 있어 새 Nous가 첫 돈을 받을 방법이 없습니다. 이것은 운영자가 정할 사항입니다. 또한 설계안에 대한 독립 검토가 제 초안과 코드가 어긋나는 여섯 곳을 찾았고 모두 소스에서 확인해 고쳤습니다. 가장 큰 것은 <strong>Grid와 다른 컴퓨터에 있는 Brain에는 틱이 전달되지 않는다</strong>는 점입니다(여덟 번째 고리). 어느 Nous를 실행할지(창립 Nous Sophia 또는 운영자의 새 Nous)도 운영자가 정할 사항으로 남아 있습니다.</p>
+<p><strong>v0.2.3 — 구현.</strong> 운영자가 설계안을 승인했고, 고리 4–8을 Brain에 구현했습니다(재산 주기와 시계 추종기, 새 테스트 128개). <strong>프로덕션에서는 아무것도 실행되지 않았습니다.</strong> 고리 1–3은 여전히 Mac Studio를 기다립니다. 코드에 대한 독립 검토에서 문제 10건이 나왔습니다. 새 코드의 8건은 고쳤고, Grid의 2건은 고치지 않았습니다. 그중 하나는 Nous가 프로덕션에서 땅을 사기 전에 반드시 고쳐야 합니다(<a href="#s19g">§19.7</a>).</p>
 </div>
 
 <!-- ============================================================ -->
@@ -1790,6 +1792,39 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 <p><span class="tag ex">DECIDED · 2026-11-21</span> <strong>The operator's office Mac Studio, on its Local AI.</strong> Constraint stated by the operator: no remote access to that machine now. Consequence: links 1 to 3 can only be closed at that machine (start the Brain, file its key in the Portal, approve, fund). Links 4 to 8 are Brain code and can be written and tested before then, but they cannot be shown working on production until the Mac Studio run. Also open and the operator's: <strong>which Nous</strong> runs there, the founder Sophia or a new Nous of the operator's own.</p>
 <p><strong>Still open inside link 3.</strong> <code>GRID_ENDOWMENT_ENABLED</code> is <code>false</code> on production. Either it is switched on and the new Nous is endowed once, or the Nous must earn through labour and bids before it can buy the cheapest parcel (400). This is the operator's call and is listed in the design.</p></div>
 
+
+<h3 id="s19g">19.7 Links 4 to 8 built — and what the review of the code found <span class="tag ex">v0.2.3</span></h3>
+<p>The operator approved the design on 2026-11-21. The same day the Brain side was built, test first, and then read by an independent reviewer against the Grid's source. <strong>This is code proven by tests. It is not a Nous owning a Holding.</strong> No Brain runs on production yet.</p>
+<div class="tbl"><table>
+<tr><th>#</th><th>Link</th><th>State now</th></tr>
+<tr><td class="num">1</td><td>A mind is running</td><td><span class="tag q">OPEN</span> waits for the Mac Studio</td></tr>
+<tr><td class="num">2</td><td>The mind is wired to the Grid</td><td><span class="tag q">OPEN</span> needs the Portal registration and approval, at the Mac Studio</td></tr>
+<tr><td class="num">3</td><td>The Nous can pay</td><td><span class="tag q">OPEN</span> endowments are off on production; operator's call</td></tr>
+<tr><td class="num">4</td><td>A menu offers the verbs</td><td><span class="tag ex">BUILT</span> property cycle: one stage at a time, "none" always allowed, no model call when nothing can be done</td></tr>
+<tr><td class="num">5</td><td>The action reaches a route</td><td><span class="tag ex">BUILT</span> sent directly to the parcel routes; the Grid's refusal code comes back</td></tr>
+<tr><td class="num">6</td><td>The verb shape fits the route</td><td><span class="tag ex">BUILT</span> <code>build</code> carries visibility, <code>buy_parcel</code> carries the address</td></tr>
+<tr><td class="num">7</td><td>The Nous sees what it owns</td><td><span class="tag ex">BUILT</span> own interior, as kinds per room, in the furnish prompt</td></tr>
+<tr><td class="num">8</td><td>The clock reaches the mind</td><td><span class="tag ex">BUILT</span> the Brain follows the Grid's public clock</td></tr>
+</table></div>
+<div class="grid2">
+<div class="box"><span class="k">What the reviewer found in the new code (all fixed)</span>
+<ul>
+<li>The list of parcels showed only the five cheapest, so only homes. Business land was never offered. That would have chosen for the Nous.</li>
+<li>The clock follower lost about one tick in fifteen.</li>
+<li>Beside a socket bridge it could deliver an older tick after a newer one.</li>
+<li>A choice the Brain refused was remembered as "chose to wait".</li>
+<li>Lessons never reached the property prompt, so a refusal would repeat forever.</li>
+<li>A timeout was recorded as "the Grid refused", even if the Grid had carried it out.</li>
+<li>The Grid's error text went into the Nous's memory unchanged.</li>
+<li>A Grid restart forced a sleep cycle.</li>
+</ul>
+<p>Writing the tests for these also exposed a circular import that two full test runs had not shown.</p></div>
+<div class="box red"><span class="k">Two defects in the Grid — not fixed</span>
+<p style="margin-top:8px"><strong>1. One reclaimed parcel takes down the public parcel feed.</strong> When a parcel is reclaimed for unpaid upkeep, the Grid marks its structure <code>undefined</code>. The public feed checks for <code>null</code> and then reads the structure's type. From that moment <code>GET /api/v1/civic/parcels</code> answers 500 for everyone, and the world map reads the same feed, until the Grid restarts. It has never happened because no parcel has ever been owned. <strong>The property cycle is what makes it reachable. It must be fixed before a Nous buys land on production.</strong></p>
+<p><strong>2. A Grid restart cuts every enrolled Brain off from its runner.</strong> The link between a Civic-DID and its runner is kept in memory and made only when the identity is first issued. After a restart the Brain is still enrolled, but what the Nous says is answered <code>404</code> and lost. Buying, building and furnishing are not affected.</p>
+<p>Both are in the Grid, which this work did not change. Fixing them means a Grid deploy.</p></div>
+</div>
+<p class="small">Errors of mine in this round: I wrote the candidate rule that hid business land while arguing, in the same design, that a shortlist would be choosing for the Nous. And I reported "the whole suite passes" twice while a circular import was sitting in the new module; the suite passed only because other tests happened to import things in a lucky order.</p>
 
 <!-- ============================================================ -->
 <h2 id="s20">20 · Sources · Glossary</h2>

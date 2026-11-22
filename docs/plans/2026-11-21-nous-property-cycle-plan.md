@@ -143,7 +143,7 @@ async def fetch_interior(self, parcel_id: str) -> dict | None    # the "interior
 async def post_civic_land_action(self, action: Any, parcel_id: str) -> tuple[bool, str | None]
 ```
 
-`post_civic_land_action`: route from `civic_land_route(action.action_type, parcel_id)`; refuses a non-POST route and a `parcel_id` not matching `^[A-Za-z0-9:_-]{1,128}$` with `(False, "invalid_parcel")` and no request; JSON body is the metadata without `parcel`, `zone`, `max_price`; bearer token as in `post_economic_action`. Returns `(True, None)` on 2xx. On a refusal returns `(False, code)` where `code` is the body's `error` string when the body is a JSON object with one, else `f"http_{status}"`. On an exception returns `(False, "transport_error")`. Never raises, never queues.
+`post_civic_land_action`: route from `civic_land_route(action.action_type, parcel_id)`; refuses a `parcel_id` not matching `^[A-Za-z0-9:_-]{1,128}$` with `(False, "invalid_parcel")` and a non-POST route with `(False, "not_a_write_verb")`, both without a request; JSON body is the metadata without `parcel`, `zone`, `max_price`; bearer token as in `post_economic_action`. Returns `(True, None)` on 2xx. On a refusal returns `(False, code)` where `code` is the body's `error` string when the body is a JSON object with one, else `f"http_{status}"`. On an exception returns `(False, "transport_error")`. Never raises, never queues.
 
 - [ ] **Step 1: Failing tests** with a fake `httpx` transport (`httpx.MockTransport`): `buy_parcel` posts to `/api/v1/civic/parcels/genesis:residential:0007/purchase` with body `{}`; `build` posts `{"name", "type", "visibility"}` only; `extend_interior` posts `{"area", "kind"}`; a 402 `{"error": "insufficient_funds"}` gives `(False, "insufficient_funds")`; a 502 with an HTML body gives `(False, "http_502")`; a raising transport gives `(False, "transport_error")`; parcel id `../x` gives `(False, "invalid_parcel")` and zero requests; `fetch_interior` returns the `interior` dict on 200 and `None` on 403; `fetch_clock` returns the dict.
 - [ ] **Step 2:** Run; fail.
@@ -215,3 +215,18 @@ async def follow_grid_clock(client, handler, *, sleep=asyncio.sleep) -> None
 ## What this plan cannot show
 
 Nothing here runs against production. Links 4 to 8 are proven by tests only until a Brain runs on the Mac Studio with an enrolled, funded Sophia.
+
+## Execution record (2026-11-21)
+
+Executed natively in one session, test first, one commit per task, then one independent review
+of the whole branch. Deviations from the plan as written:
+
+- `property_logic.validate` returns the verb's wire name, not `ActionType`: importing `rpc` from
+  that module is a circular import when it is loaded first.
+- `build_property_decision_prompt` takes a fourth argument `lessons`.
+- The follower looks four times per tick (wait 7.5 s at a 30 s tick, bounds 1–15 s) and stands
+  back on `>=`, not `==`.
+- `candidates` represents every affordable zone before repeating one.
+- A Grid error is passed on only when it matches `[a-z0-9_]{1,48}`.
+- Added `brain/test/test_property_end_to_end.py`.
+- Task 7's wiki pages are `wiki/2-concepts/mind/action.md` and `wiki/2-concepts/city/holdings.md`.

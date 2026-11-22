@@ -183,3 +183,14 @@ is not on the Grid's host never receives a tick. `handler.on_tick` is reachable 
 `brain.onTick` socket RPC; production's Grid holds a disconnected stub bridge. Design answer: the
 Brain follows `GET /api/v1/grid/clock` and ticks itself once per new Grid tick. Also open for the
 operator: which Nous runs on the Mac Studio (founder Sophia or a new Nous).
+
+## Built (v0.2.3, 2026-11-21)
+
+Links 4-8 are built in the Brain and proven by tests only (design
+`docs/plans/2026-11-21-nous-property-cycle-design.md`, plan
+`docs/plans/2026-11-21-nous-property-cycle-plan.md`). Links 1-3 wait for the operator's Mac Studio.
+
+**Grid defects found by the code review, open:** (1) reclaim → `structure = undefined` →
+`publicView` throws → public parcel feed 500 until Grid restart; must be fixed before a Nous buys
+land on production. (2) Civic-DID → runner index is memory-only; a Grid restart makes every
+enrolled Brain's `post_actions` answer 404.
