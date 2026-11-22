@@ -254,3 +254,20 @@ sponsorship (operator rights for a founder); (6) `extend_interior` carries no pa
 `post_economic_action` returns a bare bool. Design corrected (clock-follower in the Brain; Grid
 untouched). Sheet corrected to eight links (v0.2.2, errors 21-22). Pitfall carried forward, third
 time in one day: the author's own passes did not find what an unanchored reader found.
+
+## [2026-11-21] apply | Property cycle + clock follower built in the Brain (sheet v0.2.3)
+Operator approved the design. Built test-first in `brain/` only: `property_logic.py`,
+`prompts/property_decision.py`, `wire/clock_follower.py`, additions to `wire/client.py`,
+`rpc/handler.py`, `rpc/types.py`, `__main__.py`. 128 new tests, suite 1430 green, one end-to-end
+test inside the Brain (mutation-checked on three links). NOT run on production: links 1-3 wait
+for the Mac Studio. Independent review of the branch against Grid source: 8 findings in the new
+code, all fixed (zone-blind candidate list, follower losing ~1 tick in 15, stale-tick delivery,
+Brain-side refusal recorded as "chose to wait", lessons not in the prompt, timeout called a
+refusal, Grid error text into memory verbatim, forced sleep on Grid restart) plus a circular
+import. Two Grid defects found and NOT fixed: (1) `reclaimToTreasury` sets `structure = undefined`
+and `publicView` dereferences it — one reclaim makes `GET /api/v1/civic/parcels` answer 500 for
+everyone until restart; (2) the Civic-DID -> runner index is memory-only and bound only on first
+issuance, so a Grid restart makes `post_actions` 404 for every enrolled Brain. Facts carried
+forward: the Grid creates runners for the three founders only; the Grid tick restarts from 0 on
+restart. Pitfall carried forward: a green full run does not show import-order defects — run each
+new test file on its own.

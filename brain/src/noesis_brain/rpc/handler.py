@@ -52,6 +52,11 @@ from noesis_brain.prompts.economic_decision import (
     build_economic_decision_prompt,
     parse_economic_decision,
 )
+from noesis_brain.prompts.property_decision import (
+    build_property_decision_prompt,
+    parse_property_decision,
+)
+from noesis_brain import property_logic
 from noesis_brain.iris.priors import seed_priors
 from pathlib import Path
 from noesis_brain.iris.store import IrisStore
@@ -142,6 +147,12 @@ class BrainHandler:
         # W3b (D-MONEY-09): per-tick economic decision cooldown. A ticking Nous with
         # an outstanding due / an open RFP autonomously decides whether to pay / bid.
         self._last_econ_tick = -10_000
+        # Property cycle cooldown: a Nous that could buy a parcel, build on one, or
+        # furnish a structure it owns is offered that one choice (D-58-10: offered, never made for it).
+        self._last_property_tick = -10_000
+        # The last tick on_tick was called with, from any source. The clock follower
+        # reads it so it does not deliver a tick a socket bridge already delivered.
+        self._last_tick_seen = -1
         # W-A (Mind, 2026-07-02): two-timescale mind loop. The slow planner
         # decomposes the top Telos goal into GoalLedger tasks; the fast decision
         # cycle works the next task every ~20 ticks under ONE coherent intent
@@ -992,6 +1003,139 @@ class BrainHandler:
             )
         return None
 
+    def reset_tick_markers(self) -> None:
+        """Forget when each cycle last ran. Called when the Grid restarts and its
+        tick starts again from 0: every cooldown here is `tick - last >= n`, so a
+        marker from the old count would hold its cycle back until the new count
+        passed it. Each marker goes back to the value a fresh Brain starts with.
+        `_last_tick_seen` is a fact, not a cooldown, and is left to the caller.
+
+        Covers the handler's own markers only. Tick stamps kept elsewhere (a goal's
+        last-advanced tick, reminder and task due ticks) are not touched."""
+        for name, value in list(vars(self).items()):
+            if (
+                name.startswith("_last_") and name.endswith("_tick")
+                and isinstance(value, int) and not isinstance(value, bool)
+            ):
+                # The sleep marker starts at 0; anything lower would force a sleep cycle.
+                setattr(self, name, 0 if name == "_last_sleep_tick" else -10_000)
+
+    # ── Property cycle: buy a parcel · build · furnish — by the Nous's own choice ──
+    _PROPERTY_COOLDOWN_TICKS = 100
+
+    def _should_run_property_cycle(self, tick: int) -> bool:
+        """Live-wired minds only + cooldown. Whether there is anything to decide is
+        checked inside the cycle (async read). A tick below the last run means the
+        Grid restarted its clock, which also counts as elapsed."""
+        if self._grid_wire_client is None or self.llm is None:
+            return False
+        if tick < self._last_property_tick:
+            return True
+        return (tick - self._last_property_tick) >= self._PROPERTY_COOLDOWN_TICKS
+
+    async def _run_property_cycle(self, tick: int) -> None:
+        """Offer the Nous the one property choice that applies now — buy a parcel,
+        build on the one it owns, or place an object in what it built — and send
+        what it chooses. A CAPABILITY, not autoplay (D-58-10): "none" is always
+        valid and nothing is done on the Nous's behalf.
+
+        Cost-gated (no model call when no stage applies) and every model-chosen
+        value is checked by property_logic.validate before dispatch. Civic-land
+        actions go DIRECTLY to their civic-parcels route; the Grid's batch intake
+        has no case for them. Non-blocking; never fatal."""
+        wire = self._grid_wire_client
+        if wire is None:
+            return
+        try:
+            parcels = await wire.fetch_parcels()
+            account = await wire.fetch_account()
+            raw_balance = account.get("balance_wei", "0") if isinstance(account, dict) else "0"
+            balance = int(raw_balance) if str(raw_balance).isdigit() else 0
+
+            stage = property_logic.plan_stage(parcels, wire.civic_did, balance, tick)
+            if stage is None:
+                return  # nothing to decide — do NOT spend a model call
+
+            interior = None
+            if stage.name == "furnish":
+                interior = await wire.fetch_interior(stage.parcel["id"])
+                if interior is None or property_logic.interior_count(interior) >= property_logic.FURNISH_CAP:
+                    return  # cannot see the rooms, or they are full
+
+            system_prompt = build_system_prompt(
+                self.psyche, self.thymos.mood, self.telos,
+                grid_name=self.grid_name, location=self.location,
+                economic_state={"balance_wei": str(balance)},
+            )
+            # Earlier refusals are what make the next choice a better one.
+            lessons = self._ranked_memories(
+                f"property {stage.name} parcel build furnish", tick, k=3, prefix="Lesson:",
+            )
+            user_prompt = build_property_decision_prompt(stage, balance, interior, lessons)
+            response = await self.llm.generate(
+                user_prompt,
+                GenerateOptions(
+                    system_prompt=system_prompt,
+                    temperature=0.7,
+                    max_tokens=256,
+                    purpose="property_decision", json_mode=True,
+                ),
+            )
+            decision = parse_property_decision(response.text)
+            chosen = property_logic.validate(stage, decision, balance, interior)
+            can_remember = self.memory is not None and hasattr(self.memory, "record_event")
+            if chosen is None:
+                if decision is None:
+                    return  # no usable answer
+                if decision.get("action") == "none":
+                    if can_remember:
+                        self.memory.record_event(
+                            content=f"Considered my property and chose to wait: {decision.get('reason') or ''}"[:300],
+                            source_did=self.did, tick=tick,
+                        )
+                    return
+                # The Nous DID choose to act, but with a value it was not offered. That
+                # is a failed attempt, not a wait — and its own text is not echoed back.
+                self._failed_since_reflection += 1
+                if can_remember:
+                    self.memory.record_event(
+                        content=(
+                            f"Lesson: my {decision.get('action')} was not sent — "
+                            "it did not match what I was offered"
+                        ),
+                        source_did=self.did, tick=tick,
+                    )
+                return
+
+            verb_wire, parcel_id, metadata = chosen
+            action_type = ActionType(verb_wire)
+            # The name the Nous was offered the verb under ("furnish", not "extend_interior").
+            verb = decision.get("action")
+            action = build_civic_land_action(action_type, **metadata)
+            ok, code = await wire.post_civic_land_action(action, parcel_id)
+            if ok:
+                if action_type == ActionType.BUY_PARCEL:
+                    fact = f"Bought parcel {parcel_id} for {metadata['max_price']} wei"
+                elif action_type == ActionType.BUILD:
+                    fact = f"Built a {metadata['type']} named {metadata['name']} on {parcel_id}"
+                else:
+                    fact = f"Placed a {metadata['kind']} in the {metadata['area']} of {parcel_id}"
+                if can_remember:
+                    self.memory.record_event(content=fact[:300], source_did=self.did, tick=tick)
+            else:
+                # A Grid refusal is a Reflexion lesson, as in the economic cycle: the
+                # next decision retrieves it and repeated failures trigger reflection.
+                self._failed_since_reflection += 1
+                if code == "transport_error":
+                    # No answer is not a refusal: the Grid may have carried it out.
+                    lesson = f"Lesson: my {verb} got no answer from the Grid — it may or may not have happened"
+                else:
+                    lesson = f"Lesson: my {verb} was refused by the Grid ({code})"
+                if can_remember:
+                    self.memory.record_event(content=lesson[:300], source_did=self.did, tick=tick)
+        except Exception as exc:  # never let a property cycle take down the tick
+            log.warning("[Brain] property cycle failed: %s", exc)
+
     # ── W-A (Mind): two-timescale autonomous mind loop ────────────────────────
     _PLAN_COOLDOWN_TICKS = 200
     _DECISION_COOLDOWN_TICKS = 20
@@ -1517,6 +1661,10 @@ class BrainHandler:
                 Absence/empty list preserves Phase 6 behavior (D-10
                 additive widening).
         """
+        _tick_seen = params.get("tick")
+        if isinstance(_tick_seen, int) and not isinstance(_tick_seen, bool):
+            self._last_tick_seen = _tick_seen
+
         # Decay emotions each tick (Phase 6 behavior — preserved exactly).
         self.thymos.decay()
 
@@ -1668,6 +1816,12 @@ class BrainHandler:
             self._last_econ_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_economic_cycle(tick))
+        # Property cycle: when the Nous could buy a parcel, build, or furnish, it is
+        # offered that one choice. Background task; never fatal.
+        if self._should_run_property_cycle(tick) and await self._mind_awake(tick):
+            self._last_property_tick = tick
+            import asyncio as _asyncio
+            _asyncio.create_task(self._run_property_cycle(tick))
         # v3.3 Mind — synopsis: background research synthesis. Deterministic (no LLM),
         # so it runs regardless of the rest gate. Background task; never fatal.
         if self._should_run_synopsis_cycle(tick):
@@ -2610,9 +2764,10 @@ class BrainHandler:
     # These verbs are CAPABILITIES, not autoplay. The handler produces a
     # civic-land Action only when the Nous (its chosen behaviour) asks for
     # one — there is NO loop here that auto-buys or auto-builds. The produced
-    # Action rides the normal post_actions batch; the Grid action handler
-    # routes it by action_type to the civic-parcels route (see wire/client.py
-    # CIVIC_LAND_ROUTES). build_civic_land_action() is the local schema gate.
+    # Action is sent DIRECTLY to its civic-parcels route by
+    # GridWireClient.post_civic_land_action (see wire/client.py
+    # CIVIC_LAND_ROUTES); it does not ride the post_actions batch, which the
+    # Grid would drop. build_civic_land_action() is the local schema gate.
     # ────────────────────────────────────────────────────────────────────
 
     def produce_civic_land_action(
