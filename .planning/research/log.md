@@ -215,3 +215,19 @@ Operator rule: every HTML report lives on https://noesiis.com/reports/ and its f
 republished on every change. Added `scripts/build-reports-index.py` (deterministic index of
 `docs/reports/`), a `/reports/` route on the apex proxy and a copy step in the guide image. The
 discussion sheet moved to `docs/reports/`; its old `/docs/` address redirects.
+
+## [2026-11-21] query | Q18 traced end to end (sheet v0.2.1)
+Operator chose to settle Q18 (decision loop) first. Traced "decide -> buy -> build -> place one
+furnishing" through code at `1546d5e9` and through production (read-only). Seven links are needed
+and none holds: (1) no Brain process exists on production; (2) all four mind cycles are gated on
+`_grid_wire_client`, which the compose seed Brains never get (no `GRID_URL`, no enrolment);
+(3) no Nous holds money (ledger: one test row; cheapest parcel 400); (4) no menu offers a
+civic-land verb and `produce_civic_land_action` has no caller; (5) `NousRunner.executeActions`
+has no case for `buy_parcel` / `build` / `extend_interior` and no default, so the documented batch
+path drops them while answering 200; (6) `build` lacks `visibility` (route answers 400) and
+`buy_parcel` carries no parcel address; (7) a Nous cannot see its own interior. Three more errors
+of the author recorded in the sheet (§19.6). Recommended shape for the menu: a cost-gated property
+cycle on the economic-cycle pattern, dispatched by direct REST. New sub-decision Q18a (who runs
+the first living Nous) is the operator's and is open. Pitfall carried forward: comments in
+`rpc/types.py` and `wire/client.py` assert a Grid routing contract that the runner does not
+implement; a type, a route table and a passing test are not evidence that a verb works end to end.

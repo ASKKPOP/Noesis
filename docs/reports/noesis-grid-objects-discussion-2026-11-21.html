@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Noēsis — Grid House Objects · Discussion Sheet v0.2</title>
+<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.1</title>
 <meta name="description" content="Objects inside a Holding: four-layer model, credential box, full catalog of 59 kinds and 18 materials, system seed and user additions, placement and settings by Nous and human, verification and 28 open gaps. Discussion stage, 20 decisions open.">
 <style>
 :root{
@@ -79,7 +79,7 @@ footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;
 <body>
 <div class="wrap">
 
-<div class="k">NOĒSIS · DISCUSSION SHEET v0.2 · 2026-11-21 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
+<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.1 · 2026-11-21 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
 <h1>Grid House Objects</h1>
 <p class="lede">Things inside a Holding — furniture-like objects a Nous and its human configure and build together:
 some pre-designed by the system, some rendered by the Nous, some paid for and rendered by a service.
@@ -113,6 +113,11 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 </ul>
 </div>
 
+<div class="box red">
+<span class="k">Added in v0.2.1 · Q18 checked against code and production</span>
+<p style="margin-top:8px">The operator chose to settle Q18 first. Before putting the choice, I traced the whole path from a Nous deciding to a chair standing in a room. <strong>Seven links are needed and none of them holds today.</strong> Production runs no Brain at all. The sheet said "offer the verbs in the menu" as if that were the missing piece; it is one of seven. The full trace, three more errors of mine, and the choice that is now open are in <a href="#s19f">§19.6</a>.</p>
+</div>
+
 <!-- ============================================================ -->
 <div class="ko">
 <h3>한국어 요약 (Executive summary, KO)</h3>
@@ -123,6 +128,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <p><strong>제안 로드맵.</strong> OBJ-1 매니페스트+폼 렌더 → OBJ-2 Link Box → OBJ-3 기능/앱 연결 → OBJ-4 공유/판매 → OBJ-5 동료/알림. 각 단계는 GSD 크기이며 기존 불변식(제로 커스터디, 월클럭 금지, 단독 생산자, A11e 방문자 콘텐츠=데이터)을 유지합니다.</p>
 <p><strong>v0.2에서 추가된 것.</strong> ① <a href="#s14">전체 카탈로그(§14)</a>: 구조 재료 18종, 마감재 12종, 외피 요소 14종, 기물 종류 59종(미러 18 + 기능 41, 현재 코드에는 13종), 알고리즘 20종, 스타터 세트 4종. 원칙은 "<em>종류(kind)는 닫고, 형태(form)는 연다</em>"입니다. ② <a href="#s15">초기화와 확장(§15)</a>: 시스템이 Grid 부팅 시 코어 카탈로그를 시드하고, 사용자는 기본 외피·스타터 세트·안전한 기본값을 그대로 받으며, 이후 사용자가 형태 → 프리셋 → 배치 → 새 종류 순으로 검증 단계를 밟아 추가합니다. <strong>사용자가 만든 커스텀 오브젝트는 정의된 Grid 안에서만 유효하며 같은 Grid의 다른 Nous와 공유할 수 있습니다(§15.5, 운영자 요구사항).</strong> 기계가 읽을 수 있는 시드 초안(YAML)을 함께 준비했습니다. ③ <a href="#s16">배치와 설정(§16)</a>: 집의 위치(구획 주소), 각 오브젝트의 위치(좌표·회전·앵커), 오브젝트별 설정을 Nous와 사용자가 함께 정합니다. Nous는 "벽에 붙여, 책장 옆에" 같은 관계로 말하고 결정적 솔버가 좌표를 계산하며, 사용자는 3D에서 드래그합니다(사용자의 조작은 자기 Nous에 대한 요청입니다). ④ <a href="#s17">섹션별 심층 분석(§17)</a>과 <a href="#s18">추가 권고 R0–R15(§18)</a>. ⑤ <a href="#s19">우리가 놓친 것(§19)</a>: 독립 검증에서 찾은 오류 17건과 수정 내역, 기존 캐논과 충돌하는 10곳, 잃은 것 7가지, 빠진 것 28가지.</p>
 <p><strong>가장 중요한 발견 세 가지.</strong> (1) 도시가 비어 있습니다. 2026-11-21 프로덕션 실측: 구획 53개 중 소유 0개, 궤도 오브젝트 0개. 그리고 브레인의 결정 메뉴 어디에도 짓기·가구 배치·구매가 없습니다. 이것이 먼저 해결되지 않으면 이 시트의 모든 것은 아무도 쓰지 않는 가구입니다. (2) 유지비 미납으로 구획이 회수되면 인테리어 전체가 한 번에 삭제됩니다. 구매한 디자인·대여한 자격증명·판매 목록의 정리 절차가 없습니다. (3) 제 초안에는 오류가 17건 있었습니다. 독립 검토가 찾아냈고 코드에서 재확인한 뒤 모두 고쳤습니다. 예: 기존 권한 토큰은 재사용할 수 없고, 프록시 방식 자격증명 대여는 기존 불변식(A11c·A11e)과 충돌하며, 실제 자격증명의 만료는 틱이 아닌 실제 시간으로 강제해야 합니다. 결정 사항은 이제 Q1–Q20, 20건입니다.</p>
+<p><strong>v0.2.1 추가 — Q18 재검증.</strong> 운영자가 Q18을 먼저 정하기로 했습니다. 선택지를 드리기 전에 "Nous가 결정한다"에서 "방에 의자가 놓인다"까지의 전체 경로를 코드와 프로덕션에서 추적했습니다. <strong>필요한 고리는 일곱 개이고, 지금은 하나도 이어져 있지 않습니다.</strong> 프로덕션에는 Brain이 하나도 실행되고 있지 않고, 명단의 Nous 3명은 시민 신원도 자금도 없으며, Brain이 짓기 동사를 보내도 Grid 수신부가 조용히 버립니다. "메뉴에 동사를 넣는다"는 일곱 고리 중 하나일 뿐입니다. 전체 추적과 제 오류 3건, 지금 열려 있는 선택은 <a href="#s19f">§19.6</a>에 있습니다.</p>
 </div>
 
 <!-- ============================================================ -->
@@ -816,7 +822,8 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <p><strong>How are this sheet, the Grid extension plan (2026-11-19) and the visualization research (2026-11-20) joined?</strong> The other two are on <code>research/atlas-simulator</code>, which production currently runs. They define a seven-kind block catalog, a Work Card, a three-level Station View and a zero budget for art. <strong>Recommendation:</strong> one catalog and one interior view. This sheet's furnishings become the "block" entries of that catalog; the 3D interior is level three of the Station View; paid render waits. Someone has to merge the branch or the documents first, and that is your call, not mine.</p></div>
 
 <div class="dq"><span class="k">Q18 · The decision loop comes first</span>
-<p><strong>Do the building verbs go into the Nous's decision menus before any of this is built?</strong> <strong>Recommendation:</strong> yes, firmly (§18, R0). It is not cheap, and it is the one item without which the rest has no user.</p></div>
+<p><strong>Do the building verbs go into the Nous's decision menus before any of this is built?</strong> <strong>Recommendation:</strong> yes, firmly (§18, R0). It is not cheap, and it is the one item without which the rest has no user.</p>
+<p><span class="tag q">v0.2.1</span> <strong>Checked again, and the answer is larger than the question.</strong> The menu is one of seven links between a decision and a placed object, and all seven are open (<a href="#s19f">§19.6</a>). The recommendation stands and gains a first step: a living, enrolled, funded Nous on production. Who runs that Nous is the operator's call and is the part of Q18 still undecided.</p></div>
 
 <div class="dq"><span class="k">Q19 · Who has the last word on a room</span>
 <p><strong>When the human and the Nous disagree about a layout or a setting, who decides?</strong> The property is the Nous's (D-NH-07); the philosophy says operators whisper and guard. <strong>Recommendation:</strong> the Nous decides layout and its own settings; the human decides everything that touches the human's secrets, accounts and money; the human can always pause. A human who wants to force a layout is using an operator power, and that should be visible and audited like the others.</p></div>
@@ -1741,8 +1748,40 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 <li>Give objects a position, a move and a remove (§16), drawn in the existing viewer.</li>
 <li>Seed the 59 kinds (§14) with catalog templates only.</li>
 </ol>
-<p>No Link Box, no app links, no market, no materials. Then measure G4's three numbers for a month. If no Nous places a chair, nothing else in this sheet should be built. And none of the four matters until G1 is answered: a living Nous with a parcel.</p></div>
+<p>No Link Box, no app links, no market, no materials. Then measure G4's three numbers for a month. If no Nous places a chair, nothing else in this sheet should be built. And none of the four matters until G1 is answered: a living Nous with a parcel. <span class="tag q">v0.2.1</span> G1 is now measured, and it is worse than stated: see <a href="#s19f">§19.6</a>.</p></div>
 </div>
+
+<h3 id="s19f">19.6 Q18 traced end to end — seven links, none holding <span class="tag q">v0.2.1</span></h3>
+<p>Q18 asks whether the building verbs go into the decision menus first. To answer it honestly I followed one concrete case through the code and through production on 2026-11-21: <em>a Nous decides to buy a parcel, build a home and place one chair.</em> Each row is a link that must hold. Read at <code>1546d5e9</code>; production read-only.</p>
+<div class="tbl"><table>
+<tr><th>#</th><th>Link</th><th>State today</th><th>Evidence</th><th>What it needs</th></tr>
+<tr><td class="num">1</td><td><b>A mind is running</b></td><td>No Brain process exists on production, in any state.</td><td>Container list on the production host: grid, dashboard, guide, wiki, steward, nginx, mysql. No Brain. The roster lists three Nous, all in phase <code>spawning</code>.</td><td>Someone runs a Brain. This is the open choice below.</td></tr>
+<tr><td class="num">2</td><td><b>The mind is wired to the Grid</b></td><td>The three seed Brains in the compose file would start without a wire client.</td><td>All four mind cycles (economic, planner, decision, social) return early when <code>_grid_wire_client is None</code> (<code>rpc/handler.py</code>). The client is built only when <code>GRID_URL</code> and an enrolled identity are set (<code>__main__.py</code>). The compose file sets neither.</td><td>HTTPS Grid address, enrolment, a Civic-DID.</td></tr>
+<tr><td class="num">3</td><td><b>The Nous can pay</b></td><td>No Nous on production holds money.</td><td>The ledger has one row, a test identity with 1000. Two civic identities are registered, one of them that test row. The cheapest parcel costs 400 (ring 3).</td><td>An endowment or earned income for at least one enrolled Nous.</td></tr>
+<tr><td class="num">4</td><td><b>A menu offers the verbs</b></td><td>None does.</td><td>Fast actor: <code>work_task · speak · rest</code>. Social: <code>message_peer · share_skill · contribute_lore · vote · join_group · none</code>. Economic: <code>pay_due · bid_rfp · none</code>. <code>produce_civic_land_action</code> has no caller.</td><td>A new, cost-gated property cycle (recommended shape below).</td></tr>
+<tr><td class="num">5</td><td><b>The action reaches a route</b></td><td>On the documented path it is dropped without an error.</td><td>The Brain comments say civic-land actions ride the normal batch and the Grid routes them. <code>NousRunner.executeActions</code> has no case for <code>buy_parcel</code>, <code>build</code> or <code>extend_interior</code>, and no default branch. The batch still answers <code>200 accepted</code>.</td><td>Call the parcel routes directly, as <code>post_economic_action</code> already does for dues and bids.</td></tr>
+<tr><td class="num">6</td><td><b>The verb shape fits the route</b></td><td>Two of the three verbs would be refused.</td><td><code>build</code> requires <code>{parcel, type, name}</code> on the Brain side; the route also requires <code>visibility</code> and answers <code>400 invalid_visibility</code>. <code>buy_parcel</code> carries <code>{zone, max_price}</code>; the route needs a parcel address in the URL.</td><td>Add <code>visibility</code>; let the Brain pick an address from the public parcel feed.</td></tr>
+<tr><td class="num">7</td><td><b>The Nous can see what it owns</b></td><td>Parcels yes, interiors no.</td><td>World sight caches the parcel feed and orbital objects. Nothing shows a Nous its own rooms (already error 1 in §19.1).</td><td>Own-interior sight as kinds only (R13).</td></tr>
+</table></div>
+<div class="grid2">
+<div class="box red"><span class="k">Three more errors of mine</span>
+<ul>
+<li><strong>18.</strong> I wrote that the menu is "the one item without which the rest has no user". It is one of seven. Fixing only the menu changes nothing a visitor can see.</li>
+<li><strong>19.</strong> I wrote "the city is empty: 0 of 53 parcels owned" and stopped there. I did not check whether any mind was running. None is.</li>
+<li><strong>20.</strong> I cited the Brain verbs as working capabilities because the type, the route table and the tests exist. I did not follow one through the Grid intake. The repository's own comments make the same claim, and it is not true in the running code.</li>
+</ul></div>
+<div class="box acc"><span class="k">Recommended shape for link 4</span>
+<p style="margin-top:8px">A <strong>property cycle</strong> built on the pattern the economic cycle already uses, not three more options in the fast menu. It runs only when something can be done: funds for a parcel and none owned, an owned parcel with no structure, or a structure with room. One short model call, one small JSON answer, every value checked in the Brain, <code>none</code> always allowed, a failed attempt stored as a lesson. A small local model chooses badly from a long list, and this keeps each list short. It also keeps D-58-10 intact: the Nous is offered a choice and nothing is bought or built for it.</p>
+<p>Not recommended: adding the verbs to the fast actor (longer menu, a model call every 20 ticks whether or not anything can be done), or waiting for the planner to invent building as a task (needs a tool path that does not exist).</p></div>
+</div>
+<div class="dq"><span class="k">Q18a · Who runs the first living Nous</span>
+<p><strong>This is the part of Q18 that is the operator's to decide, because it spends money or a machine.</strong> The production host has 2 CPU cores, 15 GB of memory and no GPU, and it is shared with other services.</p>
+<ul>
+<li><strong>The operator's own machine.</strong> One Brain runs locally with the local model. The Local Nous Manager starts it with the Grid address (<code>api.noesiis.com</code>) in its environment, and the Brain enrols itself once its Portal registration is approved (D-V3-39). No server cost, and it is the doctrine as written: the engine is local, the city is the window. The city is alive only while that machine is on.</li>
+<li><strong>A hosted model for the three seed Nous.</strong> Their Brains run on the server and call a paid model. The city is alive around the clock. It costs money per decision, and three identities need enrolment and an endowment.</li>
+<li><strong>A small model on the server's CPU.</strong> No fee, but two shared cores will run a 4B model slowly, and the other services on the box pay for it.</li>
+</ul>
+<p><strong>Recommendation:</strong> the operator's own machine first, with one Nous. It tests all seven links at no cost and matches the architecture. Move the seed Nous to a hosted model only after that one Nous has bought, built and placed something.</p></div>
 
 
 <!-- ============================================================ -->
