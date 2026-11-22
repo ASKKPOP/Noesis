@@ -4,7 +4,7 @@
 #   Route 53 ── HTTPS:443 (ACM cert) ──▶ ALB ── HTTP ──▶ this nginx :80 ──▶ containers
 #
 # The ALB terminates TLS, so nginx speaks plain HTTP. Routing is by Host header:
-#   ${DOMAIN}        → dashboard (/, landing page) · guide (/docs) · wiki (/wiki) · steward (/console)
+#   ${DOMAIN}        → dashboard (/, landing page) · guide (/docs, /reports) · wiki (/wiki) · steward (/console)
 #   api.${DOMAIN}    → grid (Portal + Grid · REST + WS + Portal)
 #   portal.${DOMAIN} → dashboard, the PUBLIC Portal (/ → /portal)
 #   system.${DOMAIN} → dashboard, the Tier-3 Portal Manager OPERATOR console (/ → /system/portal-manager)
@@ -66,6 +66,9 @@ server {
     # guide et al.) stay reachable under /docs/ via the guide container.
     location /docs/   { proxy_pass http://noesis_guide; }
     location = /docs  { return 302 /docs/noesis-services-beginner-guide.html; }
+    # Reports — every HTML report for the project, listed at /reports/ (guide container).
+    location /reports/  { proxy_pass http://noesis_guide; }
+    location = /reports { return 302 /reports/; }
     # Wiki (single source of truth — MkDocs static site) under /wiki/.
     location /wiki/   { proxy_pass http://noesis_wiki; }
     location = /wiki  { return 302 /wiki/; }

@@ -406,3 +406,106 @@ execution. Nothing ratified — twelve decisions (Q1–Q12) are open, including 
 third-party credentials and whether the unratified T1 split gets decided by building the Link Box.
 Pitfall carried forward: "object" is already taken by `orbital_objects`; interior objects need
 their own noun before any code lands.
+
+## [2026-11-21] synthesis | Grid House Objects v0.2 — catalog, initialization, placement, gaps
+Operator asked for the full furnishing catalog with Holding materials, deeper research on every
+section, a system-seeded model users can extend, positioning and per-object settings by Nous and
+human, and a verification of what is missing. Output: sheet v0.2 (§14–§19, twelve diagrams) and
+`docs/plans/2026-11-21-genesis-catalog-seed.draft.yaml`, generated from one data source. Findings
+that stand without the design: no Brain decision path emits a build, furnish or buy action;
+perception does not cover interiors and has a latent path from feed text into memory; whisper key
+pairs derive from the public DID; parcel reclaim razes the interior; interior objects have no
+coordinates and cannot be moved or removed; production is empty (0 of 53 parcels owned, measured
+2026-11-21). An independent review found 17 errors in the draft, all re-checked in code and
+corrected (§19.1), and 10 collisions with canon (§19.2). One operator requirement recorded:
+custom objects are valid in the Grid where they were defined and shareable with its Nous.
+Decisions now Q1–Q20, none taken. Pitfall carried forward: a reviewer with no access to the
+author's reasoning caught errors that three self-checks had passed. Overlap carried forward: two
+related plans (2026-11-19, 2026-11-20) live only on `research/atlas-simulator`.
+
+## [2026-11-21] apply | Reports are served at /reports
+Operator rule: every HTML report lives on https://noesiis.com/reports/ and its final version is
+republished on every change. Added `scripts/build-reports-index.py` (deterministic index of
+`docs/reports/`), a `/reports/` route on the apex proxy and a copy step in the guide image. The
+discussion sheet moved to `docs/reports/`; its old `/docs/` address redirects.
+
+## [2026-11-21] query | Q18 traced end to end (sheet v0.2.1)
+Operator chose to settle Q18 (decision loop) first. Traced "decide -> buy -> build -> place one
+furnishing" through code at `1546d5e9` and through production (read-only). Seven links are needed
+and none holds: (1) no Brain process exists on production; (2) all four mind cycles are gated on
+`_grid_wire_client`, which the compose seed Brains never get (no `GRID_URL`, no enrolment);
+(3) no Nous holds money (ledger: one test row; cheapest parcel 400); (4) no menu offers a
+civic-land verb and `produce_civic_land_action` has no caller; (5) `NousRunner.executeActions`
+has no case for `buy_parcel` / `build` / `extend_interior` and no default, so the documented batch
+path drops them while answering 200; (6) `build` lacks `visibility` (route answers 400) and
+`buy_parcel` carries no parcel address; (7) a Nous cannot see its own interior. Three more errors
+of the author recorded in the sheet (§19.6). Recommended shape for the menu: a cost-gated property
+cycle on the economic-cycle pattern, dispatched by direct REST. New sub-decision Q18a (who runs
+the first living Nous) is the operator's and is open. Pitfall carried forward: comments in
+`rpc/types.py` and `wire/client.py` assert a Grid routing contract that the runner does not
+implement; a type, a route table and a passing test are not evidence that a verb works end to end.
+
+## [2026-11-21] decision | Q18a — first living Nous on the operator's Mac Studio (sheet v0.2.2)
+Operator decision: the first living Nous runs on the operator's office Mac Studio on its Local AI.
+Stated constraint: no remote access to that machine now, so links 1-3 (start, enrol, fund) close
+only at that machine. Design for links 4-7 written, awaiting approval:
+`docs/plans/2026-11-21-nous-property-cycle-design.md` (property cycle on the economic-cycle
+pattern; stages land / build / furnish; direct REST dispatch; Brain-side checks; allowlist +0).
+New finding: `GRID_ENDOWMENT_ENABLED=false` on production, so a new Nous has no first money;
+operator's call (endow once vs earn first). No code changed.
+
+## [2026-11-21] lint | Independent check of the property-cycle design — eighth link
+A reader with the code and without the author's reasoning checked the first draft of
+`docs/plans/2026-11-21-nous-property-cycle-design.md`. Six contradictions with the code, all
+re-read in source and confirmed: (1) nothing calls `handler.on_tick` for a Brain off the Grid's
+host (socket RPC only; production Grid holds a stub bridge) — an EIGHTH open link the sheet's
+"seven" missed; (2) upkeep is debited by the Grid scanner, not paid by the Nous; (3) structure
+type must fit the zone (`STRUCTURE_ZONE_FIT`) and commons look `available` but are not
+purchasable; (4) a Grid-wired Brain takes model names from the operator's Grid-side settings and
+exits on failure; (5) unset `NOUS_DID` makes the Brain claim Sophia, and registration needs
+sponsorship (operator rights for a founder); (6) `extend_interior` carries no parcel and
+`post_economic_action` returns a bare bool. Design corrected (clock-follower in the Brain; Grid
+untouched). Sheet corrected to eight links (v0.2.2, errors 21-22). Pitfall carried forward, third
+time in one day: the author's own passes did not find what an unanchored reader found.
+
+## [2026-11-21] apply | Property cycle + clock follower built in the Brain (sheet v0.2.3)
+Operator approved the design. Built test-first in `brain/` only: `property_logic.py`,
+`prompts/property_decision.py`, `wire/clock_follower.py`, additions to `wire/client.py`,
+`rpc/handler.py`, `rpc/types.py`, `__main__.py`. 128 new tests, suite 1430 green, one end-to-end
+test inside the Brain (mutation-checked on three links). NOT run on production: links 1-3 wait
+for the Mac Studio. Independent review of the branch against Grid source: 8 findings in the new
+code, all fixed (zone-blind candidate list, follower losing ~1 tick in 15, stale-tick delivery,
+Brain-side refusal recorded as "chose to wait", lessons not in the prompt, timeout called a
+refusal, Grid error text into memory verbatim, forced sleep on Grid restart) plus a circular
+import. Two Grid defects found and NOT fixed: (1) `reclaimToTreasury` sets `structure = undefined`
+and `publicView` dereferences it — one reclaim makes `GET /api/v1/civic/parcels` answer 500 for
+everyone until restart; (2) the Civic-DID -> runner index is memory-only and bound only on first
+issuance, so a Grid restart makes `post_actions` 404 for every enrolled Brain. Facts carried
+forward: the Grid creates runners for the three founders only; the Grid tick restarts from 0 on
+restart. Pitfall carried forward: a green full run does not show import-order defects — run each
+new test file on its own.
+
+## [2026-11-21] lint | Wrong branch; per-tick upkeep; Grid reclaim path fixed on main (sheet v0.2.4)
+Operator said to fix the two Grid defects. Findings while doing it:
+(1) AUTHOR ERROR — every code-derived statement about "production" in the sheet was read from
+`main`, while production's Grid runs `research/atlas-simulator` (57 commits not on main). On that
+branch commit `aeee7173` (2026-11-20) already added `brain/.../wire/tick_driver.py` (firehose tick
+-> on_tick: the sheet's "eighth link") and `GridCoordinator.restoreCivicDids` (the "restart
+unbinds runners" defect; live on production). The author's duplicate runner-binding fix was
+dropped; the clock follower on main now duplicates TickDriver.
+(2) An independent review of the reclaim fix found the path broken more deeply, confirmed in code
+on both branches and reproduced by tests against the real ParcelRegistry: upkeep charged on EVERY
+tick (memory never learned `lastUpkeepTick`); a reclaimed parcel owned by the treasury in memory
+and by nobody in the database, reclaimed again every tick and unpurchasable until restart; razed
+structure `undefined` -> public parcel feed 500; `persistReclaim` leaving structure name/type,
+shop binding and allowlist. All four fixed on main (`createUpkeepRegistryFacade`,
+`ParcelRegistry.stampUpkeep`, reclaim -> no owner; BEHAVIOUR CHANGE: memory no longer reports
+TREASURY_DID as owner of a reclaimed parcel). Grid suite 4214 green; in shuffled order five older
+tests in four unrelated files fail (pre-existing order dependence). NOT on production.
+(3) Brain: property cycle now off unless `BRAIN_PROPERTY_CYCLE=on`. Brain suite 1432 green twice.
+Open, not fixed: role edges survive reclaim; condition not persisted between periods; failing
+persistReclaim splits memory and DB; tick stamps not comparable across a Grid restart.
+A raw NUL byte in `grid/src/civic/parcel-registry.ts` (in a comment) made grep treat the file as
+binary and hid it from text search; removed on main, still present on the production branch,
+where it makes that file a binary merge conflict. Pitfalls carried forward: read the branch
+production runs before describing production; `grep` silently skips files with a NUL byte.

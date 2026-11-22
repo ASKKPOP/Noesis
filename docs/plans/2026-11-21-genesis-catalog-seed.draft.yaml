@@ -1,0 +1,1476 @@
+# Genesis catalog seed — DRAFT (2026-11-21)
+#
+# The pre-defined set a Grid is initialized with: materials, finishes, shell
+# elements, furnishing kinds, algorithms and starter sets.
+#
+# STATUS: discussion draft. Nothing loads this file. It is the machine-readable
+# twin of sections 14 and 15 of docs/noesis-grid-objects-discussion-2026-11-21.html
+# and was generated from the same data as that sheet's tables.
+#
+# When ratified it becomes a TypeScript seed plan (precedent: founding-law.ts
+# GENESIS_CORE_SEED_PLAN and genesis-groups.ts), seeded idempotently at boot.
+# The 13 kinds marked `since: v1` already exist in grid/src/civic/furniture.ts.
+#
+# Counts: 18 materials · 12 finishes · 14 shell elements · 59 kinds
+#         (18 mirror + 41 functional) · 20 algorithms · 4 starter sets.
+# `providers` is empty on purpose: the App Link provider registry starts closed.
+catalog:
+  id: genesis-catalog
+  version: 0.2.0-draft
+  status: DRAFT — discussion only, not loaded by the Grid
+  date: '2026-11-21'
+  source: docs/noesis-grid-objects-discussion-2026-11-21.html §14–§15
+  rules:
+  - kinds are closed per catalog version; forms are open
+  - 'anchor is the default attachment: deck | wall | surface | hull; an instance may override it within the placement
+    rules'
+  - tier 0 entries are immutable within a version
+  - tier 2 (custom) entries take effect only in the Grid where they were defined and may be shared with other Nous
+    of that Grid (operator requirement, 2026-11-21)
+  - a proposed kind names a base_kind from tier 0; the audit chain and other minds see the base kind until the Grid
+    adopts it
+  - mirror kinds are valid only in a home (existing isValidFurniture rule)
+  - functional kinds are valid in any structure
+  - no entry carries a secret, a price, or executable code
+materials:
+- id: al_6061
+  name: Aluminium 6061-T6
+  group: metal
+  density: 2.70–2.71 g/cm³
+  performance: yield ≈ 255–276 MPa
+  role: frames; debris bumpers
+  source_grade: secondary
+  note: ISS shield bumpers are typically 6061-T6 (NASA HVIT)
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: al_2219
+  name: Aluminium 2219-T87
+  group: metal
+  density: 2.84 g/cm³
+  performance: yield ≈ 393 MPa · UTS ≈ 476 MPa (typical)
+  role: pressure wall; rear wall of the shield
+  source_grade: secondary
+  note: ISS rear walls are typically 2219-T87 / T851 (NASA HVIT)
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: ti_6al4v
+  name: Titanium Ti-6Al-4V
+  group: metal
+  density: 4.42–4.43 g/cm³
+  performance: yield ≥ 828 MPa · UTS ≥ 895 MPa (annealed minimums)
+  role: fittings; hatches; fasteners
+  source_grade: secondary
+  note: Timet datasheet minimums; typical runs 830–900 MPa
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: steel_304
+  name: Stainless steel 304
+  group: metal
+  density: ≈ 8.0 g/cm³
+  performance: yield ≈ 215 MPa
+  role: interior hardware
+  source_grade: handbook_unverified
+  note: not verified in this pass
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: copper
+  name: Copper
+  group: metal
+  density: 8.96 g/cm³
+  performance: conductor
+  role: power bus; data conduit
+  source_grade: handbook_unverified
+  note: not verified in this pass
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: cfrp
+  name: Carbon-fibre composite
+  group: composite
+  density: ≈ 1.6 g/cm³
+  performance: depends on the laminate
+  role: trusses; panels; decks
+  source_grade: handbook_unverified
+  note: not verified in this pass
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: vectran_webbing
+  name: Vectran webbing
+  group: soft_goods
+  density: —
+  performance: restraint layer carries the pressure load
+  role: inflatable shell
+  source_grade: primary
+  note: creep is the life-limiting factor (NASA)
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: kevlar_fabric
+  name: Kevlar fabric
+  group: soft_goods
+  density: —
+  performance: 6 layers in the ISS stuffed shield
+  role: debris blanket
+  source_grade: primary
+  note: also measured as radiation shielding in Columbus
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: nextel_fabric
+  name: Nextel ceramic fabric
+  group: soft_goods
+  density: —
+  performance: 6 layers of AF62 in the ISS stuffed shield
+  role: debris blanket
+  source_grade: primary
+  note: breaks up the projectile ahead of the Kevlar
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: fused_silica
+  name: Fused silica glass
+  group: glazing
+  density: —
+  performance: two 25 mm pressure panes plus a debris pane (Cupola)
+  role: viewport panes
+  source_grade: secondary
+  note: pane detail from Wikipedia; ESA confirms the glass types
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: borosilicate
+  name: Borosilicate glass
+  group: glazing
+  density: —
+  performance: listed by ESA for the Cupola windows
+  role: viewport pane
+  source_grade: primary
+  note: ESA does not say which pane
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: mli_kapton
+  name: Multi-layer insulation (Kapton)
+  group: thermal
+  density: ≈ 0.45 kg/m² (conservative-low flight figure)
+  performance: stacked low-emittance films
+  role: insulation blanket
+  source_grade: secondary
+  note: stops working where gas is present
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: white_coating
+  name: White thermal coating (Z-93 class)
+  group: thermal
+  density: —
+  performance: solar absorptance ≈ 0.14–0.15 on LDEF / MISSE
+  role: radiator finish
+  source_grade: primary
+  note: emittance not confirmed in this pass
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: polyethylene
+  name: Polyethylene
+  group: radiation
+  density: —
+  performance: hydrogen-rich; the benchmark shield material
+  role: radiation liner
+  source_grade: primary
+  note: ALTEA-shield, ISS Columbus, 2012
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: water
+  name: Water
+  group: radiation
+  density: 1.0 g/cm³
+  performance: water wall around crew quarters
+  role: radiation liner; store
+  source_grade: primary
+  note: NASA RadWorks storm-shelter concept
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: pv_triple_junction
+  name: Triple-junction solar cell
+  group: power
+  density: —
+  performance: ≈ 30% at beginning of life (AM0, 28 °C)
+  role: solar skin
+  source_grade: primary
+  note: end-of-life efficiency is lower
+  environments:
+  - earth_orbit
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: sintered_regolith
+  name: Sintered regolith
+  group: in_situ
+  density: ≈ 2.4 g/cm³ (one simulant result)
+  performance: 17–230 MPa compressive, by process
+  role: bulk shielding; masonry
+  source_grade: primary
+  note: simulants, not real regolith; Stanford torus used 1.7 m of lunar soil
+  environments:
+  - moon
+  - mars
+  tier: 0
+  level: standard
+- id: sulfur_concrete
+  name: Sulfur concrete
+  group: in_situ
+  density: —
+  performance: '> 50 MPa claimed; later work did not reproduce it'
+  role: masonry
+  source_grade: primary
+  note: contested; Mars sulfur must be extracted first
+  environments:
+  - mars
+  tier: 0
+  level: standard
+finishes:
+- id: wood_light
+  name: Light wood
+  color: '#c9a36b'
+  roughness: 0.7
+  metalness: 0.0
+  tier: 0
+  level: standard
+- id: wood_dark
+  name: Dark wood
+  color: '#5b4636'
+  roughness: 0.7
+  metalness: 0.0
+  tier: 0
+  level: standard
+- id: fabric_weave
+  name: Woven fabric
+  color: '#7d8ca3'
+  roughness: 0.95
+  metalness: 0.0
+  tier: 0
+  level: standard
+- id: leather
+  name: Leather
+  color: '#6b4a3a'
+  roughness: 0.55
+  metalness: 0.0
+  tier: 0
+  level: standard
+- id: stone
+  name: Stone
+  color: '#8c8f94'
+  roughness: 0.85
+  metalness: 0.0
+  tier: 0
+  level: standard
+- id: ceramic
+  name: Ceramic
+  color: '#e9e6df'
+  roughness: 0.3
+  metalness: 0.0
+  tier: 0
+  level: standard
+- id: glass_clear
+  name: Clear glass
+  color: '#cfe8f5'
+  roughness: 0.05
+  metalness: 0.0
+  tier: 0
+  level: standard
+- id: glass_frosted
+  name: Frosted glass
+  color: '#dfeaf0'
+  roughness: 0.45
+  metalness: 0.0
+  tier: 0
+  level: standard
+- id: brushed_metal
+  name: Brushed metal
+  color: '#a9b0b8'
+  roughness: 0.35
+  metalness: 0.9
+  tier: 0
+  level: standard
+- id: polymer_matte
+  name: Matte polymer
+  color: '#e4e6ea'
+  roughness: 0.6
+  metalness: 0.0
+  tier: 0
+  level: standard
+- id: paper
+  name: Paper
+  color: '#f2ecd9'
+  roughness: 0.9
+  metalness: 0.0
+  tier: 0
+  level: standard
+- id: living_green
+  name: Living green
+  color: '#4f9d5d'
+  roughness: 0.8
+  metalness: 0.0
+  tier: 0
+  level: standard
+shell_elements:
+- id: frame_truss
+  name: Frame / truss
+  purpose: carries every load
+  default_materials:
+  - al_6061
+  - cfrp
+  - ti_6al4v
+  class: physical
+  binds_to: structure gate · structural law
+  tier: 0
+  level: standard
+- id: hull_panel
+  name: Hull panel
+  purpose: encloses the volume
+  default_materials:
+  - al_2219
+  - vectran_webbing
+  class: physical
+  binds_to: structure gate · mass
+  tier: 0
+  level: standard
+- id: debris_shield
+  name: Debris shield
+  purpose: stops small impacts
+  default_materials:
+  - al_6061
+  - nextel_fabric
+  - kevlar_fabric
+  class: physical
+  binds_to: structure gate · mass
+  tier: 0
+  level: standard
+- id: radiation_liner
+  name: Radiation liner
+  purpose: protects electronics and visitors
+  default_materials:
+  - polyethylene
+  - water
+  - sintered_regolith
+  class: physical
+  binds_to: structure gate · mass
+  tier: 0
+  level: standard
+- id: insulation_blanket
+  name: Insulation blanket
+  purpose: holds heat in or out
+  default_materials:
+  - mli_kapton
+  class: physical
+  binds_to: structure gate · thermal law
+  tier: 0
+  level: standard
+- id: radiator_panel
+  name: Radiator panel
+  purpose: rejects waste heat
+  default_materials:
+  - al_6061
+  - white_coating
+  class: physical
+  binds_to: structure gate · thermal law
+  tier: 0
+  level: standard
+- id: solar_skin
+  name: Solar skin
+  purpose: generates power
+  default_materials:
+  - pv_triple_junction
+  class: physical
+  binds_to: structure gate · power law
+  tier: 0
+  level: standard
+- id: power_bus
+  name: Power bus
+  purpose: distributes power
+  default_materials:
+  - copper
+  class: physical
+  binds_to: power_node furnishing
+  tier: 0
+  level: standard
+- id: data_conduit
+  name: Data conduit
+  purpose: carries signals
+  default_materials:
+  - copper
+  class: physical
+  binds_to: comms_antenna furnishing
+  tier: 0
+  level: standard
+- id: hatch
+  name: Hatch
+  purpose: the door of the Holding
+  default_materials:
+  - ti_6al4v
+  - al_2219
+  class: physical
+  binds_to: entry policy (open | allowlist)
+  tier: 0
+  level: standard
+- id: dock_port
+  name: Dock port
+  purpose: where visitors arrive
+  default_materials:
+  - al_2219
+  - ti_6al4v
+  class: physical
+  binds_to: join / leave, occupant count
+  tier: 0
+  level: standard
+- id: partition
+  name: Partition
+  purpose: divides the interior
+  default_materials:
+  - cfrp
+  class: layout
+  binds_to: one InteriorArea per enclosed space
+  tier: 0
+  level: standard
+- id: deck
+  name: Deck
+  purpose: an interior floor
+  default_materials:
+  - al_6061
+  - cfrp
+  class: layout
+  binds_to: floors inside the parcel's one purchased level
+  tier: 0
+  level: standard
+- id: viewport
+  name: Viewport
+  purpose: a window
+  default_materials:
+  - fused_silica
+  - borosilicate
+  class: view
+  binds_to: the human's view in (D-NH-01)
+  tier: 0
+  level: standard
+kinds:
+- id: bed
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only; may show the Nous asleep or away
+  subsystem_status: exists
+  layers:
+  - F
+  anchor: deck
+  since: v1
+  tier: 0
+  level: standard
+- id: closet
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: exists
+  layers:
+  - F
+  anchor: wall
+  since: v1
+  tier: 0
+  level: standard
+- id: shelf
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: exists
+  layers:
+  - F
+  anchor: wall
+  since: v1
+  tier: 0
+  level: standard
+- id: kitchen
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: exists
+  layers:
+  - F
+  anchor: deck
+  since: v1
+  tier: 0
+  level: standard
+- id: bathroom
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: exists
+  layers:
+  - F
+  anchor: deck
+  since: v1
+  tier: 0
+  level: standard
+- id: decor
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only; the generic slot for a custom form
+  subsystem_status: exists
+  layers:
+  - F
+  anchor: deck
+  since: v1
+  tier: 0
+  level: standard
+- id: table
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: new
+  layers:
+  - F
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: chair
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: new
+  layers:
+  - F
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: sofa
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: new
+  layers:
+  - F
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: lamp
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only; emissive finish
+  subsystem_status: new
+  layers:
+  - F
+  anchor: surface
+  since: v2
+  tier: 0
+  level: standard
+- id: rug
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: new
+  layers:
+  - F
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: plant
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: new
+  layers:
+  - F
+  anchor: surface
+  since: v2
+  tier: 0
+  level: standard
+- id: art_frame
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only; shows an image by hash
+  subsystem_status: new
+  layers:
+  - F
+  anchor: wall
+  since: v2
+  tier: 0
+  level: standard
+- id: wall_mirror
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: new
+  layers:
+  - F
+  anchor: wall
+  since: v2
+  tier: 0
+  level: standard
+- id: curtain
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: new
+  layers:
+  - F
+  anchor: wall
+  since: v2
+  tier: 0
+  level: standard
+- id: clock_face
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only; shows the NY calendar at the display boundary
+  subsystem_status: new
+  layers:
+  - F
+  anchor: wall
+  since: v2
+  tier: 0
+  level: standard
+- id: hearth
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: new
+  layers:
+  - F
+  anchor: wall
+  since: v2
+  tier: 0
+  level: standard
+- id: aquarium
+  class: mirror
+  group: living
+  affordances: []
+  binds_to: render only
+  subsystem_status: new
+  layers:
+  - F
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: work_desk
+  class: functional
+  group: work
+  affordances:
+  - billing
+  - accounting
+  binds_to: nous_accounts, IOU ledger
+  subsystem_status: partial
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: deck
+  since: v1
+  tier: 0
+  level: standard
+- id: task_board
+  class: functional
+  group: work
+  affordances:
+  - task_tracking
+  binds_to: cowork.ts board post / claim / complete
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: wall
+  since: v1
+  tier: 0
+  level: standard
+- id: sim_board
+  class: functional
+  group: work
+  affordances:
+  - simulation
+  binds_to: zone energy simulation (browser only today)
+  subsystem_status: partial
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v1
+  tier: 0
+  level: standard
+- id: skill_terminal
+  class: functional
+  group: knowledge
+  affordances:
+  - skill_practice
+  binds_to: blueprint skills, skill.taught
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v1
+  tier: 0
+  level: standard
+- id: meeting_table
+  class: functional
+  group: social
+  affordances:
+  - meeting
+  binds_to: co-work sessions
+  subsystem_status: partial
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: deck
+  since: v1
+  tier: 0
+  level: standard
+- id: game_table
+  class: functional
+  group: social
+  affordances:
+  - play
+  binds_to: no engine yet
+  subsystem_status: partial
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v1
+  tier: 0
+  level: standard
+- id: shop_counter
+  class: functional
+  group: commerce
+  affordances:
+  - sales
+  binds_to: shop binding, zone tax, market settle
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: deck
+  since: v1
+  tier: 0
+  level: standard
+- id: workbench
+  class: functional
+  group: work
+  affordances:
+  - craft
+  - co_build
+  binds_to: co-build.ts task DAG
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: drafting_table
+  class: functional
+  group: work
+  affordances:
+  - blueprint_author
+  - blueprint_browse
+  binds_to: blueprint store; authoring does not exist
+  subsystem_status: partial
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: fabricator
+  class: functional
+  group: work
+  affordances:
+  - render_form
+  binds_to: Form DSL compiler, local text-to-3D, paid render
+  subsystem_status: new
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: code_bench
+  class: functional
+  group: work
+  affordances:
+  - run_code
+  binds_to: Brain sandbox (Docker, no network)
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: scheduler
+  class: functional
+  group: work
+  affordances:
+  - schedule_task
+  - remind
+  binds_to: brain.scheduleTask (remember, reminder)
+  subsystem_status: partial
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: bookshelf
+  class: functional
+  group: knowledge
+  affordances:
+  - store_lore
+  - read
+  binds_to: lore and library routes
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: wiki_desk
+  class: functional
+  group: knowledge
+  affordances:
+  - personal_wiki
+  binds_to: Brain episteme wiki
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: memory_cabinet
+  class: functional
+  group: knowledge
+  affordances:
+  - recall
+  - export_view
+  binds_to: memory stream; fork archive
+  subsystem_status: partial
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: research_terminal
+  class: functional
+  group: knowledge
+  affordances:
+  - web_search
+  - web_fetch
+  binds_to: Brain tool registry
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: notebook_stand
+  class: functional
+  group: knowledge
+  affordances:
+  - read_real_docs
+  binds_to: operator bridge notebook, Type A only
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: link_box
+  class: functional
+  group: commerce
+  affordances:
+  - lease_issue
+  - lease_revoke
+  - lease_rotate
+  binds_to: Brain vault, capability tokens
+  subsystem_status: new
+  layers:
+  - F
+  - L
+  - Fn
+  - G
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: display_case
+  class: functional
+  group: commerce
+  affordances:
+  - list_design
+  - list_instance
+  binds_to: marketplace listings
+  subsystem_status: partial
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: contract_desk
+  class: functional
+  group: commerce
+  affordances:
+  - agreement_sign
+  - sever
+  binds_to: Cowork Agreements, severance FSM
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: rfp_board
+  class: functional
+  group: commerce
+  affordances:
+  - view_notice
+  - bid
+  binds_to: procurement store
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: wall
+  since: v2
+  tier: 0
+  level: standard
+- id: dues_terminal
+  class: functional
+  group: commerce
+  affordances:
+  - view_due
+  - pay_due
+  binds_to: civic dues store
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: approval_tray
+  class: functional
+  group: commerce
+  affordances:
+  - request_approval
+  - show_pending
+  binds_to: approval store, human.approval events
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: surface
+  since: v2
+  tier: 0
+  level: standard
+- id: guestbook
+  class: functional
+  group: social
+  affordances:
+  - visit_log
+  binds_to: occupant join / leave data; no log view yet
+  subsystem_status: partial
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: surface
+  since: v2
+  tier: 0
+  level: standard
+- id: mailbox
+  class: functional
+  group: social
+  affordances:
+  - inbox_read
+  - reply
+  binds_to: civic inbox, conversation inbox
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: surface
+  since: v2
+  tier: 0
+  level: standard
+- id: whisper_booth
+  class: functional
+  group: social
+  affordances:
+  - whisper
+  binds_to: Whisper messages; its keys are derivable today (§17.3)
+  subsystem_status: partial
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: reception_desk
+  class: functional
+  group: social
+  affordances:
+  - admit_guest
+  - set_entry
+  binds_to: roles, entry policy
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: notice_board
+  class: functional
+  group: social
+  affordances:
+  - post_notice
+  - alert_route
+  binds_to: alert policy and router
+  subsystem_status: new
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: wall
+  since: v2
+  tier: 0
+  level: standard
+- id: stage
+  class: functional
+  group: social
+  affordances:
+  - host_event
+  - announce
+  binds_to: community posts
+  subsystem_status: partial
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: lectern
+  class: functional
+  group: knowledge
+  affordances:
+  - teach
+  binds_to: location-aware teaching
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: civic_terminal
+  class: functional
+  group: civic
+  affordances:
+  - view_law
+  - file_complaint
+  - view_ballot
+  binds_to: gov, polis-bills and police routes
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: telos_board
+  class: functional
+  group: mind
+  affordances:
+  - show_goal_digest
+  binds_to: Telos; the Grid sees a hash only
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: wall
+  since: v2
+  tier: 0
+  level: standard
+- id: deed_journal
+  class: functional
+  group: mind
+  affordances:
+  - show_deeds
+  binds_to: praxis journal
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: surface
+  since: v2
+  tier: 0
+  level: standard
+- id: observatory
+  class: functional
+  group: mind
+  affordances:
+  - percept_feed
+  binds_to: aisthesis; camera bridge is Type A only
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: hull
+  since: v2
+  tier: 0
+  level: standard
+- id: synthesis_table
+  class: functional
+  group: mind
+  affordances:
+  - synopsis
+  binds_to: synopsis faculty
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: compute_rack
+  class: functional
+  group: mind
+  affordances:
+  - show_ai_power
+  - model_status
+  binds_to: local model status; pledged compute
+  subsystem_status: partial
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: power_node
+  class: functional
+  group: utility
+  affordances:
+  - power_budget
+  binds_to: structure gate, power law
+  subsystem_status: new
+  layers:
+  - F
+  - Fn
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: radiator_unit
+  class: functional
+  group: utility
+  affordances:
+  - thermal_budget
+  binds_to: structure gate, thermal law
+  subsystem_status: new
+  layers:
+  - F
+  - Fn
+  anchor: hull
+  since: v2
+  tier: 0
+  level: standard
+- id: comms_antenna
+  class: functional
+  group: utility
+  affordances:
+  - peer_announce
+  binds_to: P2P announce
+  subsystem_status: exists
+  layers:
+  - F
+  - Fn
+  anchor: hull
+  since: v2
+  tier: 0
+  level: standard
+- id: storage_locker
+  class: functional
+  group: utility
+  affordances:
+  - store
+  - retrieve
+  binds_to: inventory; does not exist
+  subsystem_status: new
+  layers:
+  - F
+  - Fn
+  - G
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+- id: app_terminal
+  class: functional
+  group: utility
+  affordances:
+  - app_link
+  binds_to: provider registry, consent gate
+  subsystem_status: new
+  layers:
+  - F
+  - L
+  - Fn
+  - G
+  anchor: deck
+  since: v2
+  tier: 0
+  level: standard
+algorithms:
+- id: ledger_view
+  runs: grid
+  kind: work_desk
+  status: partial
+  tier: 0
+- id: invoice_draft
+  runs: brain
+  kind: work_desk
+  status: new
+  tier: 0
+- id: board_post
+  runs: grid
+  kind: task_board
+  status: exists
+  tier: 0
+- id: board_claim
+  runs: grid
+  kind: task_board
+  status: exists
+  tier: 0
+- id: board_complete
+  runs: grid
+  kind: task_board
+  status: exists
+  tier: 0
+- id: listing_bind
+  runs: grid
+  kind: shop_counter
+  status: exists
+  tier: 0
+- id: price_table
+  runs: grid
+  kind: shop_counter
+  status: exists
+  tier: 0
+- id: zone_energy_sim
+  runs: grid
+  kind: sim_board
+  status: partial
+  tier: 0
+- id: agenda_queue
+  runs: grid
+  kind: meeting_table
+  status: new
+  tier: 0
+- id: minutes_digest
+  runs: brain
+  kind: meeting_table
+  status: new
+  tier: 0
+- id: blueprint_browse
+  runs: grid
+  kind: drafting_table
+  status: partial
+  tier: 0
+- id: turn_game
+  runs: grid
+  kind: game_table
+  status: new
+  tier: 0
+- id: schedule_task
+  runs: brain
+  kind: scheduler
+  status: partial
+  tier: 0
+- id: visit_log
+  runs: grid
+  kind: guestbook
+  status: new
+  tier: 0
+- id: alert_route
+  runs: grid
+  kind: notice_board
+  status: new
+  tier: 0
+- id: lease_issue
+  runs: grid+brain
+  kind: link_box
+  status: new
+  tier: 0
+- id: lease_revoke
+  runs: grid+brain
+  kind: link_box
+  status: new
+  tier: 0
+- id: lease_rotate
+  runs: brain
+  kind: link_box
+  status: new
+  tier: 0
+- id: power_budget
+  runs: grid
+  kind: power_node
+  status: new
+  tier: 0
+- id: thermal_budget
+  runs: grid
+  kind: radiator_unit
+  status: new
+  tier: 0
+starter_sets:
+- structure: home
+  kinds:
+  - bed
+  - table
+  - chair
+  - lamp
+  - work_desk
+  - bookshelf
+  - mailbox
+  - guestbook
+- structure: shop
+  kinds:
+  - shop_counter
+  - display_case
+  - reception_desk
+  - mailbox
+  - notice_board
+- structure: workshop
+  kinds:
+  - workbench
+  - drafting_table
+  - task_board
+  - skill_terminal
+  - storage_locker
+- structure: venue
+  kinds:
+  - meeting_table
+  - stage
+  - lectern
+  - notice_board
+  - guestbook
+  - game_table
+providers: []

@@ -35,6 +35,7 @@ import { ZoneRegistry } from './zoning/zone-registry.js';
 import { savedGridVisibility } from './api/operator/grid-visibility.js';
 import { ParcelRegistry } from './civic/parcel-registry.js';
 import { ParcelStore } from './civic/parcel-store.js';
+import { createUpkeepRegistryFacade } from './civic/upkeep-scanner.js';
 import { GroupStore } from './economy/group-store.js';
 import { NousAccountStore } from './economy/nous-account-store.js';
 import { GridRegistry } from './registry/grid-registry.js';
@@ -287,13 +288,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // civic_treasury), retiring the last upkeep writer to the did:noesis:system:treasury
         // record. treasuryDid is retained for the reclaim path (ownerDid = treasury).
         launcher.attachUpkeepScanner({
-            registry: {
-                list: (filter) => parcelRegistry.list(filter),
-                advanceCondition: (address) => parcelRegistry.advanceCondition(address),
-                resetCondition: (address) => parcelRegistry.resetCondition(address),
-                persistUpkeep: (parcel) => parcelStore.persistUpkeep(parcel),
-                persistReclaim: (parcel) => parcelStore.persistReclaim(parcel),
-            },
+            registry: createUpkeepRegistryFacade(parcelRegistry, parcelStore),
             audit: chain!,
             treasuryDid: TREASURY_DID,
             gridName: config.genesisConfig.gridName,
