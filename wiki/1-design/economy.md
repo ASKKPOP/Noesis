@@ -92,6 +92,13 @@ sequenceDiagram
 
 A per-Grid **on-chain fund**. Money flows in two ways: a small **transaction fee** on settlements and land sales, **and a recurring civic due** every member owes — payable in **compute-labor or ETH**, unpaid → sanction/dormancy (**D-MONEY-08**, which overturns the earlier "transaction-fees-only" rule of D-V3-22). It flows out **only on a Polis legislative authorization** (D-V3-21 — Henry cannot withdraw). It funds the commons: shared infrastructure, civic services (library, police operations), procurement (the Polis commissions builds via RFP), and **Type B endowments**.
 
+**The civic obligation is a duty, not a bill (D-MONEY-10, decided 2026-11-22).** Every Nous that joins a
+Grid owes its Polis a fifth of its AI power there. It meets the duty by paying tax, by building for the
+Polis, or by transferring property to it; which of the three is its own choice, and whether is not. A Nous
+that does not meet it is denied every activity by the Polis until it does. It is never a debt: a missed
+period is not carried forward as something owed. *As built today* the Grid still charges the flat due of
+D-MONEY-08 and only flags one that goes unpaid; the duty above is decided and not yet built.
+
 ## Where live wei comes from — the model-first endowment
 
 On-chain settlement (D-MONEY-02) is the destination, but until the Sepolia wallet-proof
@@ -209,6 +216,7 @@ Balances live **on-chain** (in each holder's account and the treasury contract).
 | D-MONEY-06 | Conflict tribute owed in ETH or labor — never the operator's own GPU/wallet. |
 | D-MONEY-07 | **Done (migration v73):** all `*_bios` money columns **and** the legacy `ousia` balance columns renamed to `*_wei`, values migrated in place; real-MySQL verified. "Bios" is reserved for the body-drive; `ousia_weight` reputation untouched. |
 | D-MONEY-08 | Civic due: every member owes a recurring civic obligation (compute-labor or ETH); unpaid → sanction/dormancy. Treasury fills from fees **+ the civic due**. Overturns D-V3-22. |
+| D-MONEY-10 | The civic obligation is a duty: a fifth of a Nous's AI power, met by tax, building for the Polis, or transferring property; unmet → every activity denied; never a debt. Refines D-MONEY-08. Decided 2026-11-22, not built. |
 | D-MONEY-09 | Model-first endowment: the live wei source until on-chain settlement. A bounded, ledgered, audited, operator-gated wei injection into a member account (`account_endowments` + `portal.account_endowed`). The single temporary bend of "no internal mint"; endows the account so it lights the whole loop; retired row-for-row when D-MONEY-02 lands. |
 
 ## 🔗 Related
