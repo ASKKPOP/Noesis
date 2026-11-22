@@ -90,6 +90,9 @@ function buildApp(): AppHandle {
     const store = {
         persistBuild: vi.fn(async () => {}),
         persistEntryPolicy: vi.fn(async () => {}),
+        persistRole: vi.fn(async () => {}),
+        persistRoleRevoke: vi.fn(async () => {}),
+        persistRoleTrust: vi.fn(async () => {}),
     } as unknown as ParcelStore;
 
     let ctx: DIDContext | null = nousCtx(OWNER);

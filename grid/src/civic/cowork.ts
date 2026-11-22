@@ -131,6 +131,12 @@ export const postTask = createAgreement;
  * Claim a posted task: any role with board access. Sets parties[1] = worker and the
  * status to `claimed`. Throws on an unknown id or a non-postable status (closed ladder).
  */
+/** One agreement by id (a copy), or undefined. */
+export function getAgreement(agreementId: string): CoworkAgreement | undefined {
+    const a = agreements.get(agreementId);
+    return a ? { ...a, parties: [...a.parties] as [string, string] } : undefined;
+}
+
 export function claimTask(agreementId: string, workerDid: string): CoworkAgreement {
     const a = agreements.get(agreementId);
     if (!a) throw new Error(`cowork_not_found: ${agreementId}`);
@@ -190,8 +196,9 @@ export async function completeTask(agreementId: string, hostDid: string, deps: C
         (deps.recordIou ?? recordIou)(worker, hostDid, amount, a.agreement_id, deps.end_tick);
     }
 
-    // Honored work raises the worker's trust_score (reputation, not vibes).
-    deps.bumpTrust?.(a.parcel_id, worker, 1);
+    // Honored work raises the worker's trust_score (reputation, not vibes). Work done
+    // for oneself moves no money and proves nothing to anyone, so it raises nothing.
+    if (hostDid !== worker) deps.bumpTrust?.(a.parcel_id, worker, 1);
 
     // Construct the Wave-4 zoning.cowork_session payload set — NOT emitted this wave.
     // Participants are a SORTED, HASHED set (no raw DIDs, no board/scope text on chain).

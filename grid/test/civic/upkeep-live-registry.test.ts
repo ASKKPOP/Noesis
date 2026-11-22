@@ -261,6 +261,9 @@ describe('upkeep — through the store and back: what a restart keeps', () => {
             const flat = sql.replace(/\s+/g, ' ').trim();
             if (/^SELECT \* FROM civic_parcels /.test(flat)) return [[{ ...row }], []];
             if (/^SELECT/.test(flat)) return [[], []];
+            if (/^UPDATE civic_parcel_roles SET revoked_tick = \? WHERE parcel_id = \? AND revoked_tick IS NULL$/.test(flat)) {
+                return [{ affectedRows: 0 }, []];        // no roles on this parcel
+            }
             const set = /^UPDATE civic_parcels SET (.+) WHERE parcel_id = \?$/.exec(flat);
             if (!set) throw new Error(`fakeDatabase: unexpected statement: ${flat}`);
             if (params[params.length - 1] !== ADDR) throw new Error(`fakeDatabase: wrong row: ${String(params[params.length - 1])}`);
@@ -275,7 +278,8 @@ describe('upkeep — through the store and back: what a restart keeps', () => {
             }
             return [{ affectedRows: 1 }, []];
         });
-        return { row, pool: { query } as never };
+        const getConnection = async () => ({ query, beginTransaction: async () => {}, commit: async () => {}, rollback: async () => {}, release: () => {} });
+        return { row, pool: { query, getConnection } as never };
     }
 
     function depsFor(registry: ParcelRegistry, store: ParcelStore, ticksBeforeStart: number) {
@@ -315,7 +319,7 @@ describe('upkeep — through the store and back: what a restart keeps', () => {
         expect(db.row).toMatchObject({ condition: 'derelict', missed_periods: 2, last_upkeep_tick: 10081 });
     });
 
-    it('a reclaim writes one statement and leaves the row ownerless and maintained', async () => {
+    it('a reclaim ends the roles, then leaves the row ownerless and maintained', async () => {
         const db = fakeDatabase();
         Object.assign(db.row, { condition: 'derelict', missed_periods: 2, last_upkeep_tick: 1 });
         const store = new ParcelStore(db.pool, 'genesis');
@@ -326,7 +330,7 @@ describe('upkeep — through the store and back: what a restart keeps', () => {
         await onUpkeepTick(1 + UPKEEP_PERIOD_TICKS, depsFor(registry, store, 0).deps);
 
         const writes = (db.pool as unknown as { query: ReturnType<typeof vi.fn> }).query.mock.calls.length - before;
-        expect(writes).toBe(1);
+        expect(writes).toBe(2);
         expect(db.row).toMatchObject({ owner_civic_did: null, condition: 'maintained', missed_periods: 0, last_upkeep_tick: null });
     });
 });
@@ -376,6 +380,49 @@ describe('upkeep — the sweep survives what goes wrong around it', () => {
         expect(w.registry.get(ADDR)!.ownerDid).toBeNull();
         expect(w.events.filter((e) => e.type === 'zoning.parcel_reclaimed')).toHaveLength(1);
         expect(w.store.persistReclaim).toHaveBeenCalledTimes(2);
+        warn.mockRestore();
+    });
+});
+
+describe('upkeep — once the owner has paid, nothing after it can bring the charge back', () => {
+    it('a parcel in a zone named with a digit is charged once per period', async () => {
+        const registry = new ParcelRegistry('genesis');
+        registry.setZones([{ zone_id: 'habitat2', kind: 'home', label: 'Habitat 2' }]);
+        registry.seedZone({ zoneId: 'habitat2', count: 1, priceWei: 400, ring: 3 });
+        const addr = 'genesis:habitat2:0001';
+        expect(registry.purchase(addr, OWNER, 10_000).ok).toBe(true);
+        const charge = vi.fn(async () => ({ newBalance: 0n }));
+        const events: string[] = [];
+        const deps = {
+            registry: createUpkeepRegistryFacade(registry, { persistUpkeep: async () => {}, persistReclaim: async () => {} }),
+            audit: { append: (type: string) => { events.push(type); } },
+            treasuryDid: TREASURY, gridName: 'genesis', accountStore: { chargeToTreasury: charge },
+        };
+        for (let tick = 1; tick <= 50; tick++) await onUpkeepTick(tick, deps);
+        expect(charge).toHaveBeenCalledTimes(1);
+        expect(events).toEqual(['treasury.upkeep_collected']);
+    });
+
+    it('an event that cannot be written after the charge does not make the parcel due again', async () => {
+        const w = world({ funded: true });
+        w.deps.audit.append = () => { throw new Error('chain refused'); };
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        for (let tick = 1; tick <= 50; tick++) await onUpkeepTick(tick, w.deps);
+        expect(w.charge).toHaveBeenCalledTimes(1);
+        expect(w.registry.get(ADDR)!.lastUpkeepTick).toBe(1);
+        expect(warn.mock.calls.some((c) => String(c[0]).includes('upkeep_event_failed'))).toBe(true);
+        warn.mockRestore();
+    });
+
+    it('a write that fails after the charge is named for what it is, and memory keeps the period', async () => {
+        const w = world({ funded: true });
+        w.store.persistUpkeep.mockRejectedValue(new Error('db down'));
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        for (let tick = 1; tick <= 50; tick++) await onUpkeepTick(tick, w.deps);
+        expect(w.charge).toHaveBeenCalledTimes(1);
+        const lines = warn.mock.calls.map((c) => String(c[0]));
+        expect(lines.some((l) => l.includes('upkeep_persist_failed'))).toBe(true);
+        expect(lines.some((l) => l.includes('upkeep_charge_failed'))).toBe(false);
         warn.mockRestore();
     });
 });

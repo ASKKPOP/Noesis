@@ -13,7 +13,7 @@ import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
 
 const HEX64_RE = /^[0-9a-f]{64}$/i;
-const PARCEL_ID_RE = /^[a-z0-9_-]+:[a-z_]+:\d{4}$/;
+const PARCEL_ID_RE = /^[a-z0-9_-]+:[a-z0-9_]+:\d{4}$/;
 
 /** Closed 5-key payload. Keys ALPHABETICAL. */
 export interface ZoningParcelPurchasedPayload {
