@@ -324,3 +324,22 @@ async def test_earlier_lessons_reach_the_property_prompt():
     assert h._ranked_memories.call_args.kwargs["prefix"] == "Lesson:"
     prompt = h.llm.generate.await_args[0][0]
     assert lesson in prompt
+
+
+async def test_a_mind_deciding_on_property_is_told_what_it_owes():
+    debt = {"iou_id": "iou:3", "counterparty_civic_did": "did:civic:noesis:hermes", "amount_wei": 700}
+    h = _handler('{"action":"none","reason":"I owe first"}')
+    w = _wire(parcels=FOR_SALE, balance="1000")
+    w.fetch_ious = AsyncMock(return_value={"i_owe": [debt], "owed_to_me": []})
+    h._grid_wire_client = w
+    await h._run_property_cycle(100)
+    standing = h.llm.generate.await_args[0][1].system_prompt
+    assert "  - iou:3: 700 wei to did:civic:noesis:hermes" in standing
+
+
+async def test_a_ledger_that_cannot_be_read_does_not_stop_a_property_decision():
+    h = _handler('{"action":"none"}')
+    h._grid_wire_client = _wire(parcels=FOR_SALE, balance="1000")      # no fetch_ious at all
+    await h._run_property_cycle(100)
+    h.llm.generate.assert_awaited_once()
+    assert "debts you owe" not in h.llm.generate.await_args[0][1].system_prompt

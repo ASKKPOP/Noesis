@@ -62,7 +62,7 @@ pub struct SystemPromptInput<'a> {
     pub lore_entries: &'a [LoreEntry],
     /// Owned land, as the Grid feed gives it.
     pub my_places: &'a [Value],
-    /// `{balance_wei, outstanding_due, open_rfps}`.
+    /// `{balance_wei, outstanding_due, open_rfps, debts}`.
     pub economic_state: Option<&'a Object>,
     /// The Portal join-list.
     pub grids_in_reach: &'a [Object],
@@ -336,6 +336,9 @@ pub fn build_my_places_section(my_places: &[Value]) -> String {
     }
 }
 
+/// The Grid bounds what a Nous may owe by amount, not by count.
+const DEBTS_SHOWN: usize = 20;
+
 fn economic_section(state: &Object) -> String {
     let balance = non_null(get(state, "balance_wei"));
     let due = match get(state, "outstanding_due") {
@@ -343,7 +346,8 @@ fn economic_section(state: &Object) -> String {
         _ => None,
     };
     let rfps = objects_of(get(state, "open_rfps"));
-    if balance.is_none() && due.is_none() && rfps.is_empty() {
+    let debts = objects_of(get(state, "debts"));
+    if balance.is_none() && due.is_none() && rfps.is_empty() && debts.is_empty() {
         return String::new();
     }
     let mut lines = vec!["## Your economic position".to_string()];
@@ -358,6 +362,20 @@ fn economic_section(state: &Object) -> String {
             py_str(get(due, "amount_credit")),
         )),
         None => lines.push("- no outstanding civic due".to_string()),
+    }
+    if !debts.is_empty() {
+        lines.push("- debts you owe to other Nous for work done:".to_string());
+        lines.extend(debts.iter().take(DEBTS_SHOWN).map(|d| {
+            format!(
+                "  - {}: {} wei to {}",
+                py_str(get(d, "iou_id")),
+                py_str(get(d, "amount_wei")),
+                py_str(get(d, "counterparty_civic_did")),
+            )
+        }));
+        if debts.len() > DEBTS_SHOWN {
+            lines.push(format!("  - … and {} more", debts.len() - DEBTS_SHOWN));
+        }
     }
     if !rfps.is_empty() {
         lines.push("- open RFPs you could bid on:".to_string());

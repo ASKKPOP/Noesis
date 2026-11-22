@@ -707,6 +707,30 @@ def system_prompt_fixture() -> dict[str, Any]:
             "psyche": PSYCHES[0][1], "mood": {"baseline_mood": "neutral", "intensities": calm}, "goals": [],
             "economic_state": {"outstanding_due": {"due_id": 1}, "open_rfps": None}, "subjective_multiplier": 4.0, "bios_levels": {"sustenance": "med"},
         }),
+        ("economic_debts", {
+            "psyche": PSYCHES[2][1], "mood": {"baseline_mood": "wary", "intensities": calm}, "goals": goals[:1], "grid_name": "Commerce",
+            "economic_state": {"balance_wei": "80", "outstanding_due": {"due_id": "d-3", "amount_wei": "1500", "amount_credit": 4},
+                               "open_rfps": [{"notice_id": "n-7", "function_type": "relay", "budget_wei": "90000"}],
+                               "debts": [{"iou_id": "iou:3", "counterparty_civic_did": "did:civic:noesis:hermes", "amount_wei": 50, "created_tick": 7},
+                                         {"iou_id": "iou:4", "counterparty_civic_did": "did:civic:noesis:테미스", "amount_wei": 500},
+                                         {"iou_id": None, "amount_wei": True}, {"iou_id": 9, "counterparty_civic_did": "", "amount_wei": "12"}]},
+        }),
+        ("economic_debts_only", {
+            "psyche": PSYCHES[0][1], "mood": {"baseline_mood": "neutral", "intensities": calm}, "goals": [],
+            "economic_state": {"debts": [{"iou_id": "iou:1", "counterparty_civic_did": "did:civic:noesis:sophia", "amount_wei": 1}], "open_rfps": []},
+        }),
+        ("economic_debts_many", {
+            "psyche": PSYCHES[0][1], "mood": {"baseline_mood": "neutral", "intensities": calm}, "goals": [],
+            "economic_state": {"balance_wei": "9", "debts": [{"iou_id": f"iou:{n}", "counterparty_civic_did": "did:civic:noesis:hermes", "amount_wei": n} for n in range(1, 24)]},
+        }),
+        ("economic_debts_twenty", {
+            "psyche": PSYCHES[0][1], "mood": {"baseline_mood": "neutral", "intensities": calm}, "goals": [],
+            "economic_state": {"debts": [{"iou_id": f"iou:{n}", "amount_wei": 1} for n in range(1, 21)]},
+        }),
+        ("economic_debts_empty", {
+            "psyche": PSYCHES[0][1], "mood": {"baseline_mood": "neutral", "intensities": calm}, "goals": [],
+            "economic_state": {"balance_wei": "5", "debts": []},
+        }),
     ]
     return {"cases": [{"name": name, "input": spec, "prompt": _system_prompt(spec)} for name, spec in cases]}
 

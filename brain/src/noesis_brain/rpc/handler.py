@@ -962,6 +962,7 @@ class BrainHandler:
     # ── Economic decision cycle (W3b / D-MONEY-09) ────────────────────────────
     _ECON_COOLDOWN_TICKS = 50
     _IOU_RETRY_TICKS = 500  # how long a debt whose payment was refused is left alone
+    _DEBTS_OFFERED = 20     # most debts put to the Nous in one question
 
     def _should_run_economic_cycle(self, tick: int) -> bool:
         """Run the economic decision cycle only when a Grid wire client is wired
@@ -1021,7 +1022,7 @@ class BrainHandler:
                 i: t for i, t in self._refused_iou_ticks.items()
                 if i in payable_ids and 0 <= tick - t < self._IOU_RETRY_TICKS
             }
-            debts = [d for d in debts if d["iou_id"] not in self._refused_iou_ticks]
+            debts = [d for d in debts if d["iou_id"] not in self._refused_iou_ticks][: self._DEBTS_OFFERED]
             if due is None and not open_rfps and not debts:
                 return  # it owes, but cannot pay yet — nothing it could act on
 
@@ -1043,6 +1044,9 @@ class BrainHandler:
                     "balance_wei": str(balance),
                     "outstanding_due": due,
                     "open_rfps": open_rfps,
+                    # Everything it owes, also what it cannot cover yet: the question
+                    # below names only the debts it can pay now.
+                    "debts": owed,
                 },
                 grids_in_reach=grids_in_reach,
                 **({"world_state": world_sight} if world_sight else {}),
@@ -1222,7 +1226,8 @@ class BrainHandler:
             system_prompt = build_system_prompt(
                 self.psyche, self.thymos.mood, self.telos,
                 grid_name=self.grid_name, location=self.location,
-                economic_state={"balance_wei": str(balance)},
+                # A mind weighing land is told what it owes; it is not asked to pay here.
+                economic_state={"balance_wei": str(balance), "debts": await self._debts_i_owe(wire)},
             )
             # Earlier refusals are what make the next choice a better one.
             lessons = self._ranked_memories(

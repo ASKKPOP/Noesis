@@ -251,13 +251,17 @@ def _grids_in_reach_section(grids: "list") -> str:
     return "\n".join(lines)
 
 
+_DEBTS_SHOWN = 20  # the Grid bounds what a Nous may owe by amount, not by count
+
+
 def _economic_section(state: "dict") -> str:
     """Render the Nous's economic position (W3b sight) — balance, outstanding due,
-    open RFPs. Returns '' when there is nothing economic to say."""
+    debts to other Nous, open RFPs. Returns '' when there is nothing economic to say."""
     balance = state.get("balance_wei")
     due = state.get("outstanding_due")
     rfps = state.get("open_rfps") or []
-    if balance is None and not due and not rfps:
+    debts = state.get("debts") or []
+    if balance is None and not due and not rfps and not debts:
         return ""
     lines = ["## Your economic position"]
     if balance is not None:
@@ -269,6 +273,14 @@ def _economic_section(state: "dict") -> str:
         )
     else:
         lines.append("- no outstanding civic due")
+    if debts:
+        lines.append("- debts you owe to other Nous for work done:")
+        for d in debts[:_DEBTS_SHOWN]:
+            lines.append(
+                f"  - {d.get('iou_id')}: {d.get('amount_wei')} wei to {d.get('counterparty_civic_did')}"
+            )
+        if len(debts) > _DEBTS_SHOWN:
+            lines.append(f"  - … and {len(debts) - _DEBTS_SHOWN} more")
     if rfps:
         lines.append("- open RFPs you could bid on:")
         for r in rfps:
