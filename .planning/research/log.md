@@ -592,3 +592,35 @@ Publishing v0.2.7: recreating `guide` and `wiki` in one `compose up` swapped the
 `noesis-nginx` kept the old upstream addresses and served 404 on /reports, /wiki and /docs for
 about 30 s until `docker exec noesis-nginx nginx -s reload`. Pitfall carried forward: reload the
 proxy after recreating ANY container behind it, then check the public URLs.
+
+## [2026-11-22] fix+deploy | Debts and tasks are saved; a task is claimed once and settled once
+Operator: "Yes, save them". PR #44 (main 1c938917), deployed to production.
+Saved: the post route calls `persistCowork` (and `removeAgreement` if the write fails); revoke
+saves what the severance drain did (`saveIous`). Migration 79
+(`civic_ledger_and_cowork_keys_per_grid`): PK (grid_name, id) on `civic_credit_ledger` and
+`civic_cowork_agreements`; `persistIouSettle` filters by grid.
+Once only: `ParcelStore.persistClaim` = conditional UPDATE (`... AND status = 'posted'`), the
+claim route answers 409 unless it returns true. `ParcelStore.settleCowork` = ONE transaction:
+conditional flip claimed -> completed (throws `cowork_not_completable` unless one row), then
+`debitAccountOnConn`/`creditAccountOnConn` or the IOU upserts. The complete route passes it as
+`completeTask`'s `settleWei`; with no money moved (IOU fallback, host === worker) it calls
+`settleCowork({ious})` afterwards. A module-level `completing` Set allows one completion of a
+task at a time. A settlement that was not saved records no trust and no session event.
+Also: task_ref > 255 -> 400; pay_bios must be a safe integer; the complete route answers 409
+only for `cowork_*`/`iou_*` codes and rethrows the rest.
+Tests: `grid/test/helpers/civic-db.ts` = one fake database (roles, ledger, tasks, accounts) with
+a shared transaction snapshot. New CI step `grid/scripts/check-civic-settlement-real-mysql.ts`
+(real MySQL 8.0, after the migration chain) asserts what the fake cannot. Grid 4389 green twice.
+Production: schema 78 -> 79 at boot, PKs per grid; lifetime tick 476222 == rows; new statements
+run with non-existent ids (claim false, settle threw + rolled back, hydrate ok), counts and
+SUM(balance_wei) unchanged; 0 tasks, 0 IOUs, 0 roles, 0 owned. Rollback image
+`noesiis-grid:pre-debts-2026-11-22` (the v79 keys are compatible with it: it never writes these
+tables).
+Open: no route lets a debtor pay an IOU (`settleIou` is called only by the severance drain;
+netting is the only other way a debt ends) and the IOU caps now persist; the drain settles debts
+with no money; posted tasks are never cancelled or cleaned up; owed-path save failure answers 200
+and is forgotten at restart; a lost commit ack leaves memory `claimed` until restart.
+Local real-MySQL gate: `docker run -d --name noesis-gate-mysql -e MYSQL_ROOT_PASSWORD=root
+-e MYSQL_DATABASE=noesis_grid -p 127.0.0.1:33079:3306 mysql:8.0`, then from grid/ with
+MYSQL_HOST=127.0.0.1 MYSQL_PORT=33079 MYSQL_USER=root MYSQL_PASSWORD=root:
+`npx tsx scripts/check-migrations-real-mysql.ts && npx tsx scripts/check-civic-settlement-real-mysql.ts`.

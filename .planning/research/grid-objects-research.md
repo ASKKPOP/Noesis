@@ -231,3 +231,9 @@ enrolled Brain's `post_actions` answer 404.
 - Role edges and earned trust are persisted (database first); a reclaim ends roles and resets the
   parcel in one transaction. The task board is tied to its parcel. Zone ids may hold digits.
 - Live on production (PR #41). Open and largest: IOUs and co-work agreements are not persisted.
+
+## Debts and tasks saved (v0.2.8, 2026-11-22)
+
+- The IOU ledger and the task board are persisted and reloaded at start; a task is claimed by a
+  conditional write and settled in one transaction with the money or the debt. Migration 79.
+- Live on production (PR #44). Largest open item now: a debtor has no way to pay an IOU.
