@@ -225,3 +225,9 @@ enrolled Brain's `post_actions` answer 404.
 - Reclaim is written to the database first. Live on production (PR #37).
 - Open in the same area: roles are never persisted; the task board's checks; zone ids with a
   digit; see sheet §19.10.
+
+## Roles saved, task board, zone ids (v0.2.7, 2026-11-22)
+
+- Role edges and earned trust are persisted (database first); a reclaim ends roles and resets the
+  parcel in one transaction. The task board is tied to its parcel. Zone ids may hold digits.
+- Live on production (PR #41). Open and largest: IOUs and co-work agreements are not persisted.
