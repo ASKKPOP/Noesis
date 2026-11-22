@@ -443,6 +443,55 @@ export class ParcelStore {
         ];
     }
 
+    /**
+     * The debtor pays a debt in full. One transaction holds both halves: the row is marked
+     * settled, only while it is still this debtor's outstanding debt of exactly this amount,
+     * and the money moves from debtor to creditor. All of it lands or none of it, so a debt
+     * cannot be paid twice and cannot be marked paid without the money having moved.
+     * Throws `iou_not_payable` when the row is not that debt (already settled, changed, or
+     * not there) and `insufficient_balance` (nothing changed) when the debtor cannot cover it.
+     */
+    async payIou(p: {
+        iouId: string; debtorDid: string; creditorDid: string; amountWei: bigint; tick: number;
+    }): Promise<void> {
+        const conn = await this.pool.getConnection();
+        try {
+            await conn.beginTransaction();
+            const [res] = await conn.query<ResultSetHeader>(
+                `UPDATE civic_credit_ledger
+                    SET settled_tick = ?, paid_tick = ?
+                  WHERE grid_name = ? AND iou_id = ? AND debtor_civic_did = ? AND creditor_civic_did = ?
+                    AND amount_wei = ? AND settled_tick IS NULL`,
+                [p.tick, p.tick, this.gridName, p.iouId, p.debtorDid, p.creditorDid, p.amountWei.toString()],
+            );
+            if (res.affectedRows !== 1) {
+                throw new Error(`iou_not_payable: ${p.iouId} is not an outstanding debt of that amount`);
+            }
+            await debitAccountOnConn(conn, { gridName: this.gridName, civicDid: p.debtorDid, amountWei: p.amountWei, currentTick: p.tick });
+            await creditAccountOnConn(conn, { gridName: this.gridName, civicDid: p.creditorDid, amountWei: p.amountWei, currentTick: p.tick });
+            await conn.commit();
+        } catch (e) {
+            try { await conn.rollback(); } catch { /* the first error is the one to report */ }
+            throw e;
+        } finally {
+            conn.release();
+        }
+    }
+
+    /**
+     * The tick at which this debt was PAID (by `payIou`), or null when it was not — still
+     * outstanding, unknown, or ended some other way. Read after a payment whose answer
+     * was lost, to learn whether it happened.
+     */
+    async iouPaidTick(iouId: string): Promise<number | null> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT paid_tick FROM civic_credit_ledger WHERE grid_name = ? AND iou_id = ?`,
+            [this.gridName, iouId],
+        );
+        const tick = rows[0]?.paid_tick;
+        return tick === null || tick === undefined ? null : Number(tick);
+    }
+
     /** Persist an IOU settlement DB-first (stamp settled_tick). */
     async persistIouSettle(iouId: string, settledTick: number): Promise<void> {
         await this.pool.query<ResultSetHeader>(

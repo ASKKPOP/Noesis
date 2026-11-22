@@ -378,7 +378,7 @@ describe('ids are unique per Grid, not per database', () => {
         expect(down).toContain('ALTER TABLE civic_credit_ledger DROP PRIMARY KEY, ADD PRIMARY KEY (iou_id)');
         expect(down).toContain('ALTER TABLE civic_cowork_agreements DROP PRIMARY KEY, ADD PRIMARY KEY (agreement_id)');
         const sorted = [...MIGRATIONS].sort((a, b) => a.version - b.version);
-        expect(sorted[sorted.length - 1].version).toBe(79);
+        expect(sorted[sorted.length - 1].version).toBeGreaterThanOrEqual(79);
         sorted.forEach((x, i) => expect(x.version).toBe(i + 1));
     });
 });

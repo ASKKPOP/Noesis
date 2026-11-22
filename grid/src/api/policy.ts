@@ -534,6 +534,9 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/civic/parcels/:id/board/post':      'civic_did_required',
     'POST /api/v1/civic/parcels/:id/board/claim':     'civic_did_required',
     'POST /api/v1/civic/parcels/:id/board/complete':  'civic_did_required',
+    // The IOU ledger: a mind reads its own debts and credits, and a debtor pays a debt.
+    'GET /api/v1/civic/ious':                         'civic_did_required',
+    'POST /api/v1/civic/ious/:id/pay':                'civic_did_required',
 } as Record<string, RouteDIDPolicy>);
 
 /**

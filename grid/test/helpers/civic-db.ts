@@ -27,6 +27,8 @@ export const SQL = {
         + 'VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE amount_wei = VALUES(amount_wei), settled_tick = VALUES(settled_tick)',
     taskUpsert: 'INSERT INTO civic_cowork_agreements (agreement_id, grid_name, parcel_id, host_civic_did, worker_civic_did, scope_ref, settlement_amount_wei, term_ticks, status, created_tick, completed_tick) '
         + 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE worker_civic_did = VALUES(worker_civic_did), status = VALUES(status), completed_tick = VALUES(completed_tick)',
+    iouPay: 'UPDATE civic_credit_ledger SET settled_tick = ?, paid_tick = ? WHERE grid_name = ? AND iou_id = ? AND debtor_civic_did = ? AND creditor_civic_did = ? AND amount_wei = ? AND settled_tick IS NULL',
+    iouPaidTick: 'SELECT paid_tick FROM civic_credit_ledger WHERE grid_name = ? AND iou_id = ?',
     taskClaim: "UPDATE civic_cowork_agreements SET worker_civic_did = ?, status = 'claimed' WHERE grid_name = ? AND agreement_id = ? AND status = 'posted'",
     taskComplete: "UPDATE civic_cowork_agreements SET status = 'completed', completed_tick = ? WHERE grid_name = ? AND agreement_id = ? AND status = 'claimed'",
 } as const;
@@ -41,6 +43,8 @@ export interface CivicDb {
     tasks(grid?: string): Row[];
     /** The next statement matching `re` fails once. */
     failNext(re: RegExp): void;
+    /** The next commit lands in the database, and then its answer is lost (commit() throws). */
+    loseNextCommitAnswer(): void;
 }
 
 export function makeCivicDb(): CivicDb {
@@ -49,6 +53,7 @@ export function makeCivicDb(): CivicDb {
     let tasks = new Map<string, Row>();
     let snap: { roles: Map<string, Row>; ious: Map<string, Row>; tasks: Map<string, Row> } | null = null;
     const failing: RegExp[] = [];
+    let loseNextCommitAnswer = false;
     const copy = (m: Map<string, Row>) => new Map([...m].map(([k, v]) => [k, { ...v }]));
     const k = (a: unknown, b: unknown) => `${String(a)} ${String(b)}`;
     const done = (affectedRows: number): [unknown, unknown] => [{ affectedRows }, []];
@@ -64,6 +69,10 @@ export function makeCivicDb(): CivicDb {
         }
         if (q === 'SELECT * FROM civic_cowork_agreements WHERE grid_name = ?') {
             return [[...tasks.values()].filter((r) => r.grid_name === params[0]).map((r) => ({ ...r, settlement_amount_wei: String(r.settlement_amount_wei) })), []];
+        }
+        if (q === SQL.iouPaidTick) {
+            const row = ious.get(k(params[0], params[1]));
+            return [row ? [{ paid_tick: row.paid_tick ?? null }] : [], []];
         }
         if (/^SELECT/.test(q)) return [[], []];
 
@@ -96,13 +105,21 @@ export function makeCivicDb(): CivicDb {
             }
             throw new Error(`civic-db: unexpected roles statement: ${q}`);
         }
+        if (q === SQL.iouPay) {
+            const [tick, paidTick, grid, id, debtor, creditor, amount] = params;
+            const row = ious.get(k(grid, id));
+            if (!row || row.debtor_civic_did !== debtor || row.creditor_civic_did !== creditor
+                || Number(row.amount_wei) !== Number(amount) || row.settled_tick !== null) return done(0);
+            row.settled_tick = tick; row.paid_tick = paidTick;
+            return done(1);
+        }
         if (/civic_credit_ledger/.test(q)) {
             if (q !== SQL.iouUpsert) throw new Error(`civic-db: unexpected ledger statement: ${q}`);
             const [id, grid, creditor, debtor, amount, reason, created, settled] = params;
             const prior = ious.get(k(grid, id));
             ious.set(k(grid, id), prior
                 ? { ...prior, amount_wei: amount, settled_tick: settled }
-                : { iou_id: id, grid_name: grid, creditor_civic_did: creditor, debtor_civic_did: debtor, amount_wei: amount, reason_ref: reason, created_tick: created, settled_tick: settled });
+                : { iou_id: id, grid_name: grid, creditor_civic_did: creditor, debtor_civic_did: debtor, amount_wei: amount, reason_ref: reason, created_tick: created, settled_tick: settled, paid_tick: null });
             return done(1);
         }
         if (/civic_cowork_agreements/.test(q)) {
@@ -140,7 +157,10 @@ export function makeCivicDb(): CivicDb {
             return {
                 query: conn.query,
                 beginTransaction: async () => { snap = { roles: copy(roles), ious: copy(ious), tasks: copy(tasks) }; await conn.beginTransaction(); },
-                commit: async () => { snap = null; await conn.commit(); },
+                commit: async () => {
+                    snap = null; await conn.commit();
+                    if (loseNextCommitAnswer) { loseNextCommitAnswer = false; throw new Error('connection lost'); }
+                },
                 rollback: async () => {
                     if (snap) { roles = snap.roles; ious = snap.ious; tasks = snap.tasks; snap = null; }
                     await conn.rollback();
@@ -158,5 +178,6 @@ export function makeCivicDb(): CivicDb {
         ious: (grid = 'genesis') => [...ious.values()].filter((r) => r.grid_name === grid),
         tasks: (grid = 'genesis') => [...tasks.values()].filter((r) => r.grid_name === grid),
         failNext: (re) => { failing.push(re); },
+        loseNextCommitAnswer: () => { loseNextCommitAnswer = true; },
     };
 }
