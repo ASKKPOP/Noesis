@@ -680,3 +680,24 @@ Gate: Brain 1534 ×2; cargo test ×2 (16 parity + 4 + 2), clippy clean. CI runs 
 Open: a declined debt is asked again each cycle (one model call per 50 ticks); the system
 prompt's economic section says nothing of debts (changing it = `system_prompt.json` + Rust);
 a failed send counts as a refusal; offer rules live only in the Python handler; no real model run.
+
+## [2026-11-22] feat | A Nous is told what it owes — debts in the standing finance view
+
+Operator: "Yes, add it" (debts in the mind's standing view of its finances, both Brains).
+PR #51, merged c644218f; Brain only. `prompts/system.py::_economic_section` reads
+`state["debts"]`, lists at most `_DEBTS_SHOWN` = 20 as "  - <id>: <amount> wei to <did>" after
+the due line and before the RFPs, then "  - … and N more" (U+2026); a state with only debts
+renders the section; no key or an empty list → byte-identical. `brain-rs/src/system_prompt.rs`
+the same (`objects_of`, `take(DEBTS_SHOWN)`). Handler: economic cycle passes `owed` (all of it);
+property cycle passes `await self._debts_i_owe(wire)` after the stage/furnish gates; the offered
+list is cut to `_DEBTS_OFFERED` = 20 after the affordability and back-off filters.
+Fixtures: `system_prompt.json` 7 → 12 cases (debts, debts only, 23 debts, exactly 20, empty
+list); no other fixture file changed; `parity.rs` count 12.
+Review, two rounds: (1) wiki said "told everything it owes whenever it weighs its money" — false
+when the cycle returns before any prompt; reworded; (2) the list had no bound, and the Grid caps
+debts by amount (pair 1000, debtor 5000), not by count — bounded in the view and in the question.
+Gate: Brain 1542 ×2; cargo test ×2, clippy clean; mutation: a wrong Rust debt line fails
+`system_prompt_matches_python`. CI runs neither suite.
+Open: view names debts the question does not offer; debts 21+ of the payable list cannot be
+chosen; the property cycle's "no outstanding civic due" is printed without reading dues
+(pre-existing; fixing it changes old cases or adds a read); pre-existing lint F541 in system.py.
