@@ -36,7 +36,7 @@ import { NousRegistry } from '../../src/registry/registry.js';
 import { makeAccountsPool } from '../helpers/accounts-pool.js';
 import { NousAccountStore } from '../../src/economy/nous-account-store.js';
 import { registerCivicParcelRoutes } from '../../src/api/routes/civic-parcels.js';
-import { onUpkeepTick, type UpkeepScannerDeps } from '../../src/civic/upkeep-scanner.js';
+import { onUpkeepTick, createUpkeepRegistryFacade, type UpkeepScannerDeps } from '../../src/civic/upkeep-scanner.js';
 import { gravityPrice, upkeepDue, UPKEEP_PERIOD_TICKS } from '../../src/civic/founding-law.js';
 import { TREASURY_DID } from '../../src/api/routes/registry.js';
 import type { GridServices } from '../../src/api/server.js';
@@ -119,13 +119,7 @@ function buildGenesisApp(): E2EApp {
     // Upkeep deps composed EXACTLY as production (main.ts): parcel-registry ladder +
     // store persist + an atomic Ledger-A charge via NousAccountStore.chargeToTreasury.
     const upkeepDeps: UpkeepScannerDeps = {
-        registry: {
-            list: (filter) => parcelRegistry.list(filter),
-            advanceCondition: (address) => parcelRegistry.advanceCondition(address),
-            resetCondition: (address) => parcelRegistry.resetCondition(address),
-            persistUpkeep: (parcel) => store.persistUpkeep(parcel),
-            persistReclaim: (parcel) => store.persistReclaim(parcel),
-        },
+        registry: createUpkeepRegistryFacade(parcelRegistry, store),
         audit,
         treasuryDid: TREASURY_DID,
         gridName: 'genesis',

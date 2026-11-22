@@ -23,10 +23,12 @@
  */
 import { createHash } from 'node:crypto';
 import type { Parcel, ParcelCondition } from './types.js';
-import { UPKEEP_PERIOD_TICKS, upkeepDue } from './founding-law.js';
+import type { RoleEdge } from './roles.js';
+import { UPKEEP_PERIOD_TICKS, RECLAIM_GRACE_PERIODS, upkeepDue } from './founding-law.js';
 import { appendTreasuryUpkeepCollected } from '../audit/append-treasury-upkeep-collected.js';
 import { appendZoningConditionChanged } from '../audit/append-zoning-condition-changed.js';
 import { appendZoningParcelReclaimed } from '../audit/append-zoning-parcel-reclaimed.js';
+import { appendZoningRoleRevoked } from '../audit/append-zoning-role-revoked.js';
 
 /** sha256 hex — the HEX64 owner-hash discipline the zoning.* / treasury.* producers expect. */
 function sha256Hex(input: string): string {
@@ -42,9 +44,11 @@ function sha256Hex(input: string): string {
 export interface UpkeepRegistry {
     /** All parcels (deep copies) for this grid. */
     list(filter?: { ownerDid?: string | null }): Parcel[];
-    /** Ladder transitions (delegate to ParcelRegistry). */
-    advanceCondition(address: string): 'worn' | 'derelict' | 'reclaimed';
+    /** Ladder transitions (delegate to ParcelRegistry). `tick` stamps the roles a reclaim ends. */
+    advanceCondition(address: string, tick: number): 'worn' | 'derelict' | 'reclaimed';
     resetCondition?(address: string): void;
+    /** Role edges on a parcel — read before a reclaim so each role it ends reaches the chain. */
+    rolesFor?(address: string): RoleEdge[];
     /** Read back current ladder state after a transition (for the emitted condition). */
     getParcel?(address: string): Parcel | undefined;
     /** DB-first persisters (delegate to ParcelStore). Optional so mocks may omit them. */
@@ -55,9 +59,10 @@ export interface UpkeepRegistry {
 /** The slice of ParcelRegistry / ParcelStore the production facade is composed from. */
 export interface UpkeepFacadeRegistry {
     list(filter?: { ownerDid?: string | null }): Parcel[];
-    advanceCondition(address: string): 'worn' | 'derelict' | 'reclaimed';
+    advanceCondition(address: string, tick: number): 'worn' | 'derelict' | 'reclaimed';
     resetCondition(address: string): void;
     stampUpkeep(address: string, tick: number): void;
+    rolesFor(address: string): RoleEdge[];
 }
 export interface UpkeepFacadeStore {
     persistUpkeep(parcel: Parcel): Promise<void>;
@@ -74,8 +79,9 @@ export function createUpkeepRegistryFacade(
 ): UpkeepRegistry {
     return {
         list: (filter) => registry.list(filter),
-        advanceCondition: (address) => registry.advanceCondition(address),
+        advanceCondition: (address, tick) => registry.advanceCondition(address, tick),
         resetCondition: (address) => registry.resetCondition(address),
+        rolesFor: (address) => registry.rolesFor(address),
         persistUpkeep: async (parcel) => {
             // Memory first: the scanner reads what is due from memory, and by now the
             // owner has already been charged (or has already slipped a rung). If the
@@ -86,6 +92,18 @@ export function createUpkeepRegistryFacade(
         },
         persistReclaim: (parcel) => store.persistReclaim(parcel),
     };
+}
+
+/**
+ * How many ticks the Grid has ever run, read from its own chain: every tick of every
+ * earlier run is a `tick` entry there. The clock starts again from 0 at each start, so
+ * a period measured on the clock alone would be pushed back by every restart, and in a
+ * Grid restarted more often than a period upkeep would never fall due again.
+ */
+export function ticksRecorded(entries: Iterable<{ eventType: string }>): number {
+    let n = 0;
+    for (const entry of entries) if (entry.eventType === 'tick') n++;
+    return n;
 }
 
 /** Minimal audit surface — the sole-producer append-* functions call `append` on this. */
@@ -116,6 +134,13 @@ export interface UpkeepScannerDeps {
     gridName: string;
     /** Atomic owner nous_accounts → civic_treasury upkeep charge (Ledger A). */
     accountStore: UpkeepAccountStore;
+    /**
+     * Ticks the Grid ran before this start (`ticksRecorded` of the restored chain; 0 when
+     * there is none). Periods and `last_upkeep_tick` are counted in lifetime ticks — this
+     * plus the clock's tick — so a restart neither postpones nor brings forward what is
+     * due. Events and the ledger still carry the clock's own tick.
+     */
+    ticksBeforeStart?: number;
 }
 
 /** True if a parcel is Polis Commons (treasury-owned: owner_civic_did NULL) — upkeep-exempt. */
@@ -130,16 +155,40 @@ function periodDue(parcel: Parcel, tick: number): boolean {
 }
 
 /**
+ * A write that fails must not reject out of the sweep: the tick callback does not await
+ * it, and an unhandled rejection ends the Grid process. Memory is already ahead of the
+ * database at this point; the warning is what makes that visible.
+ */
+async function persistOrWarn(what: string, parcelId: string, write: () => Promise<void> | void | undefined): Promise<void> {
+    try {
+        await write();
+    } catch (e) {
+        console.warn(`[upkeep] ${what}_failed parcel_id=${parcelId}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+}
+
+/**
  * Assess upkeep for every owned non-commons parcel at a period boundary. Fire-and-forget
  * from the existing tick callback — never blocks the clock, never throws out (each parcel
  * is assessed in isolation; a failure on one does not stop the sweep).
  */
 export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promise<void> {
     const { registry, audit, gridName, accountStore } = deps;
+    const age = tick + (deps.ticksBeforeStart ?? 0); // lifetime ticks: what periods are counted in
     for (const parcel of registry.list()) {
         // Polis Commons are EXEMPT — never debited, never decayed.
         if (isCommons(parcel)) continue;
-        if (!periodDue(parcel, tick)) continue;
+        if (parcel.lastUpkeepTick !== undefined && parcel.lastUpkeepTick > age) {
+            // The stamp is ahead of the Grid's lifetime count: the chain that count is
+            // read from holds fewer ticks than it did when the stamp was written (ticks
+            // not yet saved at an unclean stop, a pruned chain, an older copy restored).
+            // Start the period again from now, with no charge and no decay, rather than
+            // wait in silence for the count to catch up.
+            console.warn(`[upkeep] upkeep_stamp_ahead parcel_id=${parcel.id} stamp=${parcel.lastUpkeepTick} lifetime=${age}`);
+            await persistOrWarn('upkeep_restamp', parcel.id, () => registry.persistUpkeep?.({ ...parcel, lastUpkeepTick: age }));
+            continue;
+        }
+        if (!periodDue(parcel, age)) continue;
 
         const ownerDid = parcel.ownerDid as string;
         const due = upkeepDue(parcel);
@@ -166,7 +215,7 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
                 registry.resetCondition?.(parcel.id);
                 const settled: Parcel = {
                     ...parcel,
-                    lastUpkeepTick: tick,
+                    lastUpkeepTick: age,
                     missedPeriods: 0,
                     condition: 'maintained',
                 };
@@ -190,23 +239,44 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
 
         {
             // INSUFFICIENT (or nothing owed but a real period missed) — advance the ladder.
-            const state = registry.advanceCondition(parcel.id);
-            if (state === 'reclaimed') {
-                appendZoningParcelReclaimed(audit as never, {
-                    former_owner_civic_did_hash: ownerHash,
-                    parcel_id: parcel.id,
-                    reason: 'upkeep_default',
-                    tick,
-                });
+            if (parcel.missedPeriods + 1 >= RECLAIM_GRACE_PERIODS.reclaim) {
+                // This miss reclaims the parcel. Database first: if the write fails nothing
+                // has changed yet, the parcel is still due, and the next sweep tries again.
+                // (Reclaiming in memory first would leave a pool parcel whose row still
+                // names the former owner, and a later buyer would inherit that row.)
                 const reclaimed: Parcel = {
                     ...parcel,
                     ownerDid: null, // back to the pool, as the registry and the database record it
                     structure: null,
                     condition: 'maintained',
                     missedPeriods: 0,
-                    lastUpkeepTick: tick,
+                    lastUpkeepTick: age,
                 };
-                await registry.persistReclaim?.(reclaimed);
+                try {
+                    await registry.persistReclaim?.(reclaimed);
+                } catch (e) {
+                    console.warn(`[upkeep] reclaim_persist_failed parcel_id=${parcel.id}: ${e instanceof Error ? e.message : String(e)}`);
+                    continue;
+                }
+            }
+            const rolesBefore = (registry.rolesFor?.(parcel.id) ?? []).filter((e) => e.revoked_tick === undefined);
+            const state = registry.advanceCondition(parcel.id, tick);
+            if (state === 'reclaimed') {
+                // The roles the reclaim ended, each on the chain before the reclaim itself.
+                for (const edge of rolesBefore) {
+                    appendZoningRoleRevoked(audit as never, {
+                        holder_civic_did_hash: sha256Hex(edge.holder_civic_did),
+                        parcel_id: parcel.id,
+                        reason: 'severance_complete',
+                        tick,
+                    });
+                }
+                appendZoningParcelReclaimed(audit as never, {
+                    former_owner_civic_did_hash: ownerHash,
+                    parcel_id: parcel.id,
+                    reason: 'upkeep_default',
+                    tick,
+                });
             } else {
                 // worn | derelict — emit the new condition + persist the advanced ladder.
                 appendZoningConditionChanged(audit as never, {
@@ -219,9 +289,9 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
                     ...parcel,
                     condition: state as ParcelCondition,
                     missedPeriods: parcel.missedPeriods + 1,
-                    lastUpkeepTick: tick,
+                    lastUpkeepTick: age,
                 };
-                await registry.persistUpkeep?.(advanced);
+                await persistOrWarn('ladder_persist', parcel.id, () => registry.persistUpkeep?.(advanced));
             }
         }
     }

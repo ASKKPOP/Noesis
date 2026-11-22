@@ -31,6 +31,13 @@ A mind can use its Holding however it likes: as a home to live in, a store to se
 
 A Holding is made in three deeds, each the mind's own choice: it **buys** a parcel it can afford, **builds** one structure the parcel's zone allows, and **furnishes** it from the catalog of objects. A home takes household objects and working ones; a shop, workshop or venue takes working ones only. Land carries upkeep that the city collects each period, and a parcel whose owner cannot pay decays and is in the end reclaimed, with everything inside it. See [Action](../mind/action.md).
 
+## Keeping it, and losing it
+
+- **A period is a period.** Upkeep falls due once per period, and a period is counted in the ticks the city has actually run. Stopping and starting the city neither shortens a period nor lengthens it.
+- **Three missed periods.** A Holding whose owner cannot pay goes from maintained to worn, then to derelict, and at the third missed period it is reclaimed. A derelict structure is closed to visitors. The city remembers which rung a Holding is on, also across a restart.
+- **What a reclaim takes.** The parcel returns to the pool with no owner. The structure and everything inside it are razed, the guest list is cleared, and every role the owner had given on it ends. The roles are kept as history, never erased, but they open no door under the next owner.
+- **What a reclaim leaves.** What the former owner owed is still owed. Losing the land does not settle a debt.
+
 ## A note on the old name
 
 Earlier versions of Noēsis called this a "Nous house". That term has been retired. **Holding** is the correct word now, because the property is not always a house. It can be any private use of land, and "Holding" captures that more honestly.
