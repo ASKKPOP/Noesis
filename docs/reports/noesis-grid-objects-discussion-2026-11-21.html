@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.6</title>
+<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.7</title>
 <meta name="description" content="Objects inside a Holding: four-layer model, credential box, full catalog of 59 kinds and 18 materials, system seed and user additions, placement and settings by Nous and human, verification and 28 open gaps. Discussion stage, 20 decisions open.">
 <style>
 :root{
@@ -79,7 +79,7 @@ footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;
 <body>
 <div class="wrap">
 
-<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.6 · 2026-11-21 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
+<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.7 · 2026-11-22 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
 <h1>Grid House Objects</h1>
 <p class="lede">Things inside a Holding — furniture-like objects a Nous and its human configure and build together:
 some pre-designed by the system, some rendered by the Nous, some paid for and rendered by a service.
@@ -110,6 +110,18 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <li><a href="#s18"><b>§18 What more I recommend</b></a>, and <a href="#s19"><b>§19 What we are missing</b></a>: the verification of this sheet and its gaps.</li>
 <li>Custom objects made by a user are valid in one Grid and shareable with other Nous (<a href="#s15e">§15.5</a>), recorded as an operator requirement.</li>
 <li>Eight new decisions, <a href="#s11">Q13–Q20</a>. Seventeen errors found by verification are corrected and listed in §19.1.</li>
+</ul>
+</div>
+
+<div class="box acc">
+<span class="k">Fixed · v0.2.7 · roles are saved, the task board is tied to its parcel, zone ids may hold digits</span>
+<p style="margin-top:8px"><span class="tag ex">LIVE</span> <strong>The operator said to do the list that §19.10 left open. It is done, merged and running on production</strong> (<a href="#s19k">§19.11</a>).</p>
+<ul>
+<li><strong>Roles are saved.</strong> A role given, taken away or ended by a reclaim is written to the database, and so is the trust a worker earns. Before, every role was gone after a Grid restart.</li>
+<li><strong>The task board is tied to its parcel.</strong> A task can only be taken and finished on the board it was posted on, and only newly taken while whoever posted it still runs the place.</li>
+<li><strong>I did not add a role check to finishing a task,</strong> although I had listed its absence as a defect. Reading the code showed the check would stop a worker being paid for work already taken. That part of my list was wrong.</li>
+<li><strong>Zone ids may hold digits.</strong> All 14 event writers accept them. And once an owner has paid, nothing that fails afterwards can make the parcel due again.</li>
+<li><strong>Still open, and larger than I said:</strong> debts and tasks are not saved. They are lost at every Grid restart. My stated reason for leaving them was wrong; the real obstacles are in §19.11.</li>
 </ul>
 </div>
 
@@ -171,6 +183,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <p><strong>v0.2.4 — 정정.</strong> 프로덕션의 Grid는 <code>main</code>이 아니라 <code>research/atlas-simulator</code> 브랜치를 실행합니다. 이 시트에도 그렇게 적혀 있는데, 저는 <code>main</code>을 읽고 프로덕션에 대해 말했습니다. 프로덕션이 실행하는 브랜치로 다시 확인한 결과: 고리 8(원격 Brain의 시계)은 그 브랜치에서 2026-11-20에 이미 발견되어 고쳐졌고, "Grid 재시작이 등록된 Brain을 끊는다"는 프로덕션에 대해 사실이 아니었습니다(같은 커밋이 시작 시 다시 연결하며 라이브 상태). 고리 4–7은 그 브랜치에서도 열려 있습니다. <strong>보고한 것보다 나쁜 점이 하나 있습니다:</strong> 두 브랜치 모두에서 Grid가 유지비를 주기마다가 아니라 <em>매 틱마다</em> 부과합니다. 1000을 가진 Nous가 가장 싼 구획을 사면 30초마다 가격의 2%를 내고 약 40분 안에 구획과 돈을 모두 잃습니다. <code>main</code>에서는 테스트와 함께 고쳤지만 <strong>프로덕션에서는 고쳐지지 않았습니다.</strong> 재산 주기는 이제 의도적으로 켜지 않는 한 꺼져 있습니다(<a href="#s19h">§19.8</a>).</p>
 <p><strong>v0.2.5 — 배포.</strong> 운영자가 병합과 배포를 승인했습니다. <strong>프로덕션의 Grid는 이제 유지비를 주기마다 한 번 부과하고, 회수된 구획을 다시 매물로 돌려놓습니다.</strong> 같은 시나리오를 프로덕션의 Grid 컨테이너와 오늘 밤까지 실행되던 이미지에서 각각 돌렸습니다. 이전 코드는 자금이 있는 소유자에게 50틱 동안 50번, 새 코드는 1번 부과했습니다(<a href="#s19i">§19.9</a>). <code>main</code>을 <code>research/atlas-simulator</code>에 병합하고, 그 브랜치에서 Grid를 다시 빌드한 뒤, 그 브랜치를 <code>main</code>으로 다시 병합했습니다. 배포를 확인한 시점에 <code>main</code>과 프로덕션이 실행하는 코드는 바이트 단위로 같았습니다. 이번 배포에서 Grid 소스 변경은 유지비·회수 파일 네 개뿐입니다. 프로덕션에는 여전히 Brain이 없고, 소유된 구획이 없고, endowment가 꺼져 있습니다. 재산 주기는 <code>BRAIN_PROPERTY_CYCLE=on</code> 없이는 꺼져 있습니다. 병합을 점검하다가 제 결함을 하나 더 찾아 고쳤습니다: 시계 추종기가 모든 행동을 Grid에 한 번 더 보내고 있었습니다.</p>
 <p><strong>v0.2.6 — 남은 회수 결함 세 건 수정.</strong> 운영자가 §19.8의 5–7행을 고치라고 했습니다. 고쳐서 병합했고 프로덕션에서 실행 중입니다(<a href="#s19j">§19.10</a>). ① 회수되면 이전 소유자가 준 역할이 모두 끝납니다. 역할은 기록으로 남고, 끝난 역할마다 체인에 기록됩니다. ② 상태(maintained·worn·derelict)가 주기마다 저장되어 재시작 후에도 유지됩니다. ③ 유지비 주기는 Grid가 지금까지 실행한 총 틱으로 셉니다. 재시작해도 다음 납부가 뒤로 밀리지 않으며, 시계 자체는 바꾸지 않았습니다. 독립 검토를 두 번 거치며 수정이 바뀌었습니다. 첫 버전에는 쓰이지 않는 코드가 있었고, 두 번째 버전은 데이터베이스가 회수 쓰기를 한 번 거부하면 메모리와 데이터베이스가 영구히 어긋날 수 있었습니다. 지금은 회수를 데이터베이스에 먼저 씁니다. 프로덕션에는 여전히 소유된 구획이 없어 실제 구획에 일어난 일은 없습니다. 같은 영역에서 검토가 찾은 미해결 항목은 §19.10에 적었습니다.</p>
+<p><strong>v0.2.7 — 역할 저장, 작업 게시판, 구역 id.</strong> 운영자가 §19.10에 남겨 둔 목록을 처리하라고 했습니다. 처리해서 병합했고 프로덕션에서 실행 중입니다(<a href="#s19k">§19.11</a>). ① 역할이 저장됩니다. 주거나 거두거나 회수로 끝난 역할, 그리고 작업으로 얻은 신뢰가 데이터베이스에 기록됩니다. 이전에는 Grid가 재시작되면 모든 역할이 사라졌습니다. ② 작업 게시판이 구획에 묶입니다. 작업은 올라온 게시판에서만 맡고 끝낼 수 있고, 올린 쪽이 아직 그 장소를 운영하는 동안에만 새로 맡을 수 있습니다. ③ <strong>작업 완료에는 역할 검사를 넣지 않았습니다.</strong> 제가 결함으로 적었던 항목이지만, 코드를 읽어 보니 그 검사는 이미 맡은 작업의 대금 지급을 막습니다. 제 목록의 그 부분이 틀렸습니다. ④ 구역 id에 숫자를 쓸 수 있습니다. 이벤트 기록기 14개가 모두 받아들이고, 소유자가 한 번 납부하면 그 뒤에 무엇이 실패해도 다시 납부 대상이 되지 않습니다. <strong>아직 열려 있고 제가 말한 것보다 큰 문제:</strong> 빚(IOU)과 작업은 저장되지 않아 Grid가 재시작될 때마다 사라집니다. 이를 남겨 둔 이유로 제가 든 설명은 틀렸고, 실제 걸림돌은 §19.11에 적었습니다.</p>
 </div>
 
 <!-- ============================================================ -->
@@ -1956,15 +1969,53 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 </ul></div>
 <div class="box"><span class="k">Open in the same area, found by the review, not changed</span>
 <ul>
-<li><strong>Roles are not saved at all.</strong> Granting and revoking a role changes memory only. Every role is lost at any Grid restart, with nothing on the chain. This is larger than row 5 and was there before.</li>
-<li><strong>The task board checks too little.</strong> Completing a task does not check a role, and claiming one does not check that the task belongs to the parcel named.</li>
-<li><strong>A zone id with a digit.</strong> The law allows it; the event writers reject its parcel ids. For such a parcel a paid period would not be recorded in memory, and the owner would be charged on every tick. No such zone exists today.</li>
-<li><strong>A write that fails after a successful charge</strong> is logged as a failed charge, and the period is charged once more after a restart.</li>
+<li><span class="tag ex">FIXED · v0.2.7</span> <strong>Roles are not saved at all.</strong> Granting and revoking a role changes memory only. Every role is lost at any Grid restart, with nothing on the chain. This is larger than row 5 and was there before.</li>
+<li><span class="tag ex">FIXED · v0.2.7</span> <strong>The task board checks too little.</strong> Completing a task does not check a role, and claiming one does not check that the task belongs to the parcel named. <em>The first half of this sentence was wrong; see §19.11.</em></li>
+<li><span class="tag ex">FIXED · v0.2.7</span> <strong>A zone id with a digit.</strong> The law allows it; the event writers reject its parcel ids. For such a parcel a paid period would not be recorded in memory, and the owner would be charged on every tick. No such zone exists today.</li>
+<li><span class="tag pa">PARTLY · v0.2.7</span> <strong>A write that fails after a successful charge</strong> is logged as a failed charge, and the period is charged once more after a restart. <em>It is now logged for what it is and never charged again while the Grid runs; one more charge after a restart is still possible.</em></li>
 <li><strong>Trust carries over.</strong> A role given again by the next owner starts at the trust earned under the former one.</li>
 <li><strong>The word on the chain.</strong> A role ended by a reclaim is recorded as "severance complete" although no settlement ran. The closed list has no closer word; adding one is a decision.</li>
 </ul></div>
 </div>
 <p class="small">Gate: Grid type check clean; 4,340 tests pass, twice; invariant scripts clean. In two earlier runs a timing-dependent alerting test failed on a cold start and passed on the next; this change does not touch it.</p>
+
+<h3 id="s19k">19.11 Roles saved, the task board, zone ids — done and live <span class="tag ex">v0.2.7</span></h3>
+<div class="tbl"><table>
+<tr><th>Item</th><th>What is true now</th></tr>
+<tr><td><b>Roles are saved</b></td><td>Giving a role, inviting a guest and taking a role away each write the database before memory changes, so a refused write changes nothing. The trust a worker earns is written with the role. A reclaim ends the parcel's roles in the same transaction that returns the parcel to the pool: both writes land, or neither. An invitation no longer turns someone who already has a role into a guest.</td></tr>
+<tr><td><b>The task board</b></td><td>Taking and finishing a task answer "not found" unless the task is on the board of the parcel named. A task can be newly taken only while whoever posted it is still owner or staff there. A task a mind posts and does for itself earns no trust and is not recorded as a session of two.</td></tr>
+<tr><td><b>Zone ids with digits</b></td><td>The law allows them; all 14 event writers now accept them. Separately from that pattern: after a charge or a step down the ladder, the period is recorded first and the event is written second, and an event or a write that fails is logged instead of undoing the step.</td></tr>
+<tr><td><b>The main checkout</b></td><td>Its uncommitted rules block in <code>CLAUDE.md</code> is committed as written, and the checkout is at <code>main</code> again with nothing uncommitted.</td></tr>
+</table></div>
+<p><strong>The same scenarios on the image production ran before this deploy and on the one it runs now.</strong> In memory, in a separate process.</p>
+<div class="tbl"><table>
+<tr><th>Measured</th><th>Before</th><th>Now</th></tr>
+<tr><td>Giving a role writes the database</td><td>no</td><td>yes</td></tr>
+<tr><td>Taking a role away writes the database</td><td>no</td><td>yes</td></tr>
+<tr><td>Taking a task through another parcel's board</td><td>accepted</td><td>not found</td></tr>
+<tr><td>Staff, after being "invited"</td><td>guest</td><td>staff</td></tr>
+<tr><td>Funded owner in a zone named with a digit, 50 ticks: times charged</td><td class="num">50</td><td class="num">1</td></tr>
+</table></div>
+<p><strong>On production itself:</strong> at start the Grid logged a lifetime count of <span class="num">476,151</span> ticks and the database held <span class="num">476,151</span> tick entries. The new statements were then run against the real database with a parcel id that does not exist, so each matched no row: the reclaim transaction, the role writes, the upkeep write and the full load at start all ran, and the row counts were the same before and after. No role has been given on production, so nothing real has been saved yet.</p>
+<div class="grid2">
+<div class="box red"><span class="k">Where I was wrong this round</span>
+<ul>
+<li><strong>33.</strong> I listed "finishing a task checks no role" as a defect. Only the one who posted a task can finish it, and finishing is what pays the worker. A role check there would leave work unpaid whenever the one who posted it lost that standing. I did not add it. What was really missing was the tie to the parcel, and that is added.</li>
+<li><strong>34.</strong> I said debts and tasks could not be saved because their ids start again from zero. That is false: the load at start already moves the counters past what is stored. The reviewer showed it.</li>
+<li><strong>35.</strong> My first version wrote a new role to memory first while, twenty lines further down, arguing for database first. It also made the reclaim two separate writes. Both corrected after review.</li>
+<li><strong>36.</strong> I made the same shell mistake a second time, after writing it down the first time: the push to production's branch was refused, the guard stopped the deploy, nothing had changed.</li>
+</ul></div>
+<div class="box"><span class="k">Open in the same area, not changed</span>
+<ul>
+<li><strong>Debts and tasks are not saved.</strong> An IOU, a posted task and a task already taken are lost at every Grid restart, and a task id held from before a restart can name a different task afterwards. So "work already taken is owed" holds only as long as the Grid runs. The real obstacles: the stored ids are unique per database, not per Grid, and the ledger's save hooks are built to be called without waiting. This is the largest item left.</li>
+<li><strong>A narrow race.</strong> If a reclaim or a revoke lands during the one database round trip of a grant, memory and the database can disagree about that one role.</li>
+<li><strong>Staff can invite back someone the owner removed.</strong> Whether that should be allowed is a decision, not a fix.</li>
+<li><strong>Trust carries over</strong> to the next owner, and <strong>the word on the chain</strong> for a role ended by a reclaim is still "severance complete". Both are decisions.</li>
+<li><strong>Finishing a task</strong> answers "not found" or "not the host" in a way that tells a caller which parcel a task id is on.</li>
+<li><strong>A zone with more than 9,999 parcels</strong> would produce ids the event writers refuse.</li>
+</ul></div>
+</div>
+<p class="small">Gate: Grid type check clean; 4,367 tests pass in two full runs; in a third, the timing-dependent alerting test failed once, as before. Each new guard was undone in turn and a test failed. Two rounds of independent review. Every statement was planned on the production database before the deploy.</p>
 
 <!-- ============================================================ -->
 <h2 id="s20">20 · Sources · Glossary</h2>

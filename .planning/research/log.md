@@ -559,3 +559,32 @@ any restart); `board/complete` has no role check, `claimTask` no parcel check; `
 allows digits but the audit producers' `PARCEL_ID_RE` does not (paid branch would re-charge every
 tick for such a parcel); a persist failure after a successful charge is logged as
 `upkeep_charge_failed` and recharged after a restart; re-grant resumes trust_score across owners.
+
+## [2026-11-22] fix+deploy | Roles saved; task board tied to its parcel; zone ids with digits
+Operator: do the list §19.10 left open. PR #41 (main 6617edae), deployed to production; PR #40
+committed the rules block that sat uncommitted in the main checkout's CLAUDE.md, and the main
+checkout is at main again.
+Roles: grant, invite and revoke routes call `persistRole` / `persistRoleRevoke` DATABASE-FIRST
+(`pendingEdge` builds the row before memory changes); new `ParcelStore.persistRoleTrust` after a
+completed task (failure logged, completion stands); `persistReclaim(parcel, tick)` ends the
+parcel's role rows and resets the parcel row in ONE TRANSACTION (`pool.getConnection`); invite
+mints a guest edge only when the invitee holds no role. Board: `getAgreement` in cowork.ts;
+claim/complete 404 unless `task.parcel_id` is the URL parcel; claim 409 `task_host_left` unless
+the poster is still owner/staff; NO role check on completion (only the host can complete and
+completion pays the worker — D-NH-06); host === worker earns no trust and emits no
+`zoning.cowork_session`. Zone ids: the 14 `PARCEL_ID_RE` copies in `grid/src/audit/` accept
+`[a-z0-9_]+` in the zone segment. Scanner: period recorded (memory, then database) BEFORE the
+event in the paid and ladder branches; `emitOrWarn` around every event write.
+Grid 4367 green twice, tsc clean; each guard undone fails a test; two review rounds.
+Production: lifetime tick 476151 == 476151 `tick` rows; the new statements run against the real
+database with a non-existent parcel id (reclaim transaction, role writes, upkeep write, hydrate
+incl. the roles JOIN) all ok, row counts unchanged; 0 owned, 0 role rows. Rollback image
+`noesiis-grid:pre-roles-2026-11-22`.
+Corrected: my claim that IOUs/agreements cannot be saved because ids restart at 0 was FALSE —
+`upsertIou` / `upsertAgreement` (called by hydrate) advance `seq` past stored ids.
+Open: `persistIou` / `persistCowork` still have no caller (debts, posted and claimed tasks lost at
+restart; obstacles: PK is the id alone, not per grid; ledger hooks are synchronous and
+`completeTask` / the severance drain pass none); narrow grant-vs-reclaim race across the awaited
+write; staff can re-invite a revoked holder; trust resumes across owners; 404-vs-403 on complete
+reveals a task's parcel; parcel seq > 9999 fails `\d{4}`; `health-watchdog-alert-sns.test.ts` flaky.
+Pitfall repeated: zsh `"$T:refs/..."` — write `"${T}:refs/..."`.
