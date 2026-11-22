@@ -1855,4 +1855,21 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS grid_visibility`,
     },
+    {
+        // IOU and co-work ids are minted per Grid from counters that start at 0
+        // (`iou:0`, `cowork:0`), but both tables were keyed by the id alone. Two Grids in
+        // one database would have written the same key, and the upsert of one would have
+        // changed the other's row. Keyed by (grid_name, id) each Grid owns its own ids.
+        // Nothing wrote these tables before this migration, so there is nothing to backfill.
+        version: 79,
+        name: 'civic_ledger_and_cowork_keys_per_grid',
+        up: `
+            ALTER TABLE civic_credit_ledger DROP PRIMARY KEY, ADD PRIMARY KEY (grid_name, iou_id);
+            ALTER TABLE civic_cowork_agreements DROP PRIMARY KEY, ADD PRIMARY KEY (grid_name, agreement_id)
+        `,
+        down: `
+            ALTER TABLE civic_cowork_agreements DROP PRIMARY KEY, ADD PRIMARY KEY (agreement_id);
+            ALTER TABLE civic_credit_ledger DROP PRIMARY KEY, ADD PRIMARY KEY (iou_id)
+        `,
+    },
 ];

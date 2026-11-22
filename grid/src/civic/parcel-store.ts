@@ -18,6 +18,7 @@ import type { Role, RoleEdge } from './roles.js';
 import { gravityPrice, GENESIS_CORE_SEED_PLAN, PURCHASABLE_RINGS } from './founding-law.js';
 import { upsertIou, type IouEntry } from './credit-ledger.js';
 import { upsertAgreement, type CoworkAgreement } from './cowork.js';
+import { creditAccountOnConn, debitAccountOnConn } from '../economy/wei-ops.js';
 
 /** A civic_parcels DB row (snake_case columns as returned by mysql2). */
 export interface ParcelRow extends RowDataPacket {
@@ -342,7 +343,7 @@ export class ParcelStore {
             );
             await conn.commit();
         } catch (e) {
-            await conn.rollback();
+            try { await conn.rollback(); } catch { /* the first error is the one to report */ }
             throw e;
         } finally {
             conn.release();
@@ -432,26 +433,21 @@ export class ParcelStore {
      * settled_tick may change, so an existing iou_id refreshes those fields in place.
      */
     async persistIou(entry: IouEntry): Promise<void> {
-        await this.pool.query<ResultSetHeader>(
-            `INSERT INTO civic_credit_ledger
-                (iou_id, grid_name, creditor_civic_did, debtor_civic_did,
-                 amount_wei, reason_ref, created_tick, settled_tick)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE
-                amount_wei = VALUES(amount_wei),
-                settled_tick = VALUES(settled_tick)`,
-            [
-                entry.iou_id, this.gridName, entry.creditor_civic_did, entry.debtor_civic_did,
-                entry.amount_wei, entry.reason_ref, entry.created_tick, entry.settled_tick,
-            ],
-        );
+        await this.pool.query<ResultSetHeader>(IOU_UPSERT_SQL, this.iouParams(entry));
+    }
+
+    private iouParams(entry: IouEntry): unknown[] {
+        return [
+            entry.iou_id, this.gridName, entry.creditor_civic_did, entry.debtor_civic_did,
+            entry.amount_wei, entry.reason_ref, entry.created_tick, entry.settled_tick,
+        ];
     }
 
     /** Persist an IOU settlement DB-first (stamp settled_tick). */
     async persistIouSettle(iouId: string, settledTick: number): Promise<void> {
         await this.pool.query<ResultSetHeader>(
-            `UPDATE civic_credit_ledger SET settled_tick = ? WHERE iou_id = ?`,
-            [settledTick, iouId],
+            `UPDATE civic_credit_ledger SET settled_tick = ? WHERE grid_name = ? AND iou_id = ?`,
+            [settledTick, this.gridName, iouId],
         );
     }
 
@@ -460,6 +456,64 @@ export class ParcelStore {
      * in-memory 'settled' status maps to the DB 'completed' enum + a completed_tick
      * stamp (the DB enum has no 'settled' member — settlement is recorded as a tick).
      */
+
+    /**
+     * Take a posted task. The row changes only while it is still `posted`, so of two claims
+     * that arrive together exactly one wins, and the database, not the order of two
+     * requests, says which. Returns false when the task was not there to be taken.
+     */
+    async persistClaim(agreementId: string, workerDid: string): Promise<boolean> {
+        const [res] = await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_cowork_agreements
+                SET worker_civic_did = ?, status = 'claimed'
+              WHERE grid_name = ? AND agreement_id = ? AND status = 'posted'`,
+            [workerDid, this.gridName, agreementId],
+        );
+        return res.affectedRows === 1;
+    }
+
+    /**
+     * Finish a claimed task, exactly once. One transaction holds both halves: the row goes
+     * `claimed` → `completed` (only while it is still claimed), and what settles it is
+     * written with it — the money from host to worker, or the debts recorded in its place.
+     * Either all of it lands or none of it does, so a stop in between can neither leave paid
+     * work that reads as unfinished (and is paid again) nor finished work with nothing owed.
+     * Throws `cowork_not_completable` when the row is not a claimed task, and
+     * `insufficient_balance` (nothing changed) when the host cannot cover `pay`.
+     */
+    async settleCowork(p: {
+        agreementId: string;
+        tick: number;
+        pay?: { fromDid: string; toDid: string; amountWei: bigint };
+        ious?: readonly IouEntry[];
+    }): Promise<void> {
+        const conn = await this.pool.getConnection();
+        try {
+            await conn.beginTransaction();
+            const [res] = await conn.query<ResultSetHeader>(
+                `UPDATE civic_cowork_agreements
+                    SET status = 'completed', completed_tick = ?
+                  WHERE grid_name = ? AND agreement_id = ? AND status = 'claimed'`,
+                [p.tick, this.gridName, p.agreementId],
+            );
+            if (res.affectedRows !== 1) {
+                throw new Error(`cowork_not_completable: ${p.agreementId} is not a claimed task`);
+            }
+            if (p.pay) {
+                await debitAccountOnConn(conn, { gridName: this.gridName, civicDid: p.pay.fromDid, amountWei: p.pay.amountWei, currentTick: p.tick });
+                await creditAccountOnConn(conn, { gridName: this.gridName, civicDid: p.pay.toDid, amountWei: p.pay.amountWei, currentTick: p.tick });
+            }
+            for (const entry of p.ious ?? []) {
+                await conn.query<ResultSetHeader>(IOU_UPSERT_SQL, this.iouParams(entry));
+            }
+            await conn.commit();
+        } catch (e) {
+            try { await conn.rollback(); } catch { /* the first error is the one to report */ }
+            throw e;
+        } finally {
+            conn.release();
+        }
+    }
 
     /** Persist a cowork agreement DB-first (UPSERT civic_cowork_agreements). */
     async persistCowork(agreement: CoworkAgreement, ticks: { created: number; completed?: number }): Promise<void> {
@@ -485,6 +539,15 @@ export class ParcelStore {
         );
     }
 }
+
+/** UPSERT of one ledger entry. On a net or a settle the amount and settled_tick change in place. */
+const IOU_UPSERT_SQL = `INSERT INTO civic_credit_ledger
+                (iou_id, grid_name, creditor_civic_did, debtor_civic_did,
+                 amount_wei, reason_ref, created_tick, settled_tick)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+                amount_wei = VALUES(amount_wei),
+                settled_tick = VALUES(settled_tick)`;
 
 /** Map a civic_credit_ledger DB row into the in-memory IouEntry shape. */
 function rowToIou(row: CreditLedgerRow): IouEntry {

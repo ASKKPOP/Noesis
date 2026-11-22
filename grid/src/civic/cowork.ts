@@ -131,6 +131,11 @@ export const postTask = createAgreement;
  * Claim a posted task: any role with board access. Sets parties[1] = worker and the
  * status to `claimed`. Throws on an unknown id or a non-postable status (closed ladder).
  */
+/** Take an agreement off the board again (a post the database refused never happened). */
+export function removeAgreement(agreementId: string): void {
+    agreements.delete(agreementId);
+}
+
 /** One agreement by id (a copy), or undefined. */
 export function getAgreement(agreementId: string): CoworkAgreement | undefined {
     const a = agreements.get(agreementId);
