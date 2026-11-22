@@ -653,3 +653,8 @@ money; no part payment; posted tasks never cancelled; overlap possible after the
 Pitfall: before touching any Brain prompt, parser, need/drive constant or hash, read
 `brain/parity/README.md` — those are frozen fixtures; a change means re-recording AND changing
 `brain-rs`.
+Sheet layout: at 375 px the page scrolled sideways since v0.2 (a `pre` inside `.grid2` in §8.2;
+grid items default to `min-width:auto`). Fixed with `.grid2>*,.grid3>*{min-width:0}`. Check to
+carry forward for every report: at phone width, `document.documentElement.scrollWidth` must
+equal `clientWidth` for the WHOLE page, and the browser pane must be visible (a hidden pane
+reports a viewport of 0).

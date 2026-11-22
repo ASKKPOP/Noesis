@@ -53,6 +53,7 @@ li{margin:5px 0}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid2>*,.grid3>*{min-width:0}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 @media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr}}
 .lesson{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--vio);border-radius:10px;padding:14px 18px;margin:12px 0}
@@ -2106,6 +2107,7 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 <li><strong>41.</strong> I began to add the choice "pay a debt" to the Nous's economic decision, and changed its wording, before I had read that this wording is a frozen contract for the Rust version of the Brain. Five tests failed and told me. I took the change back out. I should have read the contract before touching the prompt.</li>
 <li><strong>42.</strong> I bounded the ledger lock in time, and started its clock when a request joined the queue instead of when its turn began. After one stalled request, those waiting behind it would have overlapped each other. The reviewer found it.</li>
 <li><strong>43.</strong> My first version left a payment whose answer was lost looking unpaid, checked the debtor but not the creditor, and left no record that a debt had been paid and not merely closed. All three came from the review.</li>
+<li><strong>44.</strong> This sheet scrolled sideways on a phone. A code box in §8.2, there since v0.2, was wider than the screen, and my checks after each version looked at the new section and at a wider window, never at the whole page at phone width. Fixed with one style rule; the page now fits 375 pixels.</li>
 </ul></div>
 <div class="box"><span class="k">Open, not changed</span>
 <ul>
