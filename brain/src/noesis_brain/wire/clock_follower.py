@@ -14,9 +14,15 @@ tick number it sees. The Grid stays the only clock:
   - when the Grid restarts, its tick starts again from 0 — the handler's cooldown
     markers are reset so its cycles do not wait for the old count to be passed.
 
-Where a socket bridge is also delivering ticks, the follower stands back: it
-waits a moment after seeing a new tick and delivers it only if the handler has
-not seen that tick, or a later one, by then.
+A wire-connected Brain normally gets its ticks from the Grid's firehose
+(wire/tick_driver.py). The follower is what keeps the mind running when the
+firehose is not delivering. Where the firehose or a socket bridge is delivering
+ticks, the follower stands back: it waits a moment after seeing a new tick and
+delivers it only if the handler has not seen that tick, or a later one, by then.
+The handler runs one decision at a time, so a tick offered while the Nous is
+still deciding is skipped whichever of them offers it.
+
+The follower never posts actions: `on_tick` forwards its own to the Grid.
 
 The follower looks at the clock several times per tick. Looking once per tick
 would lose a tick every so often, because each round also spends the grace wait
@@ -84,13 +90,9 @@ async def follow_once(client: Any, handler: Any, state: dict[str, Any], *, sleep
         return wait
 
     state["last"] = tick  # set before the call: a tick that fails is not retried
-    actions = await handler.on_tick({"tick": tick, "epoch": epoch})
-    outgoing = [
-        a for a in (actions or [])
-        if isinstance(a, dict) and a.get("action_type") != "noop"
-    ]
-    if outgoing:
-        await client.post_actions(outgoing, tick=tick)
+    # on_tick forwards its own actions to the Grid when a wire client is set, so
+    # nothing is posted from here: a second post would make the Nous act twice.
+    await handler.on_tick({"tick": tick, "epoch": epoch})
     return wait
 
 

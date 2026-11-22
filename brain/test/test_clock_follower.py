@@ -114,17 +114,13 @@ async def test_grace_wait_happens_before_delivery():
     assert slept == [cf.GRACE_SECONDS]
 
 
-async def test_noop_actions_are_not_posted():
-    h, c = _handler([{"action_type": "noop"}]), _client(_clock(10))
-    await cf.follow_once(c, h, {}, sleep=_no_sleep)
-    c.post_actions.assert_not_awaited()
-
-
-async def test_real_actions_are_posted_with_the_grid_tick():
+async def test_the_follower_does_not_post_what_on_tick_returns():
+    # on_tick forwards its own batch to the Grid when a wire client is set; a
+    # second post from here would make the Nous speak, move and trade twice.
     speak = {"action_type": "speak", "channel": "agora", "text": "hello"}
     h, c = _handler([{"action_type": "noop"}, speak]), _client(_clock(10))
     await cf.follow_once(c, h, {}, sleep=_no_sleep)
-    c.post_actions.assert_awaited_once_with([speak], tick=10)
+    c.post_actions.assert_not_awaited()
 
 
 async def test_wait_follows_the_grid_tick_rate_within_bounds():
@@ -205,3 +201,72 @@ async def test_every_tick_is_seen_when_the_follower_polls_faster_than_the_grid_t
     for _ in clocks:
         await cf.follow_once(c, h, state, sleep=_no_sleep)
     assert [call.args[0]["tick"] for call in h.on_tick.await_args_list] == [1, 2, 3]
+
+
+# ── found when the firehose TickDriver and this follower met on one branch ────
+def _wired_handler():
+    """A real handler wired to a Grid client that records what is posted."""
+    from noesis_brain.rpc.types import Action, ActionType
+
+    h = _real_handler()
+    client = MagicMock()
+    client.post_actions = AsyncMock(return_value=MagicMock(status_code=200, text=""))
+    client.fetch_clock = AsyncMock(return_value=_clock(10))
+    h._grid_wire_client = client
+    h._pending_actions.append(Action(action_type=ActionType.SPEAK, channel="agora", text="hello"))
+    return h, client
+
+
+def _posts_of(client, action_type):
+    return [
+        call for call in client.post_actions.await_args_list
+        if any(a.get("action_type") == action_type for a in call.args[0])
+    ]
+
+
+async def test_one_tick_posts_an_action_once_not_twice():
+    h, client = _wired_handler()
+    await cf.follow_once(client, h, {}, sleep=_no_sleep)
+    for _ in range(3):
+        await asyncio.sleep(0)          # let on_tick's own forward run
+    assert len(_posts_of(client, "speak")) == 1
+
+
+async def test_a_tick_that_arrives_mid_decision_is_skipped_not_run_alongside():
+    h = _real_handler()
+    release, started = asyncio.Event(), []
+
+    async def slow(params):
+        started.append(params["tick"])
+        await release.wait()
+        return []
+
+    h._on_tick = slow
+    first = asyncio.create_task(h.on_tick({"tick": 5, "epoch": 0}))
+    await asyncio.sleep(0)
+    assert await h.on_tick({"tick": 6, "epoch": 0}) == []
+    assert started == [5]               # the second tick never reached the body
+    release.set()
+    await first
+    await h.on_tick({"tick": 7, "epoch": 0})
+    assert started == [5, 7]            # free again once the first decision ended
+
+
+async def test_a_decision_that_fails_does_not_leave_the_nous_locked():
+    h = _real_handler()
+
+    async def boom(_params):
+        raise RuntimeError("model fell over")
+
+    h._on_tick = boom
+    with pytest.raises(RuntimeError):
+        await h.on_tick({"tick": 5, "epoch": 0})
+    seen = []
+
+    async def ok(params):
+        seen.append(params["tick"])
+        return []
+
+    h._on_tick = ok
+    await h.on_tick({"tick": 6, "epoch": 0})
+    assert seen == [6]
