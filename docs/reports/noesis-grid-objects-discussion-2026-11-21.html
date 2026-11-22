@@ -2004,6 +2004,7 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 <li><strong>34.</strong> I said debts and tasks could not be saved because their ids start again from zero. That is false: the load at start already moves the counters past what is stored. The reviewer showed it.</li>
 <li><strong>35.</strong> My first version wrote a new role to memory first while, twenty lines further down, arguing for database first. It also made the reclaim two separate writes. Both corrected after review.</li>
 <li><strong>36.</strong> I made the same shell mistake a second time, after writing it down the first time: the push to production's branch was refused, the guard stopped the deploy, nothing had changed.</li>
+<li><strong>37.</strong> Publishing this version, I replaced the reports container and the wiki container at the same time. They came back with each other's addresses, and the proxy in front of them went on using the old ones: for about half a minute <code>/reports</code>, <code>/wiki</code> and <code>/docs</code> answered 404. My check after the rebuild caught it and a reload of the proxy fixed it. I had done the same rebuild three times that day without reloading and had only been lucky. The proxy is now reloaded after every rebuild.</li>
 </ul></div>
 <div class="box"><span class="k">Open in the same area, not changed</span>
 <ul>

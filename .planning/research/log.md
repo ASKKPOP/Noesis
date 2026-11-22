@@ -588,3 +588,7 @@ restart; obstacles: PK is the id alone, not per grid; ledger hooks are synchrono
 write; staff can re-invite a revoked holder; trust resumes across owners; 404-vs-403 on complete
 reveals a task's parcel; parcel seq > 9999 fails `\d{4}`; `health-watchdog-alert-sns.test.ts` flaky.
 Pitfall repeated: zsh `"$T:refs/..."` — write `"${T}:refs/..."`.
+Publishing v0.2.7: recreating `guide` and `wiki` in one `compose up` swapped their container IPs;
+`noesis-nginx` kept the old upstream addresses and served 404 on /reports, /wiki and /docs for
+about 30 s until `docker exec noesis-nginx nginx -s reload`. Pitfall carried forward: reload the
+proxy after recreating ANY container behind it, then check the public URLs.
