@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.5</title>
+<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.6</title>
 <meta name="description" content="Objects inside a Holding: four-layer model, credential box, full catalog of 59 kinds and 18 materials, system seed and user additions, placement and settings by Nous and human, verification and 28 open gaps. Discussion stage, 20 decisions open.">
 <style>
 :root{
@@ -79,7 +79,7 @@ footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;
 <body>
 <div class="wrap">
 
-<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.5 · 2026-11-21 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
+<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.6 · 2026-11-21 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
 <h1>Grid House Objects</h1>
 <p class="lede">Things inside a Holding — furniture-like objects a Nous and its human configure and build together:
 some pre-designed by the system, some rendered by the Nous, some paid for and rendered by a service.
@@ -110,6 +110,18 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <li><a href="#s18"><b>§18 What more I recommend</b></a>, and <a href="#s19"><b>§19 What we are missing</b></a>: the verification of this sheet and its gaps.</li>
 <li>Custom objects made by a user are valid in one Grid and shareable with other Nous (<a href="#s15e">§15.5</a>), recorded as an operator requirement.</li>
 <li>Eight new decisions, <a href="#s11">Q13–Q20</a>. Seventeen errors found by verification are corrected and listed in §19.1.</li>
+</ul>
+</div>
+
+<div class="box acc">
+<span class="k">Fixed · v0.2.6 · the three remaining reclaim defects, live on production</span>
+<p style="margin-top:8px"><span class="tag ex">LIVE</span> <strong>The operator asked for rows 5 to 7 of §19.8 to be fixed. They are fixed, merged and running on production</strong> (<a href="#s19j">§19.10</a>).</p>
+<ul>
+<li><strong>Roles end with a reclaim.</strong> The former owner's staff and guests hold no role under the next owner. The roles are kept as history and each one is recorded on the chain.</li>
+<li><strong>Condition is saved with every period.</strong> A worn or derelict Holding is still worn or derelict after a restart.</li>
+<li><strong>A period is counted in ticks the Grid has ever run.</strong> A restart no longer pushes the next upkeep back. The clock itself is unchanged.</li>
+<li><strong>Two review rounds changed the fix.</strong> My first version carried dead code, and my second would have let memory and the database drift apart for good after one refused write. Both are corrected; a reclaim is now written to the database first.</li>
+<li><strong>Still nothing has happened to a real parcel.</strong> None is owned on production. And the review found more that is open in the same area; the list is in §19.10.</li>
 </ul>
 </div>
 
@@ -158,6 +170,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <p><strong>v0.2.3 — 구현.</strong> 운영자가 설계안을 승인했고, 고리 4–8을 Brain에 구현했습니다(재산 주기와 시계 추종기, 새 테스트 128개). <strong>프로덕션에서는 아무것도 실행되지 않았습니다.</strong> 고리 1–3은 여전히 Mac Studio를 기다립니다. 코드에 대한 독립 검토에서 문제 10건이 나왔습니다. 새 코드의 8건은 고쳤고, Grid의 2건은 고치지 않았습니다. 그중 하나는 Nous가 프로덕션에서 땅을 사기 전에 반드시 고쳐야 합니다(<a href="#s19g">§19.7</a>).</p>
 <p><strong>v0.2.4 — 정정.</strong> 프로덕션의 Grid는 <code>main</code>이 아니라 <code>research/atlas-simulator</code> 브랜치를 실행합니다. 이 시트에도 그렇게 적혀 있는데, 저는 <code>main</code>을 읽고 프로덕션에 대해 말했습니다. 프로덕션이 실행하는 브랜치로 다시 확인한 결과: 고리 8(원격 Brain의 시계)은 그 브랜치에서 2026-11-20에 이미 발견되어 고쳐졌고, "Grid 재시작이 등록된 Brain을 끊는다"는 프로덕션에 대해 사실이 아니었습니다(같은 커밋이 시작 시 다시 연결하며 라이브 상태). 고리 4–7은 그 브랜치에서도 열려 있습니다. <strong>보고한 것보다 나쁜 점이 하나 있습니다:</strong> 두 브랜치 모두에서 Grid가 유지비를 주기마다가 아니라 <em>매 틱마다</em> 부과합니다. 1000을 가진 Nous가 가장 싼 구획을 사면 30초마다 가격의 2%를 내고 약 40분 안에 구획과 돈을 모두 잃습니다. <code>main</code>에서는 테스트와 함께 고쳤지만 <strong>프로덕션에서는 고쳐지지 않았습니다.</strong> 재산 주기는 이제 의도적으로 켜지 않는 한 꺼져 있습니다(<a href="#s19h">§19.8</a>).</p>
 <p><strong>v0.2.5 — 배포.</strong> 운영자가 병합과 배포를 승인했습니다. <strong>프로덕션의 Grid는 이제 유지비를 주기마다 한 번 부과하고, 회수된 구획을 다시 매물로 돌려놓습니다.</strong> 같은 시나리오를 프로덕션의 Grid 컨테이너와 오늘 밤까지 실행되던 이미지에서 각각 돌렸습니다. 이전 코드는 자금이 있는 소유자에게 50틱 동안 50번, 새 코드는 1번 부과했습니다(<a href="#s19i">§19.9</a>). <code>main</code>을 <code>research/atlas-simulator</code>에 병합하고, 그 브랜치에서 Grid를 다시 빌드한 뒤, 그 브랜치를 <code>main</code>으로 다시 병합했습니다. 배포를 확인한 시점에 <code>main</code>과 프로덕션이 실행하는 코드는 바이트 단위로 같았습니다. 이번 배포에서 Grid 소스 변경은 유지비·회수 파일 네 개뿐입니다. 프로덕션에는 여전히 Brain이 없고, 소유된 구획이 없고, endowment가 꺼져 있습니다. 재산 주기는 <code>BRAIN_PROPERTY_CYCLE=on</code> 없이는 꺼져 있습니다. 병합을 점검하다가 제 결함을 하나 더 찾아 고쳤습니다: 시계 추종기가 모든 행동을 Grid에 한 번 더 보내고 있었습니다.</p>
+<p><strong>v0.2.6 — 남은 회수 결함 세 건 수정.</strong> 운영자가 §19.8의 5–7행을 고치라고 했습니다. 고쳐서 병합했고 프로덕션에서 실행 중입니다(<a href="#s19j">§19.10</a>). ① 회수되면 이전 소유자가 준 역할이 모두 끝납니다. 역할은 기록으로 남고, 끝난 역할마다 체인에 기록됩니다. ② 상태(maintained·worn·derelict)가 주기마다 저장되어 재시작 후에도 유지됩니다. ③ 유지비 주기는 Grid가 지금까지 실행한 총 틱으로 셉니다. 재시작해도 다음 납부가 뒤로 밀리지 않으며, 시계 자체는 바꾸지 않았습니다. 독립 검토를 두 번 거치며 수정이 바뀌었습니다. 첫 버전에는 쓰이지 않는 코드가 있었고, 두 번째 버전은 데이터베이스가 회수 쓰기를 한 번 거부하면 메모리와 데이터베이스가 영구히 어긋날 수 있었습니다. 지금은 회수를 데이터베이스에 먼저 씁니다. 프로덕션에는 여전히 소유된 구획이 없어 실제 구획에 일어난 일은 없습니다. 같은 영역에서 검토가 찾은 미해결 항목은 §19.10에 적었습니다.</p>
 </div>
 
 <!-- ============================================================ -->
@@ -1860,9 +1873,9 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 <tr><td class="num">2</td><td><b>Reclaim loop</b></td><td>A reclaimed parcel was owned by the treasury in memory and by nobody in the database. In memory it stayed in the sweep and was "reclaimed" again every tick, one audit event each time, and no one could buy it until the Grid restarted.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag ex">LIVE · v0.2.5</span></td></tr>
 <tr><td class="num">3</td><td><b>Feed crash</b></td><td>The razed structure was marked <code>undefined</code>; readers test for <code>null</code>. The public parcel feed answered 500 for every parcel.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag ex">LIVE · v0.2.5</span></td></tr>
 <tr><td class="num">4</td><td><b>The razed building came back</b></td><td>The database kept the structure's name and type, its shop binding and its allowlist. After a restart the building reappeared, and the former owner's guests could enter what the next owner built.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag ex">LIVE · v0.2.5</span></td></tr>
-<tr><td class="num">5</td><td>Roles survive a reclaim</td><td>The former owner's staff keep their role on the resold parcel.</td><td><span class="tag q">OPEN</span></td><td><span class="tag q">OPEN</span></td></tr>
-<tr><td class="num">6</td><td>Condition is not saved between periods</td><td>A derelict parcel reads as maintained after a restart.</td><td><span class="tag q">OPEN</span></td><td><span class="tag q">OPEN</span></td></tr>
-<tr><td class="num">7</td><td>Ticks do not survive a restart</td><td>The Grid's tick starts again from 0 at every restart, while "last upkeep" is stored as a tick. After a restart a parcel is not due again until the new count passes the old one.</td><td><span class="tag q">OPEN</span></td><td><span class="tag q">OPEN</span></td></tr>
+<tr><td class="num">5</td><td>Roles survive a reclaim</td><td>The former owner's staff keep their role on the resold parcel.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag ex">LIVE · v0.2.6</span></td></tr>
+<tr><td class="num">6</td><td>Condition is not saved between periods</td><td>A derelict parcel reads as maintained after a restart.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag ex">LIVE · v0.2.6</span></td></tr>
+<tr><td class="num">7</td><td>Ticks do not survive a restart</td><td>The Grid's tick starts again from 0 at every restart, while "last upkeep" is stored as a tick. After a restart a parcel is not due again until the new count passes the old one.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag ex">LIVE · v0.2.6</span></td></tr>
 </table></div>
 <div class="grid2">
 <div class="box red"><span class="k">What this means for a Nous today</span>
@@ -1906,7 +1919,7 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 <div class="box"><span class="k">What this deploy does not show</span>
 <ul>
 <li><strong>No parcel is owned on production,</strong> so the scanner has charged nobody there yet. The table shows the code production runs, not a charge that happened.</li>
-<li><strong>Rows 5 to 7 of §19.8 are still open</strong>, on <code>main</code> and on production: roles survive a reclaim, condition is not saved between periods, and ticks do not survive a restart. Tonight's restart set the tick to 0 again; with no owned parcel it cost nothing.</li>
+<li><span class="tag ex">v0.2.6</span> Fixed since (<a href="#s19j">§19.10</a>). <strong>Rows 5 to 7 of §19.8 are still open</strong>, on <code>main</code> and on production: roles survive a reclaim, condition is not saved between periods, and ticks do not survive a restart. Tonight's restart set the tick to 0 again; with no owned parcel it cost nothing.</li>
 <li><strong>Links 1 to 3 have not moved.</strong> No Brain runs on production, the founders have no civic identity, and endowments are off.</li>
 </ul></div>
 <div class="box red"><span class="k">More errors of mine</span>
@@ -1917,6 +1930,41 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 </ul></div>
 </div>
 <p class="small">Noticed and not changed: the handler has an older fault in the same function, an error handler that names a module it never imports. It can only fail when a stored skill record is unreadable. It is not part of this work.</p>
+
+<h3 id="s19j">19.10 The three remaining reclaim defects — fixed and live <span class="tag ex">v0.2.6</span></h3>
+<div class="tbl"><table>
+<tr><th>#</th><th>Defect</th><th>What is true now</th></tr>
+<tr><td class="num">5</td><td><b>Roles survived a reclaim</b></td><td>A reclaim ends every active role on the parcel. The roles stay as history, as after an owner's own revoke, and each is recorded on the chain before the reclaim itself. What the former owner owed its staff is left as it stands: losing the land does not settle a debt.</td></tr>
+<tr><td class="num">6</td><td><b>Condition not saved between periods</b></td><td>Every assessment writes the condition together with the stamp and the count of missed periods. Checked by a round trip: assess, start a fresh registry from the stored row, assess again.</td></tr>
+<tr><td class="num">7</td><td><b>Ticks did not survive a restart</b></td><td>The Grid's own chain holds one entry for every tick it has ever run. At start the Grid counts them, and upkeep periods run on that count plus the clock. The clock, the events and the ledger are unchanged. A stamp that is ahead of the count restarts the period with a warning, without a charge.</td></tr>
+</table></div>
+<p><strong>The same four scenarios on the image production ran before this deploy and on the one it runs now.</strong> In memory, in a separate process; nothing of production's state is read or written.</p>
+<div class="tbl"><table>
+<tr><th>Measured</th><th>Before</th><th>Now</th></tr>
+<tr><td>The former owner's staff, after reclaim and resale</td><td>still staff</td><td>no role; 1 event on the chain</td></tr>
+<tr><td>Charged once, the Grid then runs a full period with a restart in the middle: times charged</td><td class="num">1</td><td class="num">2</td></tr>
+<tr><td>What an assessment writes</td><td>stamp, missed periods</td><td>stamp, missed periods, condition</td></tr>
+<tr><td>The database refuses the reclaim once</td><td>the sweep fails with an unhandled error; memory says reclaimed, the row still names the owner</td><td>nothing changes and a warning is logged; the next tick reclaims it, once</td></tr>
+</table></div>
+<p><strong>On production itself:</strong> at start the Grid logged a lifetime count of <span class="num">476,011</span> ticks, and the database held exactly <span class="num">476,011</span> tick entries at that moment. Around the restart no tick was missing. 53 parcels, none owned, none carrying a stamp, so no stored value had to be converted.</p>
+<div class="grid2">
+<div class="box red"><span class="k">What the two reviews found in my fix</span>
+<ul>
+<li><strong>30.</strong> My first version also wrote the end of the roles to the database. Nothing in the Grid writes that table, so the statement did nothing and added a second, unprotected write to every reclaim. Removed.</li>
+<li><strong>31.</strong> My second version logged a refused reclaim write and carried on. Memory would then have said "back in the pool" while the row still named the former owner, his building and his missed periods, and the next buyer would have inherited that row after a restart. The reclaim is now written first; if the write is refused nothing has changed and the next tick tries again.</li>
+<li><strong>32.</strong> Four of my new tests passed without the fix: they guard a decision, they do not prove the fix. And one older test still called the changed function without its new argument, which the type check does not see because tests are outside it. Each fix was then undone in turn to confirm that a test fails.</li>
+</ul></div>
+<div class="box"><span class="k">Open in the same area, found by the review, not changed</span>
+<ul>
+<li><strong>Roles are not saved at all.</strong> Granting and revoking a role changes memory only. Every role is lost at any Grid restart, with nothing on the chain. This is larger than row 5 and was there before.</li>
+<li><strong>The task board checks too little.</strong> Completing a task does not check a role, and claiming one does not check that the task belongs to the parcel named.</li>
+<li><strong>A zone id with a digit.</strong> The law allows it; the event writers reject its parcel ids. For such a parcel a paid period would not be recorded in memory, and the owner would be charged on every tick. No such zone exists today.</li>
+<li><strong>A write that fails after a successful charge</strong> is logged as a failed charge, and the period is charged once more after a restart.</li>
+<li><strong>Trust carries over.</strong> A role given again by the next owner starts at the trust earned under the former one.</li>
+<li><strong>The word on the chain.</strong> A role ended by a reclaim is recorded as "severance complete" although no settlement ran. The closed list has no closer word; adding one is a decision.</li>
+</ul></div>
+</div>
+<p class="small">Gate: Grid type check clean; 4,340 tests pass, twice; invariant scripts clean. In two earlier runs a timing-dependent alerting test failed on a cold start and passed on the next; this change does not touch it.</p>
 
 <!-- ============================================================ -->
 <h2 id="s20">20 · Sources · Glossary</h2>
