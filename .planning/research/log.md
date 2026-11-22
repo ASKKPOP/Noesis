@@ -509,3 +509,25 @@ A raw NUL byte in `grid/src/civic/parcel-registry.ts` (in a comment) made grep t
 binary and hid it from text search; removed on main, still present on the production branch,
 where it makes that file a binary merge conflict. Pitfalls carried forward: read the branch
 production runs before describing production; `grep` silently skips files with a NUL byte.
+
+## [2026-11-21] deploy | Upkeep fix live on production; one trunk; clock follower corrected
+Operator approved "merge and deploy". The other session had already merged main into
+`research/atlas-simulator` (7a87b895); its resolution of `grid/src/civic/parcel-registry.ts` was
+read and is correct (NUL byte gone, fix intact). Gate in a fresh clone: Grid tsc clean, 4324
+tests (one run: 2 failures in `health-watchdog-alert-sns.test.ts`, a setTimeout(0) race that the
+merge does not touch; passes alone and in the second full run); Brain 1509 twice. Deploy carried
+four Grid source files and no migration. Server checkout fast-forwarded 954107c -> 7a87b89
+(`git add` of the bind-mounted nginx template first, so the ff did not rewrite it; inode kept),
+grid image rebuilt, container replaced, healthy in 15 s; rollback image
+`noesiis-grid:pre-upkeep-fix-2026-11-21`. Verified twice on production: public endpoints 200,
+53 parcels / 0 owned, tick restarted from 0; and the same in-memory scenario inside the running
+container vs the old image: funded owner charged 1 vs 50 times in 50 ticks, reclaimed parcel
+resold vs refused. PR #29 (`research/atlas-simulator` -> main) merged; trees identical.
+Then found in my own clock follower, now that both clock mechanisms are on one branch: it posted
+every action a second time (`on_tick` already forwards), and it could start a decision alongside
+one the firehose TickDriver was running. Fixed: follower never posts; `on_tick` runs one decision
+at a time. Brain 1511 twice. Pitfalls carried forward: the server's fetch refspec tracks only
+`main`, so `origin/<other-branch>` there is stale — compare against FETCH_HEAD; on this machine
+`rm` is aliased, use `/bin/rm`; the server checkout is no longer dirty.
+Still open: §19.8 rows 5-7; links 1-3; whether the firehose reaches a Brain off the Grid's host
+(needs an enrolled Brain's token); the catalog half of Q17.
