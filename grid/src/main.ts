@@ -35,7 +35,7 @@ import { ZoneRegistry } from './zoning/zone-registry.js';
 import { savedGridVisibility } from './api/operator/grid-visibility.js';
 import { ParcelRegistry } from './civic/parcel-registry.js';
 import { ParcelStore } from './civic/parcel-store.js';
-import { createUpkeepRegistryFacade } from './civic/upkeep-scanner.js';
+import { createUpkeepRegistryFacade, ticksRecorded } from './civic/upkeep-scanner.js';
 import { GroupStore } from './economy/group-store.js';
 import { NousAccountStore } from './economy/nous-account-store.js';
 import { GridRegistry } from './registry/grid-registry.js';
@@ -287,12 +287,17 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // via NousAccountStore.chargeToTreasury (Phase 62.6-02 — nous_accounts →
         // civic_treasury), retiring the last upkeep writer to the did:noesis:system:treasury
         // record. treasuryDid is retained for the reclaim path (ownerDid = treasury).
+        // The chain was restored above and the clock has not started: these are the
+        // ticks of every earlier run. Upkeep periods are counted from here on.
+        const ticksBeforeStart = ticksRecorded(chain!.all());
+        console.log(`[civic] upkeep counts from lifetime tick ${ticksBeforeStart}`);
         launcher.attachUpkeepScanner({
             registry: createUpkeepRegistryFacade(parcelRegistry, parcelStore),
             audit: chain!,
             treasuryDid: TREASURY_DID,
             gridName: config.genesisConfig.gridName,
             accountStore: nousAccountStore,
+            ticksBeforeStart,
         });
         // Phase 60 HOUSE-3 (D-60-08 / R-60-10): late-wire the ring-expansion TEMPLATE onto the
         // governance engine now that the parcel registry + founding-law read-through exist. The

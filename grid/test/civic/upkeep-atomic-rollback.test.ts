@@ -49,7 +49,7 @@ describe('Phase 62.6-05 — upkeep charge atomic rollback (insufficient owner ba
         expect(accts.balanceOf(OWNER)).toBe(5n);
         expect(accts.treasuryOf()).toBe(0n);
         // The parcel routed to the decay ladder — no phantom collection.
-        expect(advanceCondition).toHaveBeenCalledWith(PARCEL);
+        expect(advanceCondition).toHaveBeenCalledWith(PARCEL, 10080);
         expect(append).not.toHaveBeenCalledWith('treasury.upkeep_collected', expect.anything(), expect.anything());
     });
 });

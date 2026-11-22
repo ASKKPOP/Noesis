@@ -44,9 +44,9 @@ function ownBuildAndLose(registry: ParcelRegistry): void {
     expect(registry.purchase(ADDR, OWNER, 10_000).ok).toBe(true);
     expect(registry.build(ADDR, OWNER, { name: 'Oikos', type: 'home', visibility: 'open' }, 5).ok).toBe(true);
     registry.extendInterior(ADDR, OWNER, { area: 'bedroom', kind: 'bed' });
-    expect(registry.advanceCondition(ADDR)).toBe('worn');
-    expect(registry.advanceCondition(ADDR)).toBe('derelict');
-    expect(registry.advanceCondition(ADDR)).toBe('reclaimed');
+    expect(registry.advanceCondition(ADDR, 0)).toBe('worn');
+    expect(registry.advanceCondition(ADDR, 0)).toBe('derelict');
+    expect(registry.advanceCondition(ADDR, 0)).toBe('reclaimed');
 }
 
 describe('reclaimed parcel — registry state', () => {

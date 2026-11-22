@@ -223,3 +223,21 @@ describe('ParcelStore — gravity prices + caps + civic-land guard (R-58-03)', (
         expect(registry.purchase(infra[0].id, buyer, 100000)).toEqual({ ok: false, reason: 'zone_not_purchasable' });
     });
 });
+
+// ── upkeep: what must survive a restart ─────────────────────────────────────────
+
+describe('ParcelStore — an upkeep assessment survives a restart', () => {
+    it('persistUpkeep writes the condition with the period', async () => {
+        const pool = makeMockPool();
+        const store = new ParcelStore(pool, 'genesis');
+        const base = buildGenesisCoreParcels('genesis').find((x) => x.id === 'genesis:residential:0001')!;
+        const p = { ...base, condition: 'worn' as const, missedPeriods: 1, lastUpkeepTick: 77 };
+
+        await store.persistUpkeep(p);
+
+        const [sql, params] = (pool.query as ReturnType<typeof vi.fn>).mock.calls[0] as [string, unknown[]];
+        expect(sql).toMatch(/UPDATE civic_parcels/);
+        expect(sql).toMatch(/`condition` = \?/);
+        expect(params).toEqual([77, 1, 'worn', p.id]);
+    });
+});

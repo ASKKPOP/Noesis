@@ -347,13 +347,13 @@ export class ParcelRegistry {
      * the event and (at `reclaimed`) call reclaimToTreasury. The parcel is lazily
      * provisioned with a structure if this instance has not been seeded for it.
      */
-    advanceCondition(address: string): 'worn' | 'derelict' | 'reclaimed' {
+    advanceCondition(address: string, tick: number): 'worn' | 'derelict' | 'reclaimed' {
         const p = this.ensureLadderParcel(address);
         p.missedPeriods += 1;
         if (p.missedPeriods >= RECLAIM_GRACE_PERIODS.reclaim) {
             // Threshold crossed: apply the reclaim state transition here (registry owns
             // transitions); the scanner emits zoning.parcel_reclaimed + persists DB-first.
-            this.reclaimToTreasury(address);
+            this.reclaimToTreasury(address, tick);
             return 'reclaimed';
         }
         if (p.missedPeriods >= RECLAIM_GRACE_PERIODS.derelict) {
@@ -383,8 +383,15 @@ export class ParcelRegistry {
      * lot then stayed in the upkeep sweep — it has no account, so it "defaulted" and was
      * reclaimed again on every tick — and could not be bought until the Grid restarted.)
      */
-    reclaimToTreasury(address: string): void {
+    reclaimToTreasury(address: string, tick: number): void {
         const p = this.ensureLadderParcel(address);
+        // Staff and guests held their roles from the owner who is leaving. Each active
+        // edge ends here, kept as history like any revoked edge (never deleted, D-60-02),
+        // so nobody arrives with a role on what the next owner builds. IOUs are left as
+        // they stand: an owner who defaulted on upkeep still owes what it owes.
+        for (const edge of this.roleEdges.values()) {
+            if (edge.parcel_id === address && edge.revoked_tick === undefined) edge.revoked_tick = tick;
+        }
         p.ownerDid = null;
         p.acquiredAtTick = null;
         delete p.lastUpkeepTick;

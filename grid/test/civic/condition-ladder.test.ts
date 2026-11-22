@@ -25,28 +25,28 @@ describe('Phase 59 HOUSE-2 — condition ladder advance/reset [Wave 4 un-skips]'
     it('1 missed period: maintained → worn', async () => {
         const { ParcelRegistry } = await loadRegistry();
         const registry = new ParcelRegistry('genesis');
-        expect(registry.advanceCondition(PARCEL)).toBe('worn');
+        expect(registry.advanceCondition(PARCEL, 0)).toBe('worn');
     });
 
     it('2 missed periods: worn → derelict', async () => {
         const { ParcelRegistry } = await loadRegistry();
         const registry = new ParcelRegistry('genesis');
-        registry.advanceCondition(PARCEL); // worn
-        expect(registry.advanceCondition(PARCEL)).toBe('derelict');
+        registry.advanceCondition(PARCEL, 0); // worn
+        expect(registry.advanceCondition(PARCEL, 0)).toBe('derelict');
     });
 
     it('3 missed periods: derelict → reclaimed (the reclaim threshold)', async () => {
         const { ParcelRegistry } = await loadRegistry();
         const registry = new ParcelRegistry('genesis');
-        registry.advanceCondition(PARCEL); // worn
-        registry.advanceCondition(PARCEL); // derelict
-        expect(registry.advanceCondition(PARCEL)).toBe('reclaimed');
+        registry.advanceCondition(PARCEL, 0); // worn
+        registry.advanceCondition(PARCEL, 0); // derelict
+        expect(registry.advanceCondition(PARCEL, 0)).toBe('reclaimed');
     });
 
     it('paying upkeep resets missed_periods=0 and condition=maintained', async () => {
         const { ParcelRegistry } = await loadRegistry();
         const registry = new ParcelRegistry('genesis');
-        registry.advanceCondition(PARCEL); // worn
+        registry.advanceCondition(PARCEL, 0); // worn
         registry.resetCondition(PARCEL);
         expect(registry.get(PARCEL)?.condition).toBe('maintained');
         expect(registry.get(PARCEL)?.missedPeriods).toBe(0);
@@ -55,8 +55,8 @@ describe('Phase 59 HOUSE-2 — condition ladder advance/reset [Wave 4 un-skips]'
     it('derelict CLOSES the structure to visitors — join refuses with closed_to_visitors', async () => {
         const { ParcelRegistry } = await loadRegistry();
         const registry = new ParcelRegistry('genesis');
-        registry.advanceCondition(PARCEL); // worn
-        registry.advanceCondition(PARCEL); // derelict
+        registry.advanceCondition(PARCEL, 0); // worn
+        registry.advanceCondition(PARCEL, 0); // derelict
         const result = registry.join(PARCEL, 'did:civic:noesis:bob');
         expect(result).toEqual({ ok: false, reason: 'closed_to_visitors' });
     });
@@ -64,9 +64,9 @@ describe('Phase 59 HOUSE-2 — condition ladder advance/reset [Wave 4 un-skips]'
     it('reclaim returns the parcel to the pool (no owner), razes the structure+interior, and ejects occupants', async () => {
         const { ParcelRegistry } = await loadRegistry();
         const registry = new ParcelRegistry('genesis');
-        registry.advanceCondition(PARCEL); // worn
-        registry.advanceCondition(PARCEL); // derelict
-        registry.advanceCondition(PARCEL); // reclaimed
+        registry.advanceCondition(PARCEL, 0); // worn
+        registry.advanceCondition(PARCEL, 0); // derelict
+        registry.advanceCondition(PARCEL, 0); // reclaimed
         const parcel = registry.get(PARCEL)!;
         // Back to the pool with no owner — what the database records and a restart hydrates.
         expect(parcel.ownerDid).toBeNull();

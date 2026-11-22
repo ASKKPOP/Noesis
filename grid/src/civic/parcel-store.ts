@@ -286,13 +286,17 @@ export class ParcelStore {
         );
     }
 
-    /** Persist an upkeep collection DB-first (last_upkeep_tick + missed_periods). Wave 4. */
+    /**
+     * Persist an upkeep assessment DB-first: last_upkeep_tick, missed_periods and the
+     * condition they produced. Without the condition a worn or derelict parcel came back
+     * from a restart as maintained, and a derelict structure was open to visitors again.
+     */
     async persistUpkeep(parcel: Parcel): Promise<void> {
         await this.pool.query<ResultSetHeader>(
             `UPDATE civic_parcels
-                SET last_upkeep_tick = ?, missed_periods = ?
+                SET last_upkeep_tick = ?, missed_periods = ?, \`condition\` = ?
               WHERE parcel_id = ?`,
-            [parcel.lastUpkeepTick ?? null, parcel.missedPeriods, parcel.id],
+            [parcel.lastUpkeepTick ?? null, parcel.missedPeriods, parcel.condition, parcel.id],
         );
     }
 

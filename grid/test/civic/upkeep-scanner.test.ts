@@ -181,7 +181,7 @@ describe('Phase 62.6-02 — underfunded owner rolls back and decays (insufficien
         expect(accts.balanceOf(OWNER)).toBe(5n);
         expect(accts.treasuryOf()).toBe(0n);
         // Decay ladder advanced + emitted the new condition (actor = owner hash).
-        expect(advanceCondition).toHaveBeenCalledWith(OWNED);
+        expect(advanceCondition).toHaveBeenCalledWith(OWNED, 10080);
         expect(append).toHaveBeenCalledWith(
             'zoning.condition_changed',
             expect.stringMatching(/^[0-9a-f]{64}$/),
@@ -199,7 +199,7 @@ describe('Phase 62.6-02 — underfunded owner rolls back and decays (insufficien
         const persistReclaim = vi.fn();
         const deps = {
             registry: {
-                list: () => [parcelOwed8(OWNED, OWNER)],
+                list: () => [{ ...(parcelOwed8(OWNED, OWNER) as object), condition: 'derelict', missedPeriods: 2 }],
                 advanceCondition,
                 resetCondition: vi.fn(),
                 persistReclaim,
@@ -244,7 +244,7 @@ describe('Phase 62.6-02 — per-parcel isolation (a charge throw does not abort 
         };
         await onUpkeepTick(10080, deps as never);
         // Poor parcel: insufficient_balance → decayed.
-        expect(advanceCondition).toHaveBeenCalledWith(POOR_PARCEL);
+        expect(advanceCondition).toHaveBeenCalledWith(POOR_PARCEL, 10080);
         // Rich parcel: STILL assessed and funded despite the earlier failure.
         expect(accts.balanceOf(RICH)).toBe(10_000n - 8n);
         expect(accts.treasuryOf()).toBe(8n);
@@ -284,7 +284,7 @@ describe('Phase 62.6-02 — per-parcel isolation (a charge throw does not abort 
         };
         await onUpkeepTick(10080, deps as never);
         // Transient fault → the parcel is skipped, NOT decayed (no false eviction on a DB blip).
-        expect(advanceCondition).not.toHaveBeenCalledWith(FAIL_PARCEL);
+        expect(advanceCondition).not.toHaveBeenCalledWith(FAIL_PARCEL, expect.anything());
         // The sweep continued: RICH still collected.
         expect(accts.balanceOf(RICH)).toBe(10_000n - 8n);
         expect(append).toHaveBeenCalledWith(
