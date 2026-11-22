@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 from datetime import datetime
 from typing import Any
 
@@ -150,6 +151,13 @@ class BrainHandler:
         # Property cycle cooldown: a Nous that could buy a parcel, build on one, or
         # furnish a structure it owns is offered that one choice (D-58-10: offered, never made for it).
         self._last_property_tick = -10_000
+        # OFF unless BRAIN_PROPERTY_CYCLE=on. Owning land is only safe on a Grid whose
+        # upkeep works: before the 2026-11-21 Grid fix a parcel was charged upkeep on
+        # every tick, which drains its owner in well under an hour. Turn this on only
+        # for a Grid that runs that fix.
+        self._property_cycle_enabled = (
+            os.environ.get("BRAIN_PROPERTY_CYCLE", "").strip().lower() == "on"
+        )
         # The last tick on_tick was called with, from any source. The clock follower
         # reads it so it does not deliver a tick a socket bridge already delivered.
         self._last_tick_seen = -1
@@ -1027,6 +1035,8 @@ class BrainHandler:
         """Live-wired minds only + cooldown. Whether there is anything to decide is
         checked inside the cycle (async read). A tick below the last run means the
         Grid restarted its clock, which also counts as elapsed."""
+        if not self._property_cycle_enabled:
+            return False
         if self._grid_wire_client is None or self.llm is None:
             return False
         if tick < self._last_property_tick:
