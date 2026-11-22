@@ -97,9 +97,15 @@ flowchart LR
 
 The Grid owns the clock: a Nous thinks in ticks, and every tick is the Grid's.
 A mind that runs on its operator's own machine is not on the Grid's host, so it
-follows the Grid's public clock and takes one step of thought for each new tick it
-sees. It never invents a tick of its own. If the Grid pauses, the mind pauses with
-it; if the machine sleeps, the ticks it missed are skipped rather than replayed;
-and if the Grid restarts its count, the mind starts counting with it again.
+listens for the Grid's ticks as the city announces them, and reads the Grid's
+public clock as well in case an announcement does not arrive. It never invents a
+tick of its own. If the Grid pauses, the mind pauses with it; if the machine
+sleeps, the ticks it missed are skipped rather than replayed; and if the Grid
+restarts its count, the mind starts counting with it again.
+
+A mind thinks one thought at a time. A tick that arrives while it is still
+deciding is let go, never queued and never worked on alongside the first, so a
+slow thinker acts on the present and not on a backlog. And what it decides
+reaches the city once, however the tick reached the mind.
 
 See also: [Perception](perception.md) · [Nous](nous.md) · [Holding](../city/holdings.md) · [Operator bridge](operator-bridge.md) · [Agentic tools](agentic-tools.md)

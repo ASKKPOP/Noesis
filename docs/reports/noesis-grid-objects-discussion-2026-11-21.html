@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.4</title>
+<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.5</title>
 <meta name="description" content="Objects inside a Holding: four-layer model, credential box, full catalog of 59 kinds and 18 materials, system seed and user additions, placement and settings by Nous and human, verification and 28 open gaps. Discussion stage, 20 decisions open.">
 <style>
 :root{
@@ -79,7 +79,7 @@ footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;
 <body>
 <div class="wrap">
 
-<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.4 · 2026-11-21 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
+<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.5 · 2026-11-21 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
 <h1>Grid House Objects</h1>
 <p class="lede">Things inside a Holding — furniture-like objects a Nous and its human configure and build together:
 some pre-designed by the system, some rendered by the Nous, some paid for and rendered by a service.
@@ -113,6 +113,17 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 </ul>
 </div>
 
+<div class="box acc">
+<span class="k">Deployed · v0.2.5 · the upkeep fix runs on production, and the code is one line again</span>
+<p style="margin-top:8px"><span class="tag ex">LIVE</span> <strong>Production's Grid now charges upkeep once per period and returns a reclaimed parcel to the pool.</strong> The operator approved the merge and the deploy. The same scenario, run inside production's Grid container and inside the image it ran until tonight: the old code charged a funded owner 50 times in 50 ticks, the new code once (<a href="#s19i">§19.9</a>).</p>
+<ul>
+<li><strong>One trunk.</strong> <code>main</code> was merged into <code>research/atlas-simulator</code>, production's Grid was rebuilt from it, and that branch was merged back. <code>main</code> and the code production runs were byte-identical when the deploy was verified.</li>
+<li><strong>Nothing else changed on production.</strong> The Grid's only source changes in this deploy are the four upkeep and reclaim files. No Brain runs there, no parcel is owned, endowments are off, and the Grid's tick started again from 0.</li>
+<li><strong>The property cycle stays off</strong> unless a Brain is started with <code>BRAIN_PROPERTY_CYCLE=on</code>. The reason it was switched off is gone; switching it on is the operator's step at the Mac Studio.</li>
+<li><strong>One more defect of mine, found while checking the merge and fixed:</strong> the clock follower sent every action to the Grid a second time. Details in <a href="#s19i">§19.9</a>.</li>
+</ul>
+</div>
+
 <div class="box red">
 <span class="k">Correction · v0.2.4 · I read the wrong branch, and upkeep is broken</span>
 <p style="margin-top:8px"><strong>Production's Grid runs the branch <code>research/atlas-simulator</code>, not <code>main</code>.</strong> This sheet says so itself (§19, Q17). I still read <code>main</code> to make statements about production. Checked against the branch production runs:</p>
@@ -122,7 +133,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <li><strong>Links 4 to 7 are open on that branch too.</strong> The property cycle is new work there as well.</li>
 <li><strong>Measured facts stand:</strong> no Brain runs on production, no parcel is owned, endowments are off.</li>
 </ul>
-<p><strong>And one thing is worse than reported.</strong> On both branches the Grid charges upkeep <em>on every tick</em>, not once per period. A Nous that bought the cheapest parcel with 1000 would pay 2% of the price every 30 seconds and lose the parcel and all its money in about 40 minutes. This is fixed on <code>main</code> with tests; <strong>it is not fixed on production.</strong> The property cycle is now switched off unless turned on deliberately. Details in <a href="#s19h">§19.8</a>.</p>
+<p><strong>And one thing is worse than reported.</strong> On both branches the Grid charges upkeep <em>on every tick</em>, not once per period. A Nous that bought the cheapest parcel with 1000 would pay 2% of the price every 30 seconds and lose the parcel and all its money in about 40 minutes. This is fixed on <code>main</code> with tests; <strong>it is not fixed on production.</strong> The property cycle is now switched off unless turned on deliberately. Details in <a href="#s19h">§19.8</a>. <span class="tag ex">v0.2.5</span> It is fixed on production now (<a href="#s19i">§19.9</a>).</p>
 </div>
 
 <div class="box red">
@@ -146,6 +157,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <p><strong>v0.2.2 — 결정.</strong> Q18a: 첫 번째 살아 있는 Nous는 운영자의 사무실 Mac Studio에서 로컬 AI로 실행합니다. 현재 그 컴퓨터에 원격 접속할 수 없으므로 프로덕션 첫 실행은 그 컴퓨터 앞에서만 가능하고, 설계와 코드는 그 전에 진행할 수 있습니다. 재산 주기 설계안은 작성되어 승인 대기 중입니다(<code>docs/plans/2026-11-21-nous-property-cycle-design.md</code>). 작성 중 걸림돌이 하나 더 나왔습니다: 프로덕션에서 초기 자금 지급(endowment)이 꺼져 있어 새 Nous가 첫 돈을 받을 방법이 없습니다. 이것은 운영자가 정할 사항입니다. 또한 설계안에 대한 독립 검토가 제 초안과 코드가 어긋나는 여섯 곳을 찾았고 모두 소스에서 확인해 고쳤습니다. 가장 큰 것은 <strong>Grid와 다른 컴퓨터에 있는 Brain에는 틱이 전달되지 않는다</strong>는 점입니다(여덟 번째 고리). 어느 Nous를 실행할지(창립 Nous Sophia 또는 운영자의 새 Nous)도 운영자가 정할 사항으로 남아 있습니다.</p>
 <p><strong>v0.2.3 — 구현.</strong> 운영자가 설계안을 승인했고, 고리 4–8을 Brain에 구현했습니다(재산 주기와 시계 추종기, 새 테스트 128개). <strong>프로덕션에서는 아무것도 실행되지 않았습니다.</strong> 고리 1–3은 여전히 Mac Studio를 기다립니다. 코드에 대한 독립 검토에서 문제 10건이 나왔습니다. 새 코드의 8건은 고쳤고, Grid의 2건은 고치지 않았습니다. 그중 하나는 Nous가 프로덕션에서 땅을 사기 전에 반드시 고쳐야 합니다(<a href="#s19g">§19.7</a>).</p>
 <p><strong>v0.2.4 — 정정.</strong> 프로덕션의 Grid는 <code>main</code>이 아니라 <code>research/atlas-simulator</code> 브랜치를 실행합니다. 이 시트에도 그렇게 적혀 있는데, 저는 <code>main</code>을 읽고 프로덕션에 대해 말했습니다. 프로덕션이 실행하는 브랜치로 다시 확인한 결과: 고리 8(원격 Brain의 시계)은 그 브랜치에서 2026-11-20에 이미 발견되어 고쳐졌고, "Grid 재시작이 등록된 Brain을 끊는다"는 프로덕션에 대해 사실이 아니었습니다(같은 커밋이 시작 시 다시 연결하며 라이브 상태). 고리 4–7은 그 브랜치에서도 열려 있습니다. <strong>보고한 것보다 나쁜 점이 하나 있습니다:</strong> 두 브랜치 모두에서 Grid가 유지비를 주기마다가 아니라 <em>매 틱마다</em> 부과합니다. 1000을 가진 Nous가 가장 싼 구획을 사면 30초마다 가격의 2%를 내고 약 40분 안에 구획과 돈을 모두 잃습니다. <code>main</code>에서는 테스트와 함께 고쳤지만 <strong>프로덕션에서는 고쳐지지 않았습니다.</strong> 재산 주기는 이제 의도적으로 켜지 않는 한 꺼져 있습니다(<a href="#s19h">§19.8</a>).</p>
+<p><strong>v0.2.5 — 배포.</strong> 운영자가 병합과 배포를 승인했습니다. <strong>프로덕션의 Grid는 이제 유지비를 주기마다 한 번 부과하고, 회수된 구획을 다시 매물로 돌려놓습니다.</strong> 같은 시나리오를 프로덕션의 Grid 컨테이너와 오늘 밤까지 실행되던 이미지에서 각각 돌렸습니다. 이전 코드는 자금이 있는 소유자에게 50틱 동안 50번, 새 코드는 1번 부과했습니다(<a href="#s19i">§19.9</a>). <code>main</code>을 <code>research/atlas-simulator</code>에 병합하고, 그 브랜치에서 Grid를 다시 빌드한 뒤, 그 브랜치를 <code>main</code>으로 다시 병합했습니다. 배포를 확인한 시점에 <code>main</code>과 프로덕션이 실행하는 코드는 바이트 단위로 같았습니다. 이번 배포에서 Grid 소스 변경은 유지비·회수 파일 네 개뿐입니다. 프로덕션에는 여전히 Brain이 없고, 소유된 구획이 없고, endowment가 꺼져 있습니다. 재산 주기는 <code>BRAIN_PROPERTY_CYCLE=on</code> 없이는 꺼져 있습니다. 병합을 점검하다가 제 결함을 하나 더 찾아 고쳤습니다: 시계 추종기가 모든 행동을 Grid에 한 번 더 보내고 있었습니다.</p>
 </div>
 
 <!-- ============================================================ -->
@@ -1744,7 +1756,7 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 <tr><td class="num">G25</td><td><b>Observability.</b></td><td>No metric for gate rejections, use after revoke, seed drift or solver failure.</td><td>Counters from day one.</td></tr>
 <tr><td class="num">G26</td><td><b>Cost to the operator.</b></td><td>Assets and Grid-side algorithm compute land on one EC2 host.</td><td>Who pays for stored bytes; upkeep is the natural place.</td></tr>
 <tr><td class="num">G27</td><td><b>More than one Grid.</b></td><td>Custom objects are now Grid-local by decision (§15.5). Design IDs keyed by a per-Grid DID hash, cross-Grid visits and version pinning are open.</td><td>Park it: single Grid until cross-Grid migration exists.</td></tr>
-<tr><td class="num">G28</td><td><b>Parallel work on the branch production runs.</b></td><td>Two related plans and 55 commits are on <code>research/atlas-simulator</code>.</td><td>Decide the trunk before two designs harden apart (Q17).</td></tr>
+<tr><td class="num">G28</td><td><b>Parallel work on the branch production runs.</b></td><td>Two related plans and 55 commits are on <code>research/atlas-simulator</code>.</td><td>Decide the trunk before two designs harden apart (Q17). <span class="tag ex">v0.2.5</span> The trunk is one again (§19.9); joining the designs is still open.</td></tr>
 </table></div>
 
 <h3>19.5 What needs more thinking before any build</h3>
@@ -1844,17 +1856,18 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 <p>The operator asked for the two Grid defects to be fixed. Fixing the first one, and having the fix read by an independent reviewer, showed that it was one of several in the same path. Each row was reproduced by a test that runs the upkeep scanner against the real parcel registry, composed the way the Grid composes it at start.</p>
 <div class="tbl"><table>
 <tr><th>#</th><th>Defect</th><th>What it did</th><th><code>main</code></th><th>Production</th></tr>
-<tr><td class="num">1</td><td><b>Upkeep on every tick</b></td><td>A paid period was written to the database only. Memory never learned it, so the parcel was due again one tick later. A funded owner paid 2% of the price every tick; a broke one went from maintained to reclaimed in three ticks instead of three periods.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag q">OPEN</span></td></tr>
-<tr><td class="num">2</td><td><b>Reclaim loop</b></td><td>A reclaimed parcel was owned by the treasury in memory and by nobody in the database. In memory it stayed in the sweep and was "reclaimed" again every tick, one audit event each time, and no one could buy it until the Grid restarted.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag q">OPEN</span></td></tr>
-<tr><td class="num">3</td><td><b>Feed crash</b></td><td>The razed structure was marked <code>undefined</code>; readers test for <code>null</code>. The public parcel feed answered 500 for every parcel.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag q">OPEN</span></td></tr>
-<tr><td class="num">4</td><td><b>The razed building came back</b></td><td>The database kept the structure's name and type, its shop binding and its allowlist. After a restart the building reappeared, and the former owner's guests could enter what the next owner built.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag q">OPEN</span></td></tr>
+<tr><td class="num">1</td><td><b>Upkeep on every tick</b></td><td>A paid period was written to the database only. Memory never learned it, so the parcel was due again one tick later. A funded owner paid 2% of the price every tick; a broke one went from maintained to reclaimed in three ticks instead of three periods.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag ex">LIVE · v0.2.5</span></td></tr>
+<tr><td class="num">2</td><td><b>Reclaim loop</b></td><td>A reclaimed parcel was owned by the treasury in memory and by nobody in the database. In memory it stayed in the sweep and was "reclaimed" again every tick, one audit event each time, and no one could buy it until the Grid restarted.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag ex">LIVE · v0.2.5</span></td></tr>
+<tr><td class="num">3</td><td><b>Feed crash</b></td><td>The razed structure was marked <code>undefined</code>; readers test for <code>null</code>. The public parcel feed answered 500 for every parcel.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag ex">LIVE · v0.2.5</span></td></tr>
+<tr><td class="num">4</td><td><b>The razed building came back</b></td><td>The database kept the structure's name and type, its shop binding and its allowlist. After a restart the building reappeared, and the former owner's guests could enter what the next owner built.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag ex">LIVE · v0.2.5</span></td></tr>
 <tr><td class="num">5</td><td>Roles survive a reclaim</td><td>The former owner's staff keep their role on the resold parcel.</td><td><span class="tag q">OPEN</span></td><td><span class="tag q">OPEN</span></td></tr>
 <tr><td class="num">6</td><td>Condition is not saved between periods</td><td>A derelict parcel reads as maintained after a restart.</td><td><span class="tag q">OPEN</span></td><td><span class="tag q">OPEN</span></td></tr>
 <tr><td class="num">7</td><td>Ticks do not survive a restart</td><td>The Grid's tick starts again from 0 at every restart, while "last upkeep" is stored as a tick. After a restart a parcel is not due again until the new count passes the old one.</td><td><span class="tag q">OPEN</span></td><td><span class="tag q">OPEN</span></td></tr>
 </table></div>
 <div class="grid2">
 <div class="box red"><span class="k">What this means for a Nous today</span>
-<p style="margin-top:8px"><strong>No Nous should buy land on production until rows 1 to 4 run there.</strong> With the figures proposed in this sheet (1000 to start, the cheapest parcel at 400), the Nous would have 600 left, pay 8 every 30 seconds, be empty after about 37 minutes and lose the parcel 90 seconds later.</p>
+<p style="margin-top:8px"><span class="tag ex">v0.2.5</span> <strong>Rows 1 to 4 run on production since this evening (<a href="#s19i">§19.9</a>).</strong> What follows is what would have happened before.</p>
+<p><strong>No Nous should buy land on production until rows 1 to 4 run there.</strong> With the figures proposed in this sheet (1000 to start, the cheapest parcel at 400), the Nous would have 600 left, pay 8 every 30 seconds, be empty after about 37 minutes and lose the parcel 90 seconds later.</p>
 <p>The property cycle built in §19.7 is therefore <strong>off by default</strong>. It runs only when the Brain is started with <code>BRAIN_PROPERTY_CYCLE=on</code>.</p>
 <p>One change of behaviour comes with row 2: a reclaimed parcel now has no owner in memory, as the database always recorded, instead of being reported as the treasury's.</p></div>
 <div class="box"><span class="k">More errors of mine</span>
@@ -1866,7 +1879,44 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 </ul></div>
 </div>
 <div class="dq"><span class="k">Q17 can no longer wait</span>
+<p><span class="tag ex">DECIDED · v0.2.5</span> <strong>One trunk, as recommended below, and done</strong> (<a href="#s19i">§19.9</a>). What is still open in Q17 is the question it started as: how this sheet's catalog and the two plans on the other branch become one catalog and one interior view.</p>
 <p><strong>Two sessions are solving the same problem on two branches.</strong> <code>main</code> now holds the property cycle, a clock follower and the upkeep fix. <code>research/atlas-simulator</code>, which production runs, holds 57 commits that are not on <code>main</code>, among them its own clock mechanism and the runner rebinding. A trial merge of <code>main</code> into that branch conflicts in exactly one file, the parcel registry, and only because of a stray byte that made git treat it as binary; everything else merges by itself. The clock follower stands back when the other mechanism has delivered a tick, so the two can coexist. But the upkeep fix reaches production only through that branch. <strong>Recommendation:</strong> one trunk. Merge <code>main</code> into <code>research/atlas-simulator</code> (it carries the upkeep fix and the property cycle), deploy the Grid from it, and then merge that branch back so that production and <code>main</code> are the same code again.</p></div>
+
+<h3 id="s19i">19.9 Deployed — one trunk, and the fix runs on production <span class="tag ex">v0.2.5</span></h3>
+<p>The operator answered "yes, merge and deploy". By then the session working on <code>research/atlas-simulator</code> had already merged <code>main</code> into it. I read its resolution of the one conflicting file before using it: the stray byte is gone and the upkeep fix is intact. Then, in order:</p>
+<div class="tbl"><table>
+<tr><th>Step</th><th>What was done</th><th>Evidence</th></tr>
+<tr><td class="num">1</td><td>Gate on the merged branch, in a fresh clone</td><td>Grid: type check clean, 4,324 tests pass (one run had two failures in a timing-dependent alerting test that the merge does not touch; it passes alone and in the second full run). Brain: 1,509 tests pass, twice.</td></tr>
+<tr><td class="num">2</td><td>What the deploy carries</td><td>Between the commit production ran and the merged one, the Grid's source differs in four files only: the parcel registry, the parcel store, the upkeep scanner and the start-up wiring. No database migration. Dashboard code is unchanged.</td></tr>
+<tr><td class="num">3</td><td>Deploy</td><td>The server's checkout was moved forward to the merged commit, the Grid image rebuilt and the Grid container replaced. Healthy after 15 seconds. The previous image is kept as <code>noesiis-grid:pre-upkeep-fix-2026-11-21</code>.</td></tr>
+<tr><td class="num">4</td><td>Production, first check</td><td>Clock, parcel feed, site and reports answer 200. 53 parcels, none owned, all maintained. The tick started again from 0.</td></tr>
+<tr><td class="num">5</td><td>Production, second check</td><td>The compiled code inside the running container holds the fix. The scenario below ran inside that container, and again inside the old image.</td></tr>
+<tr><td class="num">6</td><td>Back to one trunk</td><td><code>research/atlas-simulator</code> merged into <code>main</code>. The two trees were identical.</td></tr>
+</table></div>
+<p><strong>The same scenario on the old and the new code.</strong> It runs in memory, in a separate process: it reads and writes nothing of production's state. A buyer takes the 400 parcel; the upkeep scanner is then run tick by tick.</p>
+<div class="tbl"><table>
+<tr><th>Measured</th><th>Image production ran until tonight</th><th>Container production runs now</th></tr>
+<tr><td>A funded owner, 50 ticks: times charged</td><td class="num">50</td><td class="num">1</td></tr>
+<tr><td>The same owner one full period later: times charged</td><td class="num">51</td><td class="num">2</td></tr>
+<tr><td>An owner who cannot pay, after 50 ticks</td><td>parcel taken; "reclaimed" 16 times</td><td>still the owner; condition worn; reclaimed 0 times</td></tr>
+<tr><td>After three missed periods</td><td>owner recorded as the treasury; "reclaimed" twice more</td><td>no owner, no structure; reclaimed once</td></tr>
+<tr><td>Can the reclaimed parcel be bought again?</td><td>refused</td><td>sold</td></tr>
+</table></div>
+<div class="grid2">
+<div class="box"><span class="k">What this deploy does not show</span>
+<ul>
+<li><strong>No parcel is owned on production,</strong> so the scanner has charged nobody there yet. The table shows the code production runs, not a charge that happened.</li>
+<li><strong>Rows 5 to 7 of §19.8 are still open</strong>, on <code>main</code> and on production: roles survive a reclaim, condition is not saved between periods, and ticks do not survive a restart. Tonight's restart set the tick to 0 again; with no owned parcel it cost nothing.</li>
+<li><strong>Links 1 to 3 have not moved.</strong> No Brain runs on production, the founders have no civic identity, and endowments are off.</li>
+</ul></div>
+<div class="box red"><span class="k">More errors of mine</span>
+<ul>
+<li><strong>27.</strong> The clock follower I built posted the actions a tick produced, and the handler already posts them. Every word, move and trade of a Nous driven by the follower would have reached the Grid twice. My tests used a stand-in handler that did not post, so they could not see it. Fixed: the follower never posts.</li>
+<li><strong>28.</strong> The follower could start a decision while the other clock mechanism's decision was still running, because that mechanism skips a tick when the Nous is busy and the follower then saw a tick nobody had handled. Fixed in the handler: one decision at a time, and a tick that arrives during a decision is skipped by whoever offers it.</li>
+<li><strong>29.</strong> My first deploy command checked the wrong reference on the server and stopped before changing anything. The server tracks only <code>main</code>, so its record of the other branch was two days old. The guard did its job; the mistake was mine.</li>
+</ul></div>
+</div>
+<p class="small">Noticed and not changed: the handler has an older fault in the same function, an error handler that names a module it never imports. It can only fail when a stored skill record is unreadable. It is not part of this work.</p>
 
 <!-- ============================================================ -->
 <h2 id="s20">20 · Sources · Glossary</h2>

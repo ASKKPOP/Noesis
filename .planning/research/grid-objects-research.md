@@ -206,3 +206,14 @@ enrolled Brain's `post_actions` answer 404.
 - **Q17 is now blocking:** the upkeep fix reaches production only through
   `research/atlas-simulator`. A trial merge of `main` into it conflicts in one file
   (`grid/src/civic/parcel-registry.ts`, binary because of a NUL byte on that branch).
+
+## Deployed (v0.2.5, 2026-11-21)
+
+- **The upkeep and reclaim fix runs on production.** Measured in production's own Grid container
+  against the image it ran before: 1 charge vs 50 in 50 ticks; reclaimed once vs repeatedly; a
+  reclaimed parcel can be bought again.
+- **One trunk.** `main` -> `research/atlas-simulator` -> production -> back to `main` (PR #29).
+  The trunk half of Q17 is settled; joining the three plans into one catalog is still open.
+- **Clock follower corrected**: it posted actions twice and could overlap a running decision.
+- **Unchanged:** no Brain on production, no owned parcel, endowments off, property cycle off
+  unless `BRAIN_PROPERTY_CYCLE=on`.

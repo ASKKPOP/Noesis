@@ -357,3 +357,29 @@ Still open in the Grid's reclaim path, not fixed: role edges survive a reclaim; 
 persisted between periods; a failing `persistReclaim` leaves memory and database apart; tick
 stamps (`last_upkeep_tick`, `acquired_at_tick`) are not comparable across a Grid restart, because
 the Grid's tick starts again from 0.
+
+## Deployed, the same evening
+
+The operator approved merging `main` into the branch production runs and deploying the Grid
+from it. The upkeep fix now runs on production: the same in-memory scenario charges a funded
+owner 50 times in 50 ticks on the image production ran before, and once on the container it
+runs now. `research/atlas-simulator` was then merged back, so `main` and production are one line
+of code again. The precondition for step 7 (funding) is met. The property cycle is still off
+unless `BRAIN_PROPERTY_CYCLE=on`; switching it on is a step of the first run.
+
+**Two clock mechanisms, and two defects where they met.** A wire-connected Brain now has the
+firehose `TickDriver` (the other branch's) and the clock follower of §0 (this design's). Reading
+them together showed two defects in the follower:
+
+- **It posted every action a second time.** `on_tick` already forwards its batch to the Grid
+  when a wire client is set; the follower then posted what `on_tick` returned. The follower no
+  longer posts anything.
+- **It could start a second decision alongside a running one.** `TickDriver` skips a tick while
+  the Nous is deciding; the follower then saw a tick nobody had handled and delivered it.
+  `on_tick` now runs one decision at a time: a tick that arrives during a decision is skipped,
+  whoever offers it. Over the local socket nothing changes, because that path already delivers
+  one tick at a time.
+
+The follower stays as the fallback for a Brain whose firehose is not delivering. It could not be
+shown from here that the firehose reaches a Brain outside the Grid's host, because the firehose
+needs an enrolled Brain's token; that is the first thing the first run will show.

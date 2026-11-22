@@ -162,6 +162,8 @@ class BrainHandler:
         # The last tick on_tick was called with, from any source. The clock follower
         # reads it so it does not deliver a tick a socket bridge already delivered.
         self._last_tick_seen = -1
+        # True while a decision is running: a tick that arrives then is skipped (see on_tick).
+        self._tick_in_flight = False
         # W-A (Mind, 2026-07-02): two-timescale mind loop. The slow planner
         # decomposes the top Telos goal into GoalLedger tasks; the fast decision
         # cycle works the next task every ~20 ticks under ONE coherent intent
@@ -1780,6 +1782,19 @@ class BrainHandler:
             log.warning("[Brain] sleep-time compute failed: %s", exc)
 
     async def on_tick(self, params: dict[str, Any]) -> list[dict[str, Any]]:
+        """One decision at a time. A tick that arrives while the Nous is still
+        deciding is skipped, never queued and never run alongside: the firehose
+        TickDriver and the clock follower can both deliver a tick, and a local
+        model can take longer to think than the Grid takes to tick."""
+        if self._tick_in_flight:
+            return []
+        self._tick_in_flight = True
+        try:
+            return await self._on_tick(params)
+        finally:
+            self._tick_in_flight = False
+
+    async def _on_tick(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle world clock tick — opportunity for autonomous action.
 
         params:
