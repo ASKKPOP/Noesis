@@ -136,6 +136,7 @@ async def test_three_grid_ticks_take_a_funded_nous_to_a_furnished_home():
         did=ME,
     )
     h._grid_wire_client = wire
+    h._property_cycle_enabled = True   # off by default (BRAIN_PROPERTY_CYCLE=on)
 
     state: dict = {}
     for _ in range(3):
@@ -174,6 +175,7 @@ async def test_a_nous_that_says_none_changes_nothing():
         did=ME,
     )
     h._grid_wire_client = wire
+    h._property_cycle_enabled = True   # off by default (BRAIN_PROPERTY_CYCLE=on)
 
     state: dict = {}
     for _ in range(3):
@@ -182,5 +184,37 @@ async def test_a_nous_that_says_none_changes_nothing():
 
     assert grid.writes == []
     assert grid.parcel["owner_civic_did_hash"] is None
+    assert grid.balance == 1000
+    await wire.aclose()
+
+
+async def test_with_the_switch_off_a_willing_nous_buys_nothing():
+    grid = FakeGrid()
+    token_mgr = MagicMock()
+    token_mgr.get_valid_token.return_value = "jwt"
+    token_mgr._civic_did = ME
+    wire = GridWireClient(grid_url="https://grid.noesis.test", token_manager=token_mgr, brain_did="did:noesis:sophia")
+    wire._client = httpx.AsyncClient(transport=httpx.MockTransport(grid.handle))
+
+    with open(SOPHIA_YAML) as f:
+        data = yaml.safe_load(f)
+    llm = AsyncMock()
+    llm.generate = AsyncMock(side_effect=_model)
+    h = BrainHandler(
+        psyche=load_psyche(data=data),
+        thymos=ThymosTracker.from_yaml(data.get("thymos", {})),
+        telos=TelosManager.from_yaml(data.get("telos", {})),
+        llm=llm,
+        did=ME,
+    )
+    h._grid_wire_client = wire
+    h._property_cycle_enabled = False
+
+    state: dict = {}
+    for _ in range(3):
+        await cf.follow_once(wire, h, state, sleep=_no_sleep)
+        await _settle()
+
+    assert grid.writes == []
     assert grid.balance == 1000
     await wire.aclose()

@@ -52,6 +52,42 @@ export interface UpkeepRegistry {
     persistReclaim?(parcel: Parcel): Promise<void> | void;
 }
 
+/** The slice of ParcelRegistry / ParcelStore the production facade is composed from. */
+export interface UpkeepFacadeRegistry {
+    list(filter?: { ownerDid?: string | null }): Parcel[];
+    advanceCondition(address: string): 'worn' | 'derelict' | 'reclaimed';
+    resetCondition(address: string): void;
+    stampUpkeep(address: string, tick: number): void;
+}
+export interface UpkeepFacadeStore {
+    persistUpkeep(parcel: Parcel): Promise<void>;
+    persistReclaim(parcel: Parcel): Promise<void>;
+}
+
+/**
+ * The production UpkeepRegistry: parcel-registry ladder + parcel-store persistence.
+ * main.ts wires exactly this, and the tests exercise exactly this.
+ */
+export function createUpkeepRegistryFacade(
+    registry: UpkeepFacadeRegistry,
+    store: UpkeepFacadeStore,
+): UpkeepRegistry {
+    return {
+        list: (filter) => registry.list(filter),
+        advanceCondition: (address) => registry.advanceCondition(address),
+        resetCondition: (address) => registry.resetCondition(address),
+        persistUpkeep: async (parcel) => {
+            // Memory first: the scanner reads what is due from memory, and by now the
+            // owner has already been charged (or has already slipped a rung). If the
+            // database write below fails, the worst case is one repeated assessment
+            // after a restart — not one on every tick while the database is down.
+            if (parcel.lastUpkeepTick !== undefined) registry.stampUpkeep(parcel.id, parcel.lastUpkeepTick);
+            await store.persistUpkeep(parcel);
+        },
+        persistReclaim: (parcel) => store.persistReclaim(parcel),
+    };
+}
+
 /** Minimal audit surface — the sole-producer append-* functions call `append` on this. */
 export interface UpkeepAudit {
     append(eventType: string, actorDid: string, payload: Record<string, unknown>): unknown;
@@ -74,7 +110,7 @@ export interface UpkeepAccountStore {
 export interface UpkeepScannerDeps {
     registry: UpkeepRegistry;
     audit: UpkeepAudit;
-    /** Retained for the reclaim path (ownerDid = treasuryDid on a reclaimed parcel). */
+    /** The Polis treasury DID. No longer read here: a reclaimed parcel has no owner. */
     treasuryDid: string;
     /** Grid name for the Ledger-A charge keying. */
     gridName: string;
@@ -99,7 +135,7 @@ function periodDue(parcel: Parcel, tick: number): boolean {
  * is assessed in isolation; a failure on one does not stop the sweep).
  */
 export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promise<void> {
-    const { registry, audit, treasuryDid, gridName, accountStore } = deps;
+    const { registry, audit, gridName, accountStore } = deps;
     for (const parcel of registry.list()) {
         // Polis Commons are EXEMPT — never debited, never decayed.
         if (isCommons(parcel)) continue;
@@ -164,7 +200,7 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
                 });
                 const reclaimed: Parcel = {
                     ...parcel,
-                    ownerDid: treasuryDid,
+                    ownerDid: null, // back to the pool, as the registry and the database record it
                     structure: null,
                     condition: 'maintained',
                     missedPeriods: 0,

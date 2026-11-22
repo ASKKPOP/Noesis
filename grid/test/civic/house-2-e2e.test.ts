@@ -268,15 +268,19 @@ describe('HOUSE-2 Definition of Done — furnish → view-gated → upkeep → r
         expect(reclaimed[0].payload.reason).toBe('upkeep_default');
         expect(String(reclaimed[0].payload.former_owner_civic_did_hash)).toBe(sha256Hex(NOUS_A));
 
-        // Ownership → treasury; structure + interior razed; occupants ejected; parcel resale-ready.
+        // No owner (as the database records it); structure + interior razed; occupants
+        // ejected; parcel resale-ready. It used to be TREASURY_DID in memory only, which
+        // kept it in the upkeep sweep and refused every purchase until a restart.
         const reclaimedParcel = parcelRegistry.get(HOME_A)!;
-        expect(reclaimedParcel.ownerDid).toBe(TREASURY_DID);
+        expect(reclaimedParcel.ownerDid).toBeNull();
         expect(reclaimedParcel.structure == null).toBe(true);
         expect(reclaimedParcel.condition).toBe('maintained');
         expect(reclaimedParcel.missedPeriods).toBe(0);
         expect(parcelRegistry.occupants(HOME_A)).toEqual([]);
-        // Back in the treasury inventory for resale.
-        expect(parcelRegistry.list({ ownerDid: TREASURY_DID }).some((p) => p.id === HOME_A)).toBe(true);
+        // Back in the pool for resale — and really purchasable, without a restart.
+        expect(parcelRegistry.list({ ownerDid: null }).some((p) => p.id === HOME_A)).toBe(true);
+        expect(parcelRegistry.purchase(HOME_A, NOUS_B, 1_000_000).ok).toBe(true);
+        parcelRegistry.releaseOwnership(HOME_A);
 
         // ── 5. COMMONS — the Polis Commons parcel was ticked every sweep, never touched ──
         const commonsParcel = parcelRegistry.get(COMMONS)!;

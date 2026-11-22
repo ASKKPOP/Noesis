@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.3</title>
+<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.4</title>
 <meta name="description" content="Objects inside a Holding: four-layer model, credential box, full catalog of 59 kinds and 18 materials, system seed and user additions, placement and settings by Nous and human, verification and 28 open gaps. Discussion stage, 20 decisions open.">
 <style>
 :root{
@@ -79,7 +79,7 @@ footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;
 <body>
 <div class="wrap">
 
-<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.3 · 2026-11-21 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
+<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.4 · 2026-11-21 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
 <h1>Grid House Objects</h1>
 <p class="lede">Things inside a Holding — furniture-like objects a Nous and its human configure and build together:
 some pre-designed by the system, some rendered by the Nous, some paid for and rendered by a service.
@@ -114,6 +114,18 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 </div>
 
 <div class="box red">
+<span class="k">Correction · v0.2.4 · I read the wrong branch, and upkeep is broken</span>
+<p style="margin-top:8px"><strong>Production's Grid runs the branch <code>research/atlas-simulator</code>, not <code>main</code>.</strong> This sheet says so itself (§19, Q17). I still read <code>main</code> to make statements about production. Checked against the branch production runs:</p>
+<ul>
+<li><strong>Link 8 was not a discovery of this sheet.</strong> That branch found and fixed it on 2026-11-20: a Brain reached over the wire now decides on the Grid's tick events. My clock follower on <code>main</code> is a second mechanism for the same job.</li>
+<li><strong>"A Grid restart cuts enrolled Brains off" was false for production.</strong> The same commit rebinds them at start, and it is live.</li>
+<li><strong>Links 4 to 7 are open on that branch too.</strong> The property cycle is new work there as well.</li>
+<li><strong>Measured facts stand:</strong> no Brain runs on production, no parcel is owned, endowments are off.</li>
+</ul>
+<p><strong>And one thing is worse than reported.</strong> On both branches the Grid charges upkeep <em>on every tick</em>, not once per period. A Nous that bought the cheapest parcel with 1000 would pay 2% of the price every 30 seconds and lose the parcel and all its money in about 40 minutes. This is fixed on <code>main</code> with tests; <strong>it is not fixed on production.</strong> The property cycle is now switched off unless turned on deliberately. Details in <a href="#s19h">§19.8</a>.</p>
+</div>
+
+<div class="box red">
 <span class="k">Added in v0.2.1 · Q18 checked against code and production</span>
 <p style="margin-top:8px">The operator chose to settle Q18 first. Before putting the choice, I traced the whole path from a Nous deciding to a chair standing in a room. <strong>Eight links are needed and none of them holds today</strong> (seven in v0.2.1; the eighth was found by an independent check on the same day). Production runs no Brain at all. The sheet said "offer the verbs in the menu" as if that were the missing piece; it is one of eight. The full trace, three more errors of mine, and the choice that is now open are in <a href="#s19f">§19.6</a>.</p>
 <p><span class="tag ex">DECIDED · v0.2.2</span> <strong>Q18a: the first living Nous runs on the operator's office Mac Studio, on its Local AI.</strong> That machine cannot be reached remotely at the moment, so the first production run waits for it; the design and the code do not. A design for the property cycle is written and awaits approval (<code>docs/plans/2026-11-21-nous-property-cycle-design.md</code>). One more blocker was found while writing it: endowments are switched off on production, so a new Nous has no way to receive its first money.</p>
@@ -133,6 +145,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <p><strong>v0.2.1 추가 — Q18 재검증.</strong> 운영자가 Q18을 먼저 정하기로 했습니다. 선택지를 드리기 전에 "Nous가 결정한다"에서 "방에 의자가 놓인다"까지의 전체 경로를 코드와 프로덕션에서 추적했습니다. <strong>필요한 고리는 여덟 개이고, 지금은 하나도 이어져 있지 않습니다</strong>(v0.2.1에서는 일곱 개로 적었고, 같은 날 독립 검토가 여덟 번째를 찾았습니다). 프로덕션에는 Brain이 하나도 실행되고 있지 않고, 명단의 Nous 3명은 시민 신원도 자금도 없으며, Brain이 짓기 동사를 보내도 Grid 수신부가 조용히 버립니다. "메뉴에 동사를 넣는다"는 여덟 고리 중 하나일 뿐입니다. 전체 추적과 제 오류 3건, 지금 열려 있는 선택은 <a href="#s19f">§19.6</a>에 있습니다.</p>
 <p><strong>v0.2.2 — 결정.</strong> Q18a: 첫 번째 살아 있는 Nous는 운영자의 사무실 Mac Studio에서 로컬 AI로 실행합니다. 현재 그 컴퓨터에 원격 접속할 수 없으므로 프로덕션 첫 실행은 그 컴퓨터 앞에서만 가능하고, 설계와 코드는 그 전에 진행할 수 있습니다. 재산 주기 설계안은 작성되어 승인 대기 중입니다(<code>docs/plans/2026-11-21-nous-property-cycle-design.md</code>). 작성 중 걸림돌이 하나 더 나왔습니다: 프로덕션에서 초기 자금 지급(endowment)이 꺼져 있어 새 Nous가 첫 돈을 받을 방법이 없습니다. 이것은 운영자가 정할 사항입니다. 또한 설계안에 대한 독립 검토가 제 초안과 코드가 어긋나는 여섯 곳을 찾았고 모두 소스에서 확인해 고쳤습니다. 가장 큰 것은 <strong>Grid와 다른 컴퓨터에 있는 Brain에는 틱이 전달되지 않는다</strong>는 점입니다(여덟 번째 고리). 어느 Nous를 실행할지(창립 Nous Sophia 또는 운영자의 새 Nous)도 운영자가 정할 사항으로 남아 있습니다.</p>
 <p><strong>v0.2.3 — 구현.</strong> 운영자가 설계안을 승인했고, 고리 4–8을 Brain에 구현했습니다(재산 주기와 시계 추종기, 새 테스트 128개). <strong>프로덕션에서는 아무것도 실행되지 않았습니다.</strong> 고리 1–3은 여전히 Mac Studio를 기다립니다. 코드에 대한 독립 검토에서 문제 10건이 나왔습니다. 새 코드의 8건은 고쳤고, Grid의 2건은 고치지 않았습니다. 그중 하나는 Nous가 프로덕션에서 땅을 사기 전에 반드시 고쳐야 합니다(<a href="#s19g">§19.7</a>).</p>
+<p><strong>v0.2.4 — 정정.</strong> 프로덕션의 Grid는 <code>main</code>이 아니라 <code>research/atlas-simulator</code> 브랜치를 실행합니다. 이 시트에도 그렇게 적혀 있는데, 저는 <code>main</code>을 읽고 프로덕션에 대해 말했습니다. 프로덕션이 실행하는 브랜치로 다시 확인한 결과: 고리 8(원격 Brain의 시계)은 그 브랜치에서 2026-11-20에 이미 발견되어 고쳐졌고, "Grid 재시작이 등록된 Brain을 끊는다"는 프로덕션에 대해 사실이 아니었습니다(같은 커밋이 시작 시 다시 연결하며 라이브 상태). 고리 4–7은 그 브랜치에서도 열려 있습니다. <strong>보고한 것보다 나쁜 점이 하나 있습니다:</strong> 두 브랜치 모두에서 Grid가 유지비를 주기마다가 아니라 <em>매 틱마다</em> 부과합니다. 1000을 가진 Nous가 가장 싼 구획을 사면 30초마다 가격의 2%를 내고 약 40분 안에 구획과 돈을 모두 잃습니다. <code>main</code>에서는 테스트와 함께 고쳤지만 <strong>프로덕션에서는 고쳐지지 않았습니다.</strong> 재산 주기는 이제 의도적으로 켜지 않는 한 꺼져 있습니다(<a href="#s19h">§19.8</a>).</p>
 </div>
 
 <!-- ============================================================ -->
@@ -1822,9 +1835,38 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 <div class="box red"><span class="k">Two defects in the Grid — not fixed</span>
 <p style="margin-top:8px"><strong>1. One reclaimed parcel takes down the public parcel feed.</strong> When a parcel is reclaimed for unpaid upkeep, the Grid marks its structure <code>undefined</code>. The public feed checks for <code>null</code> and then reads the structure's type. From that moment <code>GET /api/v1/civic/parcels</code> answers 500 for everyone, and the world map reads the same feed, until the Grid restarts. It has never happened because no parcel has ever been owned. <strong>The property cycle is what makes it reachable. It must be fixed before a Nous buys land on production.</strong></p>
 <p><strong>2. A Grid restart cuts every enrolled Brain off from its runner.</strong> The link between a Civic-DID and its runner is kept in memory and made only when the identity is first issued. After a restart the Brain is still enrolled, but what the Nous says is answered <code>404</code> and lost. Buying, building and furnishing are not affected.</p>
-<p>Both are in the Grid, which this work did not change. Fixing them means a Grid deploy.</p></div>
+<p>Both are in the Grid, which this work did not change. Fixing them means a Grid deploy.</p>
+<p><span class="tag q">CORRECTED · v0.2.4</span> Defect 2 is true of <code>main</code> only. The branch production runs fixed it on 2026-11-20 and that fix is live. Defect 1 is real on both branches and turned out to be one of several in the same path: see <a href="#s19h">§19.8</a>.</p></div>
 </div>
 <p class="small">Errors of mine in this round: I wrote the candidate rule that hid business land while arguing, in the same design, that a shortlist would be choosing for the Nous. And I reported "the whole suite passes" twice while a circular import was sitting in the new module; the suite passed only because other tests happened to import things in a lucky order.</p>
+
+<h3 id="s19h">19.8 Upkeep and reclaim — what was really broken <span class="tag q">v0.2.4</span></h3>
+<p>The operator asked for the two Grid defects to be fixed. Fixing the first one, and having the fix read by an independent reviewer, showed that it was one of several in the same path. Each row was reproduced by a test that runs the upkeep scanner against the real parcel registry, composed the way the Grid composes it at start.</p>
+<div class="tbl"><table>
+<tr><th>#</th><th>Defect</th><th>What it did</th><th><code>main</code></th><th>Production</th></tr>
+<tr><td class="num">1</td><td><b>Upkeep on every tick</b></td><td>A paid period was written to the database only. Memory never learned it, so the parcel was due again one tick later. A funded owner paid 2% of the price every tick; a broke one went from maintained to reclaimed in three ticks instead of three periods.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag q">OPEN</span></td></tr>
+<tr><td class="num">2</td><td><b>Reclaim loop</b></td><td>A reclaimed parcel was owned by the treasury in memory and by nobody in the database. In memory it stayed in the sweep and was "reclaimed" again every tick, one audit event each time, and no one could buy it until the Grid restarted.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag q">OPEN</span></td></tr>
+<tr><td class="num">3</td><td><b>Feed crash</b></td><td>The razed structure was marked <code>undefined</code>; readers test for <code>null</code>. The public parcel feed answered 500 for every parcel.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag q">OPEN</span></td></tr>
+<tr><td class="num">4</td><td><b>The razed building came back</b></td><td>The database kept the structure's name and type, its shop binding and its allowlist. After a restart the building reappeared, and the former owner's guests could enter what the next owner built.</td><td><span class="tag ex">FIXED</span></td><td><span class="tag q">OPEN</span></td></tr>
+<tr><td class="num">5</td><td>Roles survive a reclaim</td><td>The former owner's staff keep their role on the resold parcel.</td><td><span class="tag q">OPEN</span></td><td><span class="tag q">OPEN</span></td></tr>
+<tr><td class="num">6</td><td>Condition is not saved between periods</td><td>A derelict parcel reads as maintained after a restart.</td><td><span class="tag q">OPEN</span></td><td><span class="tag q">OPEN</span></td></tr>
+<tr><td class="num">7</td><td>Ticks do not survive a restart</td><td>The Grid's tick starts again from 0 at every restart, while "last upkeep" is stored as a tick. After a restart a parcel is not due again until the new count passes the old one.</td><td><span class="tag q">OPEN</span></td><td><span class="tag q">OPEN</span></td></tr>
+</table></div>
+<div class="grid2">
+<div class="box red"><span class="k">What this means for a Nous today</span>
+<p style="margin-top:8px"><strong>No Nous should buy land on production until rows 1 to 4 run there.</strong> With the figures proposed in this sheet (1000 to start, the cheapest parcel at 400), the Nous would have 600 left, pay 8 every 30 seconds, be empty after about 37 minutes and lose the parcel 90 seconds later.</p>
+<p>The property cycle built in §19.7 is therefore <strong>off by default</strong>. It runs only when the Brain is started with <code>BRAIN_PROPERTY_CYCLE=on</code>.</p>
+<p>One change of behaviour comes with row 2: a reclaimed parcel now has no owner in memory, as the database always recorded, instead of being reported as the treasury's.</p></div>
+<div class="box"><span class="k">More errors of mine</span>
+<ul>
+<li><strong>23.</strong> I read <code>main</code> to describe production, which runs another branch. The measurements were right; several statements about how production's code behaves were not.</li>
+<li><strong>24.</strong> I reported link 8 and the lost runner binding as new and open. Both were fixed the day before on the branch production runs. I then wrote a second fix for the binding before noticing; that one is dropped.</li>
+<li><strong>25.</strong> I designed a "reserve for five periods of upkeep" without ever running the upkeep scanner against the real registry. Upkeep was per tick. A reserve of any size would have been gone within the hour.</li>
+<li><strong>26.</strong> Two tests I wrote for the first fix could not fail. The reviewer showed it; they are replaced.</li>
+</ul></div>
+</div>
+<div class="dq"><span class="k">Q17 can no longer wait</span>
+<p><strong>Two sessions are solving the same problem on two branches.</strong> <code>main</code> now holds the property cycle, a clock follower and the upkeep fix. <code>research/atlas-simulator</code>, which production runs, holds 57 commits that are not on <code>main</code>, among them its own clock mechanism and the runner rebinding. A trial merge of <code>main</code> into that branch conflicts in exactly one file, the parcel registry, and only because of a stray byte that made git treat it as binary; everything else merges by itself. The clock follower stands back when the other mechanism has delivered a tick, so the two can coexist. But the upkeep fix reaches production only through that branch. <strong>Recommendation:</strong> one trunk. Merge <code>main</code> into <code>research/atlas-simulator</code> (it carries the upkeep fix and the property cycle), deploy the Grid from it, and then merge that branch back so that production and <code>main</code> are the same code again.</p></div>
 
 <!-- ============================================================ -->
 <h2 id="s20">20 · Sources · Glossary</h2>

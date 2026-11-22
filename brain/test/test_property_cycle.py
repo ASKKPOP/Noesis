@@ -35,6 +35,7 @@ def _handler(llm_text: str | None = None) -> BrainHandler:
         did=ME,
     )
     h.memory = MagicMock()
+    h._property_cycle_enabled = True   # off by default; see the gate tests below
     if llm_text is not None:
         h.llm.generate = AsyncMock(
             return_value=LLMResponse(text=llm_text, model="m", provider="mock", usage={})
@@ -97,6 +98,31 @@ def test_gate_true_on_a_fresh_handler():
     h = _handler()
     h._grid_wire_client = _wire(parcels=[])
     assert h._should_run_property_cycle(0) is True
+
+
+def test_gate_is_off_by_default_and_on_only_when_asked(monkeypatch):
+    # Owning land is only safe on a Grid whose upkeep works, so the cycle must be
+    # switched on deliberately.
+    def fresh() -> BrainHandler:
+        with open(SOPHIA_YAML) as f:
+            data = yaml.safe_load(f)
+        h = BrainHandler(
+            psyche=load_psyche(data=data),
+            thymos=ThymosTracker.from_yaml(data.get("thymos", {})),
+            telos=TelosManager.from_yaml(data.get("telos", {})),
+            llm=AsyncMock(), did=ME,
+        )
+        h._grid_wire_client = _wire(parcels=[])
+        return h
+
+    monkeypatch.delenv("BRAIN_PROPERTY_CYCLE", raising=False)
+    assert fresh()._should_run_property_cycle(1000) is False
+    for value in ("off", "1", "true", ""):
+        monkeypatch.setenv("BRAIN_PROPERTY_CYCLE", value)
+        assert fresh()._should_run_property_cycle(1000) is False
+    for value in ("on", "ON", " on "):
+        monkeypatch.setenv("BRAIN_PROPERTY_CYCLE", value)
+        assert fresh()._should_run_property_cycle(1000) is True
 
 
 # ── nothing to decide → no model call ───────────────────────────────────────

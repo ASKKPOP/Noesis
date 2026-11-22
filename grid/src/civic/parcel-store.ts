@@ -288,14 +288,25 @@ export class ParcelStore {
     }
 
     /**
-     * Persist a reclaim DB-first (Wave 4): ownership returns to the treasury, the
-     * interior + structure are razed, and the condition ladder resets to maintained.
+     * Persist a reclaim DB-first (Wave 4): the parcel goes back to the pool with no
+     * owner, the structure and interior are razed, and the ladder resets to maintained.
+     * Everything that belonged to the former owner's structure is cleared with it — the
+     * loader rebuilds a structure whenever name and type are set, and would attach a
+     * left-over shop binding or allowlist to whatever the next owner builds.
      */
     async persistReclaim(parcel: Parcel): Promise<void> {
         await this.pool.query<ResultSetHeader>(
             `UPDATE civic_parcels
                 SET owner_civic_did = NULL,
+                    acquired_at_tick = NULL,
+                    last_upkeep_tick = NULL,
+                    structure_name = NULL,
+                    structure_type = NULL,
+                    built_at_tick = NULL,
                     structure_interior = NULL,
+                    bound_shop_id = NULL,
+                    entry_policy = 'open',
+                    entry_allowlist = NULL,
                     \`condition\` = 'maintained',
                     missed_periods = 0
               WHERE parcel_id = ?`,
