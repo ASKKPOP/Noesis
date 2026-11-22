@@ -46,8 +46,9 @@ import { appendZoningRoleGranted } from '../../audit/append-zoning-role-granted.
 import { appendZoningRoleRevoked } from '../../audit/append-zoning-role-revoked.js';
 import { appendZoningCoworkSession } from '../../audit/append-zoning-cowork-session.js';
 import { appendSkillBlueprintExecuted } from '../../audit/append-skill-blueprint-executed.js';
-import { isHumanDid } from '../../civic/roles.js';
-import { postTask, claimTask, completeTask } from '../../civic/cowork.js';
+import { isHumanDid, type RoleEdge } from '../../civic/roles.js';
+import type { ParcelRegistry } from '../../civic/parcel-registry.js';
+import { postTask, claimTask, completeTask, getAgreement } from '../../civic/cowork.js';
 import { buildFromBlueprint } from '../../civic/blueprint.js';
 import { coBuildStaffOf } from '../../civic/co-build.js';
 import { NousAccountStore } from '../../economy/nous-account-store.js';
@@ -665,16 +666,22 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             });
             if (policyResult.ok) await guarded.store.persistEntryPolicy(policyResult.parcel);
             // 2. Mint the durable guest role edge (the social bond beside the allowlist entry).
-            const grantor = parcel?.ownerDid ?? buyerDid;
-            const edge = parcelRegistry.grantRole(addr, invitee, 'guest', grantor, tick);
-            // 3. Emit zoning.role_granted (96) — DIDs HEX64; raw DIDs never cross.
-            appendZoningRoleGranted(services.audit, {
-                grantor_civic_did_hash: sha256Hex(edge.granted_by_civic_did),
-                holder_civic_did_hash: sha256Hex(edge.holder_civic_did),
-                parcel_id: addr,
-                role: 'guest',
-                tick,
-            });
+            // Someone who already holds a role here keeps it: an invitation admits, it does
+            // not turn staff into a guest.
+            if (parcelRegistry.roleOf(addr, invitee) === null) {
+                const grantor = parcel?.ownerDid ?? buyerDid;
+                // Database first, so a failed write leaves no role that memory alone knows.
+                await guarded.store.persistRole(addr, pendingEdge(parcelRegistry, addr, invitee, 'guest', grantor, tick));
+                const edge = parcelRegistry.grantRole(addr, invitee, 'guest', grantor, tick);
+                // 3. Emit zoning.role_granted (96) — DIDs HEX64; raw DIDs never cross.
+                appendZoningRoleGranted(services.audit, {
+                    grantor_civic_did_hash: sha256Hex(edge.granted_by_civic_did),
+                    holder_civic_did_hash: sha256Hex(edge.holder_civic_did),
+                    parcel_id: addr,
+                    role: 'guest',
+                    tick,
+                });
+            }
             return reply.code(200).send({ invited: true, parcel_id: addr });
         },
     );
@@ -705,6 +712,8 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
                 return reply.code(403).send({ error: 'not_owner' });
             }
             const tick = currentTick(services);
+            // Database first, so a failed write leaves no role that memory alone knows.
+            await guarded.store.persistRole(addr, pendingEdge(parcelRegistry, addr, holder, role, buyerDid, tick));
             const edge = parcelRegistry.grantRole(addr, holder, role, buyerDid, tick);
             appendZoningRoleGranted(services.audit, {
                 grantor_civic_did_hash: sha256Hex(edge.granted_by_civic_did),
@@ -742,6 +751,9 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             // event reason is owner_revoked (the audit reason mirrors the severance outcome).
             const forCause = rawReason === 'for_cause';
             const tick = currentTick(services);
+            // Database first: if this write fails nothing has changed. The other order would
+            // let a role that was revoked in memory come back at the next restart.
+            await guarded.store.persistRoleRevoke(addr, holder, tick);
             parcelRegistry.revokeRole(addr, holder, forCause ? 'for_cause' : 'owner_revoked', tick);
             appendZoningRoleRevoked(services.audit, {
                 holder_civic_did_hash: sha256Hex(holder),
@@ -804,6 +816,15 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             if (parcelRegistry.roleOf(addr, buyerDid) === null) {
                 return reply.code(403).send({ error: 'no_board_access' });
             }
+            // The task must be on THIS parcel's board: board access was checked for this
+            // parcel only. And whoever posted it must still run the place (owner or staff):
+            // a task left behind by someone who has gone cannot bind them to a new worker.
+            const task = getAgreement(taskId);
+            if (!task || task.parcel_id !== addr) return reply.code(404).send({ error: 'task_not_found' });
+            const hostRole = parcelRegistry.roleOf(addr, task.parties[0]);
+            if (hostRole !== 'owner' && hostRole !== 'staff') {
+                return reply.code(409).send({ error: 'task_host_left' });
+            }
             try {
                 const agreement = claimTask(taskId, buyerDid);
                 return reply.code(200).send({ claimed: true, task_id: agreement.agreement_id });
@@ -828,6 +849,11 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             if (typeof taskId !== 'string' || taskId.length === 0) {
                 return reply.code(400).send({ error: 'invalid_task_id' });
             }
+            // The task must be on THIS parcel's board, so the session is recorded against the
+            // parcel it happened on. No role is asked of the host here, on purpose: once work
+            // is claimed it is owed (D-NH-06), also when the host has since lost the place.
+            const task = getAgreement(taskId);
+            if (!task || task.parcel_id !== addr) return reply.code(404).send({ error: 'task_not_found' });
             const startTick = currentTick(services);
             const endTick = startTick;
             try {
@@ -849,16 +875,32 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
                     }),
                     bumpTrust: (parcelId, workerDid, delta) => parcelRegistry.bumpTrust(parcelId, workerDid, delta),
                 });
-                // Emit zoning.cowork_session (99) — participants HASHED (single hash over the
-                // sorted DID set); NO raw DIDs, NO board/task/scope text crosses (D-60-10).
-                const participants = [agreement.parties[0], agreement.parties[1]].sort();
-                appendZoningCoworkSession(services.audit, {
-                    end_tick: endTick,
-                    parcel_id: addr,
-                    participant_count: participants.length,
-                    participants_hash: sha256Hex(participants.join('|')),
-                    start_tick: startTick,
-                });
+                // Honored work raised the worker's trust on this parcel; save it with the edge.
+                // The work is settled by now: a failed write here must not turn the answer
+                // into an error, so it is logged and the completion stands.
+                const workerEdge = parcelRegistry.rolesFor(addr)
+                    .find((e) => e.holder_civic_did === agreement.parties[1] && e.revoked_tick === undefined);
+                if (workerEdge) {
+                    try {
+                        await guarded.store.persistRoleTrust(addr, workerEdge.holder_civic_did, workerEdge.trust_score);
+                    } catch (e) {
+                        req.log.warn({ parcel_id: addr, err: e instanceof Error ? e.message : String(e) }, 'role_trust_persist_failed');
+                    }
+                }
+                // A session is two minds working together. A task someone posted and did alone
+                // settles, but it is not a session and is not recorded as one.
+                if (agreement.parties[0] !== agreement.parties[1]) {
+                    // Emit zoning.cowork_session (99) — participants HASHED (single hash over the
+                    // sorted DID set); NO raw DIDs, NO board/task/scope text crosses (D-60-10).
+                    const participants = [agreement.parties[0], agreement.parties[1]].sort();
+                    appendZoningCoworkSession(services.audit, {
+                        end_tick: endTick,
+                        parcel_id: addr,
+                        participant_count: participants.length,
+                        participants_hash: sha256Hex(participants.join('|')),
+                        start_tick: startTick,
+                    });
+                }
                 return reply.code(200).send({ completed: true, task_id: agreement.agreement_id });
             } catch (err) {
                 const msg = err instanceof Error ? err.message : 'cowork_error';
@@ -868,6 +910,20 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             }
         },
     );
+}
+
+/**
+ * The edge a grant is about to make, built before memory changes so the database can be
+ * written first. Trust resumes from an earlier edge of the same holder, as grantRole does.
+ */
+function pendingEdge(
+    registry: ParcelRegistry, addr: string, holder: string, role: 'staff' | 'guest', grantor: string, tick: number,
+): RoleEdge {
+    const prior = registry.rolesFor(addr).find((e) => e.holder_civic_did === holder);
+    return {
+        parcel_id: addr, holder_civic_did: holder, role,
+        granted_by_civic_did: grantor, granted_tick: tick, trust_score: prior?.trust_score ?? 0,
+    };
 }
 
 /**

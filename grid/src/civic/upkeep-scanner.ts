@@ -53,7 +53,7 @@ export interface UpkeepRegistry {
     getParcel?(address: string): Parcel | undefined;
     /** DB-first persisters (delegate to ParcelStore). Optional so mocks may omit them. */
     persistUpkeep?(parcel: Parcel): Promise<void> | void;
-    persistReclaim?(parcel: Parcel): Promise<void> | void;
+    persistReclaim?(parcel: Parcel, tick: number): Promise<void> | void;
 }
 
 /** The slice of ParcelRegistry / ParcelStore the production facade is composed from. */
@@ -66,7 +66,7 @@ export interface UpkeepFacadeRegistry {
 }
 export interface UpkeepFacadeStore {
     persistUpkeep(parcel: Parcel): Promise<void>;
-    persistReclaim(parcel: Parcel): Promise<void>;
+    persistReclaim(parcel: Parcel, tick: number): Promise<void>;
 }
 
 /**
@@ -90,7 +90,7 @@ export function createUpkeepRegistryFacade(
             if (parcel.lastUpkeepTick !== undefined) registry.stampUpkeep(parcel.id, parcel.lastUpkeepTick);
             await store.persistUpkeep(parcel);
         },
-        persistReclaim: (parcel) => store.persistReclaim(parcel),
+        persistReclaim: (parcel, tick) => store.persistReclaim(parcel, tick),
     };
 }
 
@@ -168,6 +168,19 @@ async function persistOrWarn(what: string, parcelId: string, write: () => Promis
 }
 
 /**
+ * An event that cannot be written must not undo what already happened, nor reject out of
+ * the sweep. By the time an event is written the charge or the ladder step is done and
+ * recorded; the warning is what is left to say about it.
+ */
+function emitOrWarn(what: string, parcelId: string, emit: () => void): void {
+    try {
+        emit();
+    } catch (e) {
+        console.warn(`[upkeep] ${what}_event_failed parcel_id=${parcelId}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+}
+
+/**
  * Assess upkeep for every owned non-commons parcel at a period boundary. Fire-and-forget
  * from the existing tick callback — never blocks the clock, never throws out (each parcel
  * is assessed in isolation; a failure on one does not stop the sweep).
@@ -195,6 +208,7 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
         const ownerHash = sha256Hex(ownerDid);
 
         if (due > 0) {
+            let charged = false;
             try {
                 // FUNDED — atomic owner nous_accounts → civic_treasury (Ledger A). The
                 // affordability read collapses into the charge: chargeToTreasury does
@@ -206,21 +220,7 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
                     amountWei: BigInt(due),
                     currentTick: tick,
                 });
-                appendTreasuryUpkeepCollected(audit as never, {
-                    amount_wei: due,
-                    owner_civic_did_hash: ownerHash,
-                    parcel_id: parcel.id,
-                    tick,
-                });
-                registry.resetCondition?.(parcel.id);
-                const settled: Parcel = {
-                    ...parcel,
-                    lastUpkeepTick: age,
-                    missedPeriods: 0,
-                    condition: 'maintained',
-                };
-                await registry.persistUpkeep?.(settled);
-                continue;
+                charged = true;
             } catch (e) {
                 if (!(e instanceof Error && e.message === 'insufficient_balance')) {
                     // Non-affordability error — preserve per-parcel isolation: skip this
@@ -234,6 +234,25 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
                     continue;
                 }
                 // insufficient_balance → fall through to the decay ladder below.
+            }
+            if (charged) {
+                // The owner has paid. Record the period before anything else can fail: a
+                // paid period that memory does not know is charged again on the next tick.
+                registry.resetCondition?.(parcel.id);
+                const settled: Parcel = {
+                    ...parcel,
+                    lastUpkeepTick: age,
+                    missedPeriods: 0,
+                    condition: 'maintained',
+                };
+                await persistOrWarn('upkeep_persist', parcel.id, () => registry.persistUpkeep?.(settled));
+                emitOrWarn('upkeep', parcel.id, () => appendTreasuryUpkeepCollected(audit as never, {
+                    amount_wei: due,
+                    owner_civic_did_hash: ownerHash,
+                    parcel_id: parcel.id,
+                    tick,
+                }));
+                continue;
             }
         }
 
@@ -253,7 +272,7 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
                     lastUpkeepTick: age,
                 };
                 try {
-                    await registry.persistReclaim?.(reclaimed);
+                    await registry.persistReclaim?.(reclaimed, tick);
                 } catch (e) {
                     console.warn(`[upkeep] reclaim_persist_failed parcel_id=${parcel.id}: ${e instanceof Error ? e.message : String(e)}`);
                     continue;
@@ -264,27 +283,22 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
             if (state === 'reclaimed') {
                 // The roles the reclaim ended, each on the chain before the reclaim itself.
                 for (const edge of rolesBefore) {
-                    appendZoningRoleRevoked(audit as never, {
+                    emitOrWarn('role_revoked', parcel.id, () => appendZoningRoleRevoked(audit as never, {
                         holder_civic_did_hash: sha256Hex(edge.holder_civic_did),
                         parcel_id: parcel.id,
                         reason: 'severance_complete',
                         tick,
-                    });
+                    }));
                 }
-                appendZoningParcelReclaimed(audit as never, {
+                emitOrWarn('reclaim', parcel.id, () => appendZoningParcelReclaimed(audit as never, {
                     former_owner_civic_did_hash: ownerHash,
                     parcel_id: parcel.id,
                     reason: 'upkeep_default',
                     tick,
-                });
+                }));
             } else {
-                // worn | derelict — emit the new condition + persist the advanced ladder.
-                appendZoningConditionChanged(audit as never, {
-                    condition: state as ParcelCondition,
-                    owner_civic_did_hash: ownerHash,
-                    parcel_id: parcel.id,
-                    tick,
-                });
+                // worn | derelict — record the rung (memory, then the database) before the
+                // event: a rung memory has not stamped is taken again on the next tick.
                 const advanced: Parcel = {
                     ...parcel,
                     condition: state as ParcelCondition,
@@ -292,6 +306,12 @@ export async function onUpkeepTick(tick: number, deps: UpkeepScannerDeps): Promi
                     lastUpkeepTick: age,
                 };
                 await persistOrWarn('ladder_persist', parcel.id, () => registry.persistUpkeep?.(advanced));
+                emitOrWarn('condition', parcel.id, () => appendZoningConditionChanged(audit as never, {
+                    condition: state as ParcelCondition,
+                    owner_civic_did_hash: ownerHash,
+                    parcel_id: parcel.id,
+                    tick,
+                }));
             }
         }
     }

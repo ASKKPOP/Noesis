@@ -119,13 +119,22 @@ describe('reclaimed parcel — the database forgets the razed structure', () => 
     it('persistReclaim clears the structure columns, so the structure does not return after a restart', async () => {
         const { ParcelStore } = await import('../../src/civic/parcel-store.js');
         const query = vi.fn(async () => [{ affectedRows: 1 }, []]);
-        const store = new ParcelStore({ query } as never);
+        const conn = { query, beginTransaction: vi.fn(async () => {}), commit: vi.fn(async () => {}), rollback: vi.fn(async () => {}), release: vi.fn() };
+        const store = new ParcelStore({ query, getConnection: async () => conn } as never);
         const { registry } = buildApp();
         ownBuildAndLose(registry);
-        await store.persistReclaim(registry.get(ADDR)!);
+        await store.persistReclaim(registry.get(ADDR)!, 42);
 
-        expect(query).toHaveBeenCalledTimes(1);
-        const [sql, params] = query.mock.calls[0] as unknown as [string, unknown[]];
+        // Two writes: the roles that end with the reclaim, then the parcel row itself.
+        const calls = query.mock.calls as unknown as Array<[string, unknown[]]>;
+        expect(calls).toHaveLength(2);
+        expect(conn.beginTransaction).toHaveBeenCalledTimes(1);
+        expect(conn.commit).toHaveBeenCalledTimes(1);
+        expect(conn.rollback).not.toHaveBeenCalled();
+        expect(conn.release).toHaveBeenCalledTimes(1);
+        expect(calls[0][0].replace(/\s+/g, ' ')).toContain('UPDATE civic_parcel_roles SET revoked_tick = ? WHERE parcel_id = ? AND revoked_tick IS NULL');
+        expect(calls[0][1]).toEqual([42, ADDR]);
+        const [sql, params] = calls[1];
         const flat = sql.replace(/\s+/g, ' ');
         // rowToParcel rebuilds a structure whenever name and type are both non-null.
         expect(flat).toContain('structure_name = NULL');

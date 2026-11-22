@@ -214,7 +214,7 @@ describe('Phase 62.6-02 — underfunded owner rolls back and decays (insufficien
             'zoning.parcel_reclaimed', OWNED, expect.objectContaining({ reason: 'upkeep_default' }),
         );
         // Back to the pool with no owner: what persistReclaim writes (owner_civic_did = NULL).
-        expect(persistReclaim).toHaveBeenCalledWith(expect.objectContaining({ ownerDid: null, structure: null }));
+        expect(persistReclaim).toHaveBeenCalledWith(expect.objectContaining({ ownerDid: null, structure: null }), 10080);
     });
 });
 

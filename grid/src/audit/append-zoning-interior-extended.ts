@@ -15,7 +15,7 @@ import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
 
-const PARCEL_ID_RE = /^[a-z0-9_-]+:[a-z_]+:\d{4}$/;
+const PARCEL_ID_RE = /^[a-z0-9_-]+:[a-z0-9_]+:\d{4}$/;
 const OBJECT_CLASSES = ['mirror', 'functional'] as const;
 
 /** Closed 4-key payload. Keys ALPHABETICAL. */

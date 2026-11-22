@@ -307,24 +307,46 @@ export class ParcelStore {
      * loader rebuilds a structure whenever name and type are set, and would attach a
      * left-over shop binding or allowlist to whatever the next owner builds.
      */
-    async persistReclaim(parcel: Parcel): Promise<void> {
-        await this.pool.query<ResultSetHeader>(
-            `UPDATE civic_parcels
-                SET owner_civic_did = NULL,
-                    acquired_at_tick = NULL,
-                    last_upkeep_tick = NULL,
-                    structure_name = NULL,
-                    structure_type = NULL,
-                    built_at_tick = NULL,
-                    structure_interior = NULL,
-                    bound_shop_id = NULL,
-                    entry_policy = 'open',
-                    entry_allowlist = NULL,
-                    \`condition\` = 'maintained',
-                    missed_periods = 0
-              WHERE parcel_id = ?`,
-            [parcel.id],
-        );
+    async persistReclaim(parcel: Parcel, tick: number): Promise<void> {
+        // Two writes, one transaction: the roles that end with the reclaim and the parcel
+        // row itself land together or not at all. Apart, a stop between them would leave
+        // either an owner whose staff have silently gone, or a pool parcel whose former
+        // staff still hold a role under the next owner.
+        const conn = await this.pool.getConnection();
+        try {
+            await conn.beginTransaction();
+            // Every active edge on the parcel ends at this tick; the rows stay as history
+            // (never deleted, D-60-02), exactly like an owner's revoke.
+            await conn.query<ResultSetHeader>(
+                `UPDATE civic_parcel_roles
+                    SET revoked_tick = ?
+                  WHERE parcel_id = ? AND revoked_tick IS NULL`,
+                [tick, parcel.id],
+            );
+            await conn.query<ResultSetHeader>(
+                `UPDATE civic_parcels
+                    SET owner_civic_did = NULL,
+                        acquired_at_tick = NULL,
+                        last_upkeep_tick = NULL,
+                        structure_name = NULL,
+                        structure_type = NULL,
+                        built_at_tick = NULL,
+                        structure_interior = NULL,
+                        bound_shop_id = NULL,
+                        entry_policy = 'open',
+                        entry_allowlist = NULL,
+                        \`condition\` = 'maintained',
+                        missed_periods = 0
+                  WHERE parcel_id = ?`,
+                [parcel.id],
+            );
+            await conn.commit();
+        } catch (e) {
+            await conn.rollback();
+            throw e;
+        } finally {
+            conn.release();
+        }
     }
 
     /* ───────────────── Shop⇄structure binding + place name (v40 / D-60-03/07) ─────────────────
@@ -386,6 +408,16 @@ export class ParcelStore {
                 SET revoked_tick = ?
               WHERE parcel_id = ? AND holder_civic_did = ?`,
             [revokedTick, parcelId, holderDid],
+        );
+    }
+
+    /** Persist the trust an active edge has earned (honored work raises it). */
+    async persistRoleTrust(parcelId: string, holderDid: string, trustScore: number): Promise<void> {
+        await this.pool.query<ResultSetHeader>(
+            `UPDATE civic_parcel_roles
+                SET trust_score = ?
+              WHERE parcel_id = ? AND holder_civic_did = ?`,
+            [trustScore, parcelId, holderDid],
         );
     }
 

@@ -12,7 +12,7 @@ import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
 
-const PARCEL_ID_RE = /^[a-z0-9_-]+:[a-z_]+:\d{4}$/;
+const PARCEL_ID_RE = /^[a-z0-9_-]+:[a-z0-9_]+:\d{4}$/;
 
 /** Closed 3-key payload. Keys ALPHABETICAL. */
 export interface TreasuryParcelRevenuePayload {
