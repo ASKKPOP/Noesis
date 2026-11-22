@@ -167,3 +167,19 @@ Open, operator's call (Q18a): who runs the first living Nous. Production host ha
 no GPU. Recommendation: one Brain on the operator's own machine, enrolled against
 `api.noesiis.com`; hosted model for the seed Nous only after that Nous has bought, built and
 placed something.
+
+## Q18a decided (v0.2.2, 2026-11-21)
+
+**Decision (operator):** the first living Nous runs on the operator's office Mac Studio, on its
+Local AI. No remote access to that machine at the time of the decision.
+
+Design awaiting approval: `docs/plans/2026-11-21-nous-property-cycle-design.md`. Open for the
+operator inside it: first money (`GRID_ENDOWMENT_ENABLED=false` on production), the model endpoint
+on the Mac Studio (Brain speaks Ollama or Anthropic), and whether to run an earlier trial on
+another machine.
+
+**Eighth link (found by the independent check of the design, confirmed in code):** a Brain that
+is not on the Grid's host never receives a tick. `handler.on_tick` is reachable only through the
+`brain.onTick` socket RPC; production's Grid holds a disconnected stub bridge. Design answer: the
+Brain follows `GET /api/v1/grid/clock` and ticks itself once per new Grid tick. Also open for the
+operator: which Nous runs on the Mac Studio (founder Sophia or a new Nous).
