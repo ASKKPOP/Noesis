@@ -75,7 +75,8 @@ def test_action_type_drive_crossed_present() -> None:
     # + 1 (Phase 72b: TOOL_USED) = 50
     # + 2 (O1a Organs: JOIN_GROUP, LEAVE_GROUP) = 52
     # + 4 (W3 economic: PAY_DUE, BID_RFP, REQUEST_APPROVAL, POST_CONVERSATION) = 56
-    assert len(list(ActionType)) == 56
+    # + 1 (a debt can be paid: PAY_IOU) = 57
+    assert len(list(ActionType)) == 57
 
 
 def test_action_type_drive_crossed_position() -> None:

@@ -4,8 +4,8 @@
  * The vitest suite runs these writes against a fake database that cannot hold two open
  * transactions apart, so it cannot show what the database itself guarantees: that a task
  * is claimed by exactly one worker, settled exactly once (also by two requests at the same
- * moment), that a settlement which cannot be paid leaves no trace, and that two Grids in
- * one database may use the same ids. This script asserts those on a real MySQL 8.0, after
+ * moment), that a settlement which cannot be paid leaves no trace, that a debt is paid
+ * exactly once, and that two Grids in one database may use the same ids. This script asserts those on a real MySQL 8.0, after
  * the migration chain (run check-migrations-real-mysql.ts first; same env variables).
  *
  * Usage (CI: .github/workflows/real-mysql-migrations.yml):
@@ -59,7 +59,7 @@ async function main(): Promise<void> {
         assert.equal(claimed.status, 'claimed');
         assert.equal(claimed.worker_civic_did, claims[0] ? B : C, 'the row names the claim that won');
         const worker = claimed.worker_civic_did as string;
-        console.log(`${TAG} 1/6 one claim wins`);
+        console.log(`${TAG} 1/7 one claim wins`);
 
         // 2. A settlement flips the row and moves the money together, once.
         await store.settleCowork({ agreementId: 'cowork:0', tick: 5, pay: { fromDid: A, toDid: worker, amountWei: 50n } });
@@ -68,7 +68,7 @@ async function main(): Promise<void> {
         assert.equal(await balance(worker), 50);
         assert.equal(await outcome(() => store.settleCowork({ agreementId: 'cowork:0', tick: 6, pay: { fromDid: A, toDid: worker, amountWei: 50n } })), 'cowork_not_completable');
         assert.equal(await balance(A), 50, 'a second settlement moves nothing');
-        console.log(`${TAG} 2/6 a task is paid once`);
+        console.log(`${TAG} 2/7 a task is paid once`);
 
         // 3. A settlement the host cannot cover leaves the task claimed; the debt is then written with the flip.
         await store.persistCowork(task('cowork:1'), { created: 1 });
@@ -79,7 +79,7 @@ async function main(): Promise<void> {
             { iou_id: 'iou:0', creditor_civic_did: B, debtor_civic_did: A, amount_wei: 1000, reason_ref: 'cowork:1', created_tick: 7, settled_tick: null },
         ] });
         assert.equal((await row('cowork:1')).status, 'completed');
-        console.log(`${TAG} 3/6 unpaid work becomes a debt, written with the task`);
+        console.log(`${TAG} 3/7 unpaid work becomes a debt, written with the task`);
 
         // 4. Two settlements of one task at the same moment: one lands.
         await store.persistCowork(task('cowork:2'), { created: 1 });
@@ -88,14 +88,14 @@ async function main(): Promise<void> {
         const both = await Promise.all([1, 2].map(() => outcome(() => store.settleCowork({ agreementId: 'cowork:2', tick: 9, pay: { fromDid: A, toDid: B, amountWei: 10n } }))));
         assert.deepEqual([...both].sort(), ['cowork_not_completable', 'ok']);
         assert.equal(await balance(A), before - 10, 'the money moved once');
-        console.log(`${TAG} 4/6 two settlements at once pay once`);
+        console.log(`${TAG} 4/7 two settlements at once pay once`);
 
         // 5. Another Grid in the same database may use the same ids.
         await other.persistCowork({ ...task('cowork:0'), scope_ref: 'theirs' }, { created: 1 });
         await other.persistIou({ iou_id: 'iou:0', creditor_civic_did: C, debtor_civic_did: A, amount_wei: 7, reason_ref: 'theirs', created_tick: 1, settled_tick: null });
         assert.equal((await row('cowork:0')).status, 'completed', 'this Grid\'s row is untouched');
         assert.equal((await row('cowork:0', `${G}_b`)).status, 'posted');
-        console.log(`${TAG} 5/6 ids are per Grid`);
+        console.log(`${TAG} 5/7 ids are per Grid`);
 
         // 6. A restart finds what was stored, as the right types, and mints fresh ids after it.
         _resetCowork(); _resetLedger();
@@ -105,7 +105,31 @@ async function main(): Promise<void> {
         assert.equal(typeof tasks[0].settlement_amount_wei, 'number');
         assert.deepEqual(allIous().map((e) => [e.iou_id, e.amount_wei, e.settled_tick]), [['iou:0', 1000, null]]);
         assert.equal(outstandingFor(A), 1000);
-        console.log(`${TAG} 6/6 a restart finds the board and the ledger`);
+        console.log(`${TAG} 6/7 a restart finds the board and the ledger`);
+
+        // 7. A debt is paid by its debtor, in full, once; a payment that cannot be covered leaves no trace.
+        const debt = async () => {
+            const [r] = await pool.query('SELECT amount_wei, settled_tick, paid_tick FROM civic_credit_ledger WHERE grid_name = ? AND iou_id = ?', [G, 'iou:0']);
+            return (r as Array<Record<string, unknown>>)[0];
+        };
+        const pay = (amountWei: bigint, debtorDid = A, creditorDid = B) => outcome(() => store.payIou({ iouId: 'iou:0', debtorDid, creditorDid, amountWei, tick: 11 }));
+        assert.equal(await pay(1000n), 'insufficient_balance');
+        assert.equal((await debt()).settled_tick, null, 'the mark was rolled back with the failed payment');
+        await accts.credit({ gridName: G, civicDid: A, amountWei: 2000n, currentTick: 11 });
+        assert.equal(await pay(999n), 'iou_not_payable', 'not the amount the database holds');
+        assert.equal(await pay(1000n, C), 'iou_not_payable', 'not the debtor');
+        assert.equal(await pay(1000n, A, C), 'iou_not_payable', 'not the creditor');
+        assert.equal(await store.iouPaidTick('iou:0'), null, 'not paid yet');
+        const [a0, b0] = [await balance(A), await balance(B)];
+        const twice = await Promise.all([pay(1000n), pay(1000n)]);
+        assert.deepEqual([...twice].sort(), ['iou_not_payable', 'ok']);
+        assert.equal(await balance(A), a0 - 1000, 'the debtor paid once');
+        assert.equal(await balance(B), b0 + 1000, 'the creditor was paid once');
+        assert.equal((await debt()).settled_tick, 11);
+        assert.equal((await debt()).paid_tick, 11, 'recorded as a payment');
+        assert.equal(await store.iouPaidTick('iou:0'), 11);
+        assert.equal(await store.iouPaidTick('iou:none'), null);
+        console.log(`${TAG} 7/7 a debt is paid once`);
         console.log(`${TAG} PASS`);
     } finally {
         await pool.query('DELETE FROM civic_cowork_agreements WHERE grid_name IN (?, ?)', [G, `${G}_b`]);

@@ -1872,4 +1872,14 @@ export const MIGRATIONS: Migration[] = [
             ALTER TABLE civic_credit_ledger DROP PRIMARY KEY, ADD PRIMARY KEY (iou_id)
         `,
     },
+    {
+        // A debt ends in three ways: its debtor pays it, an opposite debt cancels it, or a
+        // role is removed and severance closes it. All three only stamped settled_tick, so
+        // a debt that was paid in money looked exactly like one that was never paid.
+        // paid_tick is set by a payment and by nothing else.
+        version: 80,
+        name: 'civic_credit_ledger_add_paid_tick',
+        up: `ALTER TABLE civic_credit_ledger ADD COLUMN paid_tick INT UNSIGNED NULL AFTER settled_tick`,
+        down: `ALTER TABLE civic_credit_ledger DROP COLUMN paid_tick`,
+    },
 ];

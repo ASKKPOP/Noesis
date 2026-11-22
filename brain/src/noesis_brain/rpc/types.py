@@ -144,6 +144,9 @@ class ActionType(str, Enum):
     #   request_approval  {human_did, kind, summary, payload, deadline_tick}
     #   post_conversation {partner_did, text}
     PAY_DUE           = "pay_due"           # POST /api/v1/civic/dues/{due_id}/pay
+    # A debt can be paid: work the host could not pay at once leaves an IOU, and the
+    # debtor pays it in full when it chooses to. The Grid checks debtor and funds.
+    PAY_IOU = "pay_iou"  # -> /api/v1/civic/ious/:iou_id/pay. Metadata: {iou_id}
     BID_RFP           = "bid_rfp"           # POST /api/v1/procurement/notices/{notice_id}/bids
     REQUEST_APPROVAL  = "request_approval"  # POST /api/v1/civic/approvals
     POST_CONVERSATION = "post_conversation" # POST /api/v1/civic/conversation/{partner_did}/messages
@@ -363,7 +366,7 @@ def build_group_action(action_type: ActionType, **metadata: Any) -> Action:
 # ──────────────────────────────────────────────────────────────────────────
 # W3 — Economic capability builder.
 #
-# build_economic_action() is the SCHEMA GATE for the four economic verbs.
+# build_economic_action() is the SCHEMA GATE for the economic verbs.
 # It validates the documented metadata shape and raises ValueError when a
 # required key is missing or when action_type is not an economic verb.
 #
@@ -377,6 +380,7 @@ def build_group_action(action_type: ActionType, **metadata: Any) -> Action:
 
 _ECONOMIC_REQUIRED_KEYS: dict[ActionType, tuple[str, ...]] = {
     ActionType.PAY_DUE: ("due_id", "method"),
+    ActionType.PAY_IOU: ("iou_id",),
     ActionType.BID_RFP: ("notice_id", "price_wei", "artifact_spec"),
     ActionType.REQUEST_APPROVAL: ("human_did", "kind", "summary", "payload", "deadline_tick"),
     ActionType.POST_CONVERSATION: ("partner_did", "text"),

@@ -152,6 +152,7 @@ def civic_land_route(
 # ──────────────────────────────────────────────────────────────────────────
 ECONOMIC_ROUTES: dict[ActionType, tuple[str, str]] = {
     ActionType.PAY_DUE: ("POST", "/api/v1/civic/dues/{due_id}/pay"),
+    ActionType.PAY_IOU: ("POST", "/api/v1/civic/ious/{iou_id}/pay"),
     ActionType.BID_RFP: ("POST", "/api/v1/procurement/notices/{notice_id}/bids"),
     ActionType.REQUEST_APPROVAL: ("POST", "/api/v1/civic/approvals"),
     ActionType.POST_CONVERSATION: ("POST", "/api/v1/civic/conversation/{partner_did}/messages"),
@@ -523,6 +524,18 @@ class GridWireClient:
         data = await self._econ_get(f"/api/v1/civic/parcels/{parcel_id}/interior")
         interior = data.get("interior") if isinstance(data, dict) else None
         return interior if isinstance(interior, dict) else None
+
+    async def fetch_ious(self) -> dict[str, list[dict[str, Any]]]:
+        """GET /api/v1/civic/ious — the Nous's own outstanding debts ("i_owe") and
+        credits ("owed_to_me"). Both lists are empty on any error."""
+        data = await self._econ_get("/api/v1/civic/ious")
+        out: dict[str, list[dict[str, Any]]] = {"i_owe": [], "owed_to_me": []}
+        if isinstance(data, dict):
+            for key in out:
+                rows = data.get(key)
+                if isinstance(rows, list):
+                    out[key] = [r for r in rows if isinstance(r, dict)]
+        return out
 
     async def post_civic_land_action(self, action: Any, parcel_id: str) -> tuple[bool, str | None]:
         """Send one civic-land Action DIRECTLY to its civic-parcels route.

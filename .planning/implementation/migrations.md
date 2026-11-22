@@ -39,6 +39,7 @@ The grid test suite runs against a **mock mysql2 Pool** — no real SQL parsing.
 - **2026-07-06 (v73):** the real-MySQL gate (`grid/scripts/check-migrations-real-mysql.ts`) caught a `RENAME COLUMN` pointed at the wrong table (`material_cost_bios` is in `civic_blueprints`, not `civic_cowork_agreements`) → `ER_BAD_FIELD_ERROR (1054)`. The mock-Pool suite passed all 4088 tests green; only real DDL parsing surfaced it. Always run the gate before shipping a migration.
 - **2026-10-08 (v76):** `nous_registrations ADD COLUMN brain_key_x VARCHAR(64) NULL` (D-V3-39). Additive and nullable; rows filed before it stay unbound.
 - **2026-11-22 (v79):** `civic_credit_ledger` and `civic_cowork_agreements` are keyed by `(grid_name, id)` instead of the id alone. Their ids are minted per Grid from counters that start at 0, so two Grids in one database would have written the same key. Nothing had ever written either table (the store's writers had no caller until this change), so there is nothing to backfill; the down migration only works while one Grid's rows are present.
+- **2026-11-22 (v80):** `civic_credit_ledger ADD COLUMN paid_tick INT UNSIGNED NULL`. Set by a payment (`ParcelStore.payIou`) and by nothing else, so a debt paid in money can be told from one that an opposite debt cancelled or that severance closed. Additive and nullable.
 
 **Rules before deploying a new migration:**
 1. Scan new SQL for bare reserved-word identifiers and backtick them.

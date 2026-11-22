@@ -49,7 +49,7 @@ import { appendSkillBlueprintExecuted } from '../../audit/append-skill-blueprint
 import { isHumanDid, type RoleEdge } from '../../civic/roles.js';
 import type { ParcelRegistry } from '../../civic/parcel-registry.js';
 import { postTask, claimTask, completeTask, getAgreement, removeAgreement } from '../../civic/cowork.js';
-import { recordIou, allIous, outstandingBetween, type LedgerDeps } from '../../civic/credit-ledger.js';
+import { recordIou, settleIou, allIous, outstandingBetween, type LedgerDeps, type IouEntry } from '../../civic/credit-ledger.js';
 import { buildFromBlueprint } from '../../civic/blueprint.js';
 import { coBuildStaffOf } from '../../civic/co-build.js';
 import { NousAccountStore } from '../../economy/nous-account-store.js';
@@ -752,18 +752,21 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             // event reason is owner_revoked (the audit reason mirrors the severance outcome).
             const forCause = rawReason === 'for_cause';
             const tick = currentTick(services);
-            // Database first: if this write fails nothing has changed. The other order would
-            // let a role that was revoked in memory come back at the next restart.
-            await guarded.store.persistRoleRevoke(addr, holder, tick);
+            // One ledger step, so a waiting revoke never leaves the database saying "revoked"
+            // while memory still grants the role. Database first: if that write fails nothing
+            // has changed; the other order would let a revoked role come back at a restart.
             // Severance settles every debt between the two in the ledger; note which, and
             // save them as they stand afterwards.
-            const drained = outstandingBetween(buyerDid, holder).map((e) => e.iou_id);
-            parcelRegistry.revokeRole(addr, holder, forCause ? 'for_cause' : 'owner_revoked', tick);
-            try {
-                await saveIous(guarded.store, drained);
-            } catch (e) {
-                req.log.warn({ parcel_id: addr, err: e instanceof Error ? e.message : String(e) }, 'severance_ledger_persist_failed');
-            }
+            await withLedger(async () => {
+                await guarded.store.persistRoleRevoke(addr, holder, tick);
+                const drained = outstandingBetween(buyerDid, holder).map((e) => e.iou_id);
+                parcelRegistry.revokeRole(addr, holder, forCause ? 'for_cause' : 'owner_revoked', tick);
+                try {
+                    await saveIous(guarded.store, drained);
+                } catch (e) {
+                    req.log.warn({ parcel_id: addr, err: e instanceof Error ? e.message : String(e) }, 'severance_ledger_persist_failed');
+                }
+            });
             appendZoningRoleRevoked(services.audit, {
                 holder_civic_did_hash: sha256Hex(holder),
                 parcel_id: addr,
@@ -889,45 +892,50 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
                 // IOU. Either way the task row and what settles it are written in ONE database
                 // transaction (ParcelStore.settleCowork): the row goes claimed → completed only
                 // once, so a task can be paid once, also across a restart.
-                const touched = new Set<string>();
-                const noteIou: LedgerDeps = {
-                    persistIou: (e) => { touched.add(e.iou_id); },
-                    persistIouSettle: (id) => { touched.add(id); },
-                };
-                let paid = false;
-                const agreement = await completeTask(taskId, buyerDid, {
-                    funded: true,
-                    start_tick: startTick,
-                    end_tick: endTick,
-                    // Funded: flip the row and move host → worker together. An underfunded host
-                    // throws insufficient_balance with nothing changed, and completeTask falls
-                    // back to an IOU.
-                    settleWei: async (from, to, amt) => {
-                        await guarded.store.settleCowork({
-                            agreementId: taskId, tick: endTick,
-                            pay: { fromDid: from, toDid: to, amountWei: BigInt(amt) },
-                        });
-                        paid = true;
-                    },
-                    recordIou: (creditor, debtor, amount, reasonRef, tick) => {
-                        recordIou(creditor, debtor, amount, reasonRef, tick, noteIou);
-                    },
-                    bumpTrust: (parcelId, workerDid, delta) => parcelRegistry.bumpTrust(parcelId, workerDid, delta),
-                });
-                let saved = paid;
-                if (!paid) {
-                    // No money moved (an IOU stands in memory, or the host did the work itself):
-                    // flip the row and write the debts together. If this fails nothing was paid;
-                    // the task reads as claimed again after a restart and can be finished then.
-                    try {
-                        const byId = new Map(allIous().map((e) => [e.iou_id, e]));
-                        const ious = [...touched].map((id) => byId.get(id)).filter((e) => e !== undefined);
-                        await guarded.store.settleCowork({ agreementId: taskId, tick: endTick, ious });
-                        saved = true;
-                    } catch (e) {
-                        req.log.warn({ parcel_id: addr, task_id: taskId, err: e instanceof Error ? e.message : String(e) }, 'cowork_settlement_persist_failed');
+                // The ledger changes one request at a time: between a debt changing in memory
+                // and that change being saved, no payment and no other settlement may act on it.
+                const { agreement, saved } = await withLedger(async () => {
+                    const touched = new Set<string>();
+                    const noteIou: LedgerDeps = {
+                        persistIou: (e) => { touched.add(e.iou_id); },
+                        persistIouSettle: (id) => { touched.add(id); },
+                    };
+                    let paid = false;
+                    const agreement = await completeTask(taskId, buyerDid, {
+                        funded: true,
+                        start_tick: startTick,
+                        end_tick: endTick,
+                        // Funded: flip the row and move host → worker together. An underfunded host
+                        // throws insufficient_balance with nothing changed, and completeTask falls
+                        // back to an IOU.
+                        settleWei: async (from, to, amt) => {
+                            await guarded.store.settleCowork({
+                                agreementId: taskId, tick: endTick,
+                                pay: { fromDid: from, toDid: to, amountWei: BigInt(amt) },
+                            });
+                            paid = true;
+                        },
+                        recordIou: (creditor, debtor, amount, reasonRef, tick) => {
+                            recordIou(creditor, debtor, amount, reasonRef, tick, noteIou);
+                        },
+                        bumpTrust: (parcelId, workerDid, delta) => parcelRegistry.bumpTrust(parcelId, workerDid, delta),
+                    });
+                    let saved = paid;
+                    if (!paid) {
+                        // No money moved (an IOU stands in memory, or the host did the work itself):
+                        // flip the row and write the debts together. If this fails nothing was paid;
+                        // the task reads as claimed again after a restart and can be finished then.
+                        try {
+                            const byId = new Map(allIous().map((e) => [e.iou_id, e]));
+                            const ious = [...touched].map((id) => byId.get(id)).filter((e) => e !== undefined);
+                            await guarded.store.settleCowork({ agreementId: taskId, tick: endTick, ious });
+                            saved = true;
+                        } catch (e) {
+                            req.log.warn({ parcel_id: addr, task_id: taskId, err: e instanceof Error ? e.message : String(e) }, 'cowork_settlement_persist_failed');
+                        }
                     }
-                }
+                    return { agreement, saved };
+                });
                 // A settlement the database did not take will be done again after a restart.
                 // Its trust and its session are recorded then, once — not now and again later.
                 if (!saved) return reply.code(200).send({ completed: true, task_id: agreement.agreement_id });
@@ -969,6 +977,107 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             }
         },
     );
+
+    // --- GET /api/v1/civic/ious (the caller's own outstanding debts and credits) ---
+    app.get('/api/v1/civic/ious', async (req, reply) => {
+        const guarded = requireCivicWriter(req, reply, services);
+        if (!guarded) return reply;
+        const me = guarded.buyerDid;
+        // A debt is bookkeeping between two: each side sees its own, nobody sees another's.
+        const row = (e: IouEntry, counterparty: string) => ({
+            iou_id: e.iou_id, counterparty_civic_did: counterparty, amount_wei: e.amount_wei, created_tick: e.created_tick,
+        });
+        const open = allIous().filter((e) => e.settled_tick === null);
+        return reply.code(200).send({
+            i_owe: open.filter((e) => e.debtor_civic_did === me).map((e) => row(e, e.creditor_civic_did)),
+            owed_to_me: open.filter((e) => e.creditor_civic_did === me).map((e) => row(e, e.debtor_civic_did)),
+        });
+    });
+
+    // --- POST /api/v1/civic/ious/:id/pay (the debtor pays one debt, in full) ---
+    app.post<{ Params: { id: string } }>(
+        '/api/v1/civic/ious/:id/pay',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply;
+            const me = guarded.buyerDid;
+            const iouId = req.params.id;
+            if (!/^iou:\d{1,12}$/.test(iouId)) return reply.code(400).send({ error: 'invalid_iou_id' });
+            return withLedger(async () => {
+                const entry = allIous().find((e) => e.iou_id === iouId);
+                // Only the two parties may learn that the debt exists.
+                if (!entry || (entry.debtor_civic_did !== me && entry.creditor_civic_did !== me)) {
+                    return reply.code(404).send({ error: 'iou_not_found' });
+                }
+                if (entry.debtor_civic_did !== me) return reply.code(403).send({ error: 'not_debtor' });
+                if (entry.settled_tick !== null) return reply.code(409).send({ error: 'iou_already_settled' });
+                const tick = currentTick(services);
+                try {
+                    // Database first, in one transaction: the row is marked settled and the money
+                    // moves together, or neither does. Memory follows only once that has landed.
+                    await guarded.store.payIou({
+                        iouId, debtorDid: me, creditorDid: entry.creditor_civic_did,
+                        amountWei: BigInt(entry.amount_wei), tick,
+                    });
+                } catch (err) {
+                    const msg = err instanceof Error ? err.message : '';
+                    if (msg === 'insufficient_balance') return reply.code(402).send({ error: 'insufficient_funds' });
+                    // The database did not take this payment, or its answer was lost. If it
+                    // holds the debt as PAID, memory is behind: a paid debt left outstanding
+                    // there would still be netted against, and written back as unpaid.
+                    const paidTick = await guarded.store.iouPaidTick(iouId).catch(() => null);
+                    if (paidTick !== null) {
+                        settleIou(iouId, paidTick);
+                        if (msg.startsWith('iou_not_payable')) {
+                            return reply.code(409).send({ error: 'iou_already_settled' });   // paid by an earlier request
+                        }
+                        req.log.warn({ iou_id: iouId, err: msg }, 'iou_payment_answer_lost');
+                        return reply.code(200).send({ paid: true, iou_id: iouId, amount_wei: entry.amount_wei });
+                    }
+                    if (msg.startsWith('iou_not_payable')) return reply.code(409).send({ error: 'iou_not_payable' });
+                    throw err;
+                }
+                settleIou(iouId, tick);
+                return reply.code(200).send({ paid: true, iou_id: iouId, amount_wei: entry.amount_wei });
+            });
+        },
+    );
+}
+
+/**
+ * The ledger changes one request at a time. A debt can change in memory (two debts
+ * cancelling, a role removed) a moment before that change is saved; a payment or another
+ * settlement that acted in between would work from one picture and write over the other.
+ * One process, so a chain of promises is the whole lock. Never call it from inside itself.
+ */
+let ledgerTail: Promise<unknown> = Promise.resolve();
+/** How long the ledger waits for one request before letting the next one in. */
+export const LEDGER_WAIT_MS = 30_000;
+export function withLedger<T>(fn: () => Promise<T>, waitMs = LEDGER_WAIT_MS): Promise<T> {
+    // `turnOver` settles when this step has ended, or has been given up on. It is what the
+    // next request waits for.
+    let release!: () => void;
+    const turnOver = new Promise<void>((resolve) => { release = resolve; });
+    const step = async (): Promise<T> => {
+        // The clock starts when the step STARTS, not when it joined the queue: a request
+        // that waited long behind a stalled one still gets its whole turn. A step that
+        // never returns (a stalled database call) must not hold every later payment and
+        // settlement until a restart; after `waitMs` the next goes ahead, and it is logged,
+        // because from then on the two may overlap.
+        const timer = setTimeout(() => {
+            console.warn(`[ledger] a ledger step has not returned after ${waitMs}ms; letting the next request in`);
+            release();
+        }, waitMs);
+        try {
+            return await fn();
+        } finally {
+            clearTimeout(timer);
+            release();
+        }
+    };
+    const run = ledgerTail.then(step, step);
+    ledgerTail = turnOver;
+    return run;
 }
 
 /** Task ids with a completion in flight (one process, so a Set is the whole lock). */
