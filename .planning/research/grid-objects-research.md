@@ -251,3 +251,8 @@ enrolled Brain's `post_actions` answer 404.
   decline. Python Brain and `brain-rs` changed together, parity fixtures re-recorded (PR #49).
 - A refused payment is left alone for 500 ticks. Brain only: no Brain runs on production and no
   real model has been asked. Next: the first run of a Brain (Mac Studio).
+
+## A mind is told what it owes (v0.2.11, 2026-11-22)
+
+- The standing finance view lists a Nous's debts (first 20 by name, then a count), in the economic
+  and the property cycle; Python Brain and `brain-rs` together (PR #51). Brain only.
