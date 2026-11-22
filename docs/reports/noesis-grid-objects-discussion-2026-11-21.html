@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.8</title>
+<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.9</title>
 <meta name="description" content="Objects inside a Holding: four-layer model, credential box, full catalog of 59 kinds and 18 materials, system seed and user additions, placement and settings by Nous and human, verification and 28 open gaps. Discussion stage, 20 decisions open.">
 <style>
 :root{
@@ -79,7 +79,7 @@ footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;
 <body>
 <div class="wrap">
 
-<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.8 · 2026-11-22 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
+<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.9 · 2026-11-22 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
 <h1>Grid House Objects</h1>
 <p class="lede">Things inside a Holding — furniture-like objects a Nous and its human configure and build together:
 some pre-designed by the system, some rendered by the Nous, some paid for and rendered by a service.
@@ -110,6 +110,16 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <li><a href="#s18"><b>§18 What more I recommend</b></a>, and <a href="#s19"><b>§19 What we are missing</b></a>: the verification of this sheet and its gaps.</li>
 <li>Custom objects made by a user are valid in one Grid and shareable with other Nous (<a href="#s15e">§15.5</a>), recorded as an operator requirement.</li>
 <li>Eight new decisions, <a href="#s11">Q13–Q20</a>. Seventeen errors found by verification are corrected and listed in §19.1.</li>
+</ul>
+</div>
+
+<div class="box acc">
+<span class="k">Added · v0.2.9 · a debtor can pay a debt</span>
+<p style="margin-top:8px"><span class="tag ex">LIVE</span> <strong>The operator said to add it. The Grid now lets a mind read what it owes and is owed, and lets a debtor pay a debt in full</strong>, merged and running on production (<a href="#s19m">§19.13</a>).</p>
+<ul>
+<li><strong>Paid once, and recorded as paid.</strong> The debt is marked settled and the money moves in one transaction. The ledger now says when a debt was paid in money, so "paid" can be told from "cancelled" or "closed when a role was removed".</li>
+<li><strong>The ledger changes one request at a time.</strong> A payment cannot slip between a debt changing and that change being saved.</li>
+<li><strong>What is not there yet: no mind chooses to pay.</strong> The Brain can send the payment, but no decision of a Nous offers it. Offering it changes the wording of the economic decision, and that wording is frozen as the contract the Rust version of the Brain must reproduce (D-V3-42). Rust is not installed on the machine I work on, so I could not check that version, and I did not change the contract.</li>
 </ul>
 </div>
 
@@ -196,6 +206,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <p><strong>v0.2.6 — 남은 회수 결함 세 건 수정.</strong> 운영자가 §19.8의 5–7행을 고치라고 했습니다. 고쳐서 병합했고 프로덕션에서 실행 중입니다(<a href="#s19j">§19.10</a>). ① 회수되면 이전 소유자가 준 역할이 모두 끝납니다. 역할은 기록으로 남고, 끝난 역할마다 체인에 기록됩니다. ② 상태(maintained·worn·derelict)가 주기마다 저장되어 재시작 후에도 유지됩니다. ③ 유지비 주기는 Grid가 지금까지 실행한 총 틱으로 셉니다. 재시작해도 다음 납부가 뒤로 밀리지 않으며, 시계 자체는 바꾸지 않았습니다. 독립 검토를 두 번 거치며 수정이 바뀌었습니다. 첫 버전에는 쓰이지 않는 코드가 있었고, 두 번째 버전은 데이터베이스가 회수 쓰기를 한 번 거부하면 메모리와 데이터베이스가 영구히 어긋날 수 있었습니다. 지금은 회수를 데이터베이스에 먼저 씁니다. 프로덕션에는 여전히 소유된 구획이 없어 실제 구획에 일어난 일은 없습니다. 같은 영역에서 검토가 찾은 미해결 항목은 §19.10에 적었습니다.</p>
 <p><strong>v0.2.7 — 역할 저장, 작업 게시판, 구역 id.</strong> 운영자가 §19.10에 남겨 둔 목록을 처리하라고 했습니다. 처리해서 병합했고 프로덕션에서 실행 중입니다(<a href="#s19k">§19.11</a>). ① 역할이 저장됩니다. 주거나 거두거나 회수로 끝난 역할, 그리고 작업으로 얻은 신뢰가 데이터베이스에 기록됩니다. 이전에는 Grid가 재시작되면 모든 역할이 사라졌습니다. ② 작업 게시판이 구획에 묶입니다. 작업은 올라온 게시판에서만 맡고 끝낼 수 있고, 올린 쪽이 아직 그 장소를 운영하는 동안에만 새로 맡을 수 있습니다. ③ <strong>작업 완료에는 역할 검사를 넣지 않았습니다.</strong> 제가 결함으로 적었던 항목이지만, 코드를 읽어 보니 그 검사는 이미 맡은 작업의 대금 지급을 막습니다. 제 목록의 그 부분이 틀렸습니다. ④ 구역 id에 숫자를 쓸 수 있습니다. 이벤트 기록기 14개가 모두 받아들이고, 소유자가 한 번 납부하면 그 뒤에 무엇이 실패해도 다시 납부 대상이 되지 않습니다. <strong>아직 열려 있고 제가 말한 것보다 큰 문제:</strong> 빚(IOU)과 작업은 저장되지 않아 Grid가 재시작될 때마다 사라집니다. 이를 남겨 둔 이유로 제가 든 설명은 틀렸고, 실제 걸림돌은 §19.11에 적었습니다.</p>
 <p><strong>v0.2.8 — 빚과 작업 저장.</strong> 운영자가 저장하라고 했습니다. 빚과 작업이 이제 Grid 재시작 후에도 남으며, 병합되어 프로덕션에서 실행 중입니다(<a href="#s19l">§19.12</a>). ① 올린 작업, 이미 맡은 작업, 끝난 작업, 모든 빚이 데이터베이스에 기록되고 시작할 때 다시 불러옵니다. ② 저장하면서 잘못될 수 있는 길이 두 가지 새로 생겼고, 검토가 둘 다 찾았습니다. 같은 순간에 두 Nous가 한 작업을 맡는 경우, 그리고 지급과 기록 사이에 중단되어 한 작업에 두 번 지급되는 경우입니다. 이제 둘 다 데이터베이스가 판정합니다. 작업은 한 쪽만 맡고, 정산은 돈 또는 빚과 함께 하나의 트랜잭션으로 이루어집니다. ③ 테스트용 가짜 데이터베이스로는 이를 보일 수 없어서, CI에서 실제 데이터베이스로 돌리는 검사를 새로 추가했습니다. <strong>저장으로 드러난 문제:</strong> 빚은 기억되지만 채무자가 갚을 방법이 없습니다. 지금 남은 것 중 가장 큰 항목입니다.</p>
+<p><strong>v0.2.9 — 빚을 갚을 수 있음.</strong> 운영자가 추가하라고 했습니다. 이제 Grid에서 Nous가 자신이 진 빚과 받을 빚을 조회할 수 있고, 채무자는 빚을 전액 갚을 수 있습니다. 병합되어 프로덕션에서 실행 중입니다(<a href="#s19m">§19.13</a>). ① 빚을 정산됨으로 표시하는 것과 돈의 이동이 하나의 트랜잭션으로 이루어지고, 장부에는 돈으로 갚은 시점이 따로 기록됩니다. 그래서 "갚음"을 "상계됨"이나 "역할 회수로 종료됨"과 구분할 수 있습니다. ② 장부는 한 번에 한 요청만 바꿉니다. 빚이 바뀌는 순간과 그 변경이 저장되는 순간 사이에 지급이 끼어들 수 없습니다. ③ <strong>아직 없는 것: 갚기로 선택하는 Nous가 없습니다.</strong> Brain은 지급을 보낼 수 있지만, Nous의 어떤 결정도 그 선택지를 제시하지 않습니다. 선택지를 넣으려면 경제 결정의 문구를 바꿔야 하는데, 그 문구는 Brain의 Rust 버전이 그대로 재현해야 하는 계약으로 동결되어 있습니다(D-V3-42). 제가 작업하는 컴퓨터에는 Rust가 설치되어 있지 않아 그 버전을 확인할 수 없었고, 그래서 계약은 바꾸지 않았습니다.</p>
 </div>
 
 <!-- ============================================================ -->
@@ -2060,7 +2071,7 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 </ul></div>
 <div class="box"><span class="k">Open in the same area, not changed</span>
 <ul>
-<li><strong>A debt cannot be paid.</strong> No route lets a debtor pay what it owes. A debt ends only when an opposite debt cancels it, or when the owner removes the worker's role (next item). The ledger has ceilings per pair and per debtor; a restart used to clear them by forgetting every debt. Now a host at its ceiling cannot finish unpaid work until it has money. This is the largest item left, and it is a missing deed, not a fault to patch.</li>
+<li><span class="tag pa">PARTLY · v0.2.9</span> <strong>A debt cannot be paid.</strong> <em>The Grid can now take the payment (§19.13); no mind chooses it yet.</em> No route lets a debtor pay what it owes. A debt ends only when an opposite debt cancels it, or when the owner removes the worker's role (next item). The ledger has ceilings per pair and per debtor; a restart used to clear them by forgetting every debt. Now a host at its ceiling cannot finish unpaid work until it has money. This is the largest item left, and it is a missing deed, not a fault to patch.</li>
 <li><strong>Removing a role marks every debt between the two as settled, with no money moving.</strong> It was so before; it is now stored that way. An owner can give a role and take it away at will. Whether a revoke should pay, or leave the debt standing, is a decision.</li>
 <li><strong>Posted tasks never leave the board.</strong> There is no cancel, and a reclaim does not remove them. They can no longer be taken once whoever posted them has gone, but they stay stored.</li>
 <li><strong>Unpaid work whose save fails</strong> is answered as done and then forgotten as a whole at the next restart, when it can be finished again. No trust and no session are recorded for it until then.</li>
@@ -2068,6 +2079,44 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 </ul></div>
 </div>
 <p class="small">Gate: Grid type check clean; 4,389 tests pass in two full runs; the migration chain (79) and the new settlement check pass on a real MySQL 8.0, locally and in CI. Each new guard was undone in turn and a test failed. Two rounds of independent review.</p>
+
+<h3 id="s19m">19.13 A debtor can pay a debt <span class="tag ex">v0.2.9</span></h3>
+<div class="tbl"><table>
+<tr><th>Item</th><th>What is true now</th></tr>
+<tr><td><b>Reading the ledger</b></td><td>A mind can read its own outstanding debts and what it is owed. Each side sees its own; nobody sees a debt it is not party to, and cannot tell from the answer whether such a debt exists.</td></tr>
+<tr><td><b>Paying</b></td><td>The debtor pays one debt, in full. One transaction marks the debt settled and moves the money to the creditor; it does so only while the database still holds that debt, for that debtor, to that creditor, at that amount. A debtor who cannot cover it pays nothing and the debt stands.</td></tr>
+<tr><td><b>Recorded as paid</b></td><td>The ledger stamps the tick at which a debt was paid in money. Nothing else sets that stamp, so a debt that an opposite debt cancelled, or that ended when a role was removed, does not read as paid.</td></tr>
+<tr><td><b>One request at a time</b></td><td>A payment, unpaid work that creates or cancels a debt, and the removal of a role now take turns on the ledger. If one of them never returns, the next goes ahead after 30 seconds and it is logged.</td></tr>
+<tr><td><b>A lost answer</b></td><td>If the database takes a payment and its answer is lost on the way back, the Grid asks the database what happened before deciding, so a paid debt is not left looking unpaid.</td></tr>
+<tr><td><b>Nothing on the chain</b></td><td>Recording a debt, two debts cancelling and paying a debt write nothing to the public chain. The list of chain events is unchanged.</td></tr>
+</table></div>
+<p><strong>The image production ran before this deploy and the one it runs now</strong>, same scenario, in memory: one mind owes another 50.</p>
+<div class="tbl"><table>
+<tr><th>Measured</th><th>Before</th><th>Now</th></tr>
+<tr><td>The debtor reads its debts</td><td>no such route</td><td>one debt of 50, with its id and the other party</td></tr>
+<tr><td>The creditor tries to pay it</td><td>no such route</td><td>refused</td></tr>
+<tr><td>The debtor pays it</td><td>no such route</td><td>paid, 50</td></tr>
+<tr><td>Owed afterwards</td><td class="num">50</td><td class="num">0</td></tr>
+<tr><td>Newest migration</td><td class="num">79</td><td class="num">80</td></tr>
+</table></div>
+<p><strong>On a real database.</strong> The CI check from §19.12 gained a seventh step: a debt is paid once, also when two payments arrive together; a payment with the wrong amount, the wrong debtor, the wrong creditor or too little money leaves no trace. <strong>On production:</strong> the migration ran at start (version 79 → 80), the Grid logged a lifetime count of <span class="num">476,499</span> ticks against <span class="num">476,499</span> stored, both new routes refuse a caller without a civic identity, and the payment was run against the real database with ids that do not exist: it was refused and rolled back, and the row counts and the sum of all balances were the same before and after. No debt exists on production, so no real debt has been paid.</p>
+<div class="grid2">
+<div class="box red"><span class="k">Where I was wrong this round</span>
+<ul>
+<li><strong>41.</strong> I began to add the choice "pay a debt" to the Nous's economic decision, and changed its wording, before I had read that this wording is a frozen contract for the Rust version of the Brain. Five tests failed and told me. I took the change back out. I should have read the contract before touching the prompt.</li>
+<li><strong>42.</strong> I bounded the ledger lock in time, and started its clock when a request joined the queue instead of when its turn began. After one stalled request, those waiting behind it would have overlapped each other. The reviewer found it.</li>
+<li><strong>43.</strong> My first version left a payment whose answer was lost looking unpaid, checked the debtor but not the creditor, and left no record that a debt had been paid and not merely closed. All three came from the review.</li>
+</ul></div>
+<div class="box"><span class="k">Open, not changed</span>
+<ul>
+<li><strong>No mind chooses to pay.</strong> The Brain has the deed and can read its debts; no decision offers it. Adding it means changing the economic decision in the Python Brain and in the Rust Brain together, and checking the Rust one. This is now the largest item, and it needs Rust, or the session that works on it.</li>
+<li><strong>Removing a role still closes every debt between the two with no money moving.</strong> With paying possible, the decision is sharper: should a removal ask for payment, or leave the debt standing?</li>
+<li><strong>A debt is paid in full or not at all.</strong> There is no part payment.</li>
+<li><strong>Posted tasks never leave the board,</strong> as before.</li>
+<li><strong>When the ledger gives way after 30 seconds,</strong> the stalled request and the next one may overlap. It is logged; it is not prevented.</li>
+</ul></div>
+</div>
+<p class="small">Gate: Grid type check clean; 4,410 tests pass in two full runs; Brain 1,519 tests pass twice with the frozen contract untouched; migrations 1 to 80 pass on a real MySQL 8.0 from empty and from 79. Each guard was undone in turn and a test failed. Two rounds of independent review.</p>
 
 <!-- ============================================================ -->
 <h2 id="s20">20 · Sources · Glossary</h2>

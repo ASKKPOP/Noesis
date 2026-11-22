@@ -237,3 +237,10 @@ enrolled Brain's `post_actions` answer 404.
 - The IOU ledger and the task board are persisted and reloaded at start; a task is claimed by a
   conditional write and settled in one transaction with the money or the debt. Migration 79.
 - Live on production (PR #44). Largest open item now: a debtor has no way to pay an IOU.
+
+## A debtor can pay a debt (v0.2.9, 2026-11-22)
+
+- Grid: read one's debts and credits; pay a debt in full, one transaction, recorded as paid
+  (`paid_tick`, migration 80); the ledger changes one request at a time. Live (PR #46).
+- Brain: the verb and the read exist; no decision offers it, because the economic prompt is a
+  frozen contract for the Rust port (D-V3-42). Largest open item.
