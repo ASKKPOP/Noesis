@@ -50,7 +50,8 @@ describe('ZKP Identity Proofs (Schnorr PoK)', () => {
 
     it('rejects a proof with tampered challenge', () => {
         const proof = createIdentityProof(alice, roomId);
-        proof.challenge = proof.challenge.replace(/^./, 'f'); // Tamper first char
+        // Change the first hex char to a different one ('f' → '0', anything else → 'f').
+        proof.challenge = (proof.challenge[0] === 'f' ? '0' : 'f') + proof.challenge.slice(1);
 
         const result = verifyIdentityProof(proof);
         expect(result.valid).toBe(false);
