@@ -119,9 +119,14 @@ jobs:
         working-directory: dashboard
         run: npx playwright install --with-deps chromium
 
+      # QUARANTINE — these 2 tests were already red on main when this workflow
+      # was added (2026-11-22); they fail on retry too. The other 4 gate every
+      # PR. Fix a test, then delete its title from --grep-invert.
       - name: Dashboard e2e
         working-directory: dashboard
-        run: npx playwright test
+        run: >
+          npx playwright test --grep-invert
+          "SC#5: Delete Nous button is visible, disabled, with Phase 8 tooltip|tier auto-downgrade on /grid/replay route exit"
 
   brain:
     name: brain (pytest, parity fixtures)

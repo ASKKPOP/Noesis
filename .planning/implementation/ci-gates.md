@@ -37,6 +37,36 @@ flowchart TD
 | **Hygiene** | `check-no-silent-catch` · `check-observability-no-todo` · `check-gates-wired` | No silent `.catch`; structured logging; no TODO in observability paths; every gate script is run by a CI workflow |
 | **Docs** | `check-wiki` · `check-map-sync` | Wiki page invariants (front-matter, At-a-glance diagram, one canonical per topic) — see `PROTOCOL.md`; the canonical world map and its dashboard copy stay identical |
 
+## Test suites in CI
+
+`.github/workflows/tests.yml` runs the test suites on every pull request and on every push to `main` (added 2026-11-22; before that CI ran only `grid/test/rig`).
+
+| Job | Node | Runs |
+|-----|------|------|
+| `protocol` | 22 | `tsc` build + tests. Node 22 because libp2p's dependencies call `Promise.withResolvers`, which Node 20 lacks |
+| `grid` | 20 | protocol build, grid `tsc` build, full `vitest run`. Node 20 is the production image (`docker/Dockerfile.grid`) |
+| `web` | 22 | dashboard unit tests (minus the quarantine below), steward type-check + tests |
+| `dashboard-e2e` | 22 | Playwright on Chromium, pinned to `ubuntu-24.04` (Playwright 1.50 has no Chromium for 26.04) |
+| `brain` | — | `uv sync --frozen` + `pytest` (includes the parity fixtures, `test/test_parity_fixtures.py`) |
+| `brain-rs` | — | `cargo test --locked` (includes `tests/parity.rs`) |
+
+**Quarantine (dashboard).** Seven test files, 27 failing tests, were already red on `main` when the workflow was added. They are excluded by name in the `web` job so the other 104 files gate every PR. Fix a file, then delete its `--exclude` line:
+
+- `src/app/portal/portal-dashboard.test.ts` (12)
+- `src/components/portal/__tests__/PortalShell.test.tsx` (5)
+- `src/components/portal/PortalShell.test.tsx` (4)
+- `src/app/grid/components/firehose-row.test.tsx` (3)
+- `src/components/portal/__tests__/PortalSidebarHeader.test.tsx` (1)
+- `src/components/portal/PostComposer.test.tsx` (1)
+- `src/app/grid/components/heartbeat.test.tsx` (1)
+
+**Quarantine (dashboard e2e).** Two of the six Playwright tests were already red on `main` and fail on retry too. They are skipped by title with `--grep-invert` in the `dashboard-e2e` job:
+
+- `agency.spec.ts` — "SC#5: Delete Nous button is visible, disabled, with Phase 8 tooltip"
+- `replay.spec.ts` — "tier auto-downgrade on /grid/replay route exit"
+
+Not in CI: ESLint (no config file exists yet) and the nightly rig bench (scheduled separately in `nightly-rig-bench.yml`).
+
 ## Why gates, not policy text
 
 Each gate exists because the rule it guards is load-bearing and easy to violate silently. The pattern: a philosophy commitment (sovereignty, zero custody, plaintext-never, Nous-only governance, zero-diff audit) becomes a grep/AST check that fails the build, so the invariant survives refactors and new contributors. New audit events, routes, and intervals must satisfy their gate **in the same commit** that introduces them.
