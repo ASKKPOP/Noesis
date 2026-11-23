@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react';
 import type { ParcelFeedEntry } from './OrbitalGenesisMap';
 import { districtCounts, layoutDistrict } from './district-layout';
 import { mountDistrict, type DistrictHandle, type DistrictNous } from './district-scene';
+import { mountBevyDistrict, rendererChoice } from './orbital-bevy';
 import type { Translate } from './map-i18n';
 
 export interface DistrictViewProps {
@@ -27,15 +28,27 @@ export interface DistrictViewProps {
 
 export default function DistrictView({ zoneId, zoneLabel, color, parcels, residents, t, onClose, onHandle }: DistrictViewProps): React.ReactElement {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const overlayRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<DistrictHandle | null>(null);
     const lots = layoutDistrict(parcels, zoneId);
     const counts = districtCounts(lots);
 
+    // The latest lots and Nous, so a scene that takes over (Bevy stopped) starts current.
+    const now = useRef({ lots, residents });
+    now.current = { lots, residents };
+
     useEffect(() => {
-        if (!canvasRef.current) return;
-        const h = mountDistrict(canvasRef.current, color);
-        handleRef.current = h; onHandle(h);
-        (window as unknown as { __districtScene?: DistrictHandle }).__districtScene = h; // for inspection, like __forestScene
+        const canvas = canvasRef.current; const overlay = overlayRef.current;
+        if (!canvas || !overlay) return;
+        let h: DistrictHandle;
+        const attach = (next: DistrictHandle): void => {
+            h = next; handleRef.current = next; onHandle(next);
+            (window as unknown as { __districtScene?: DistrictHandle }).__districtScene = next; // for inspection, like __forestScene
+            next.setLots(now.current.lots); next.setNous(now.current.residents);
+        };
+        // Bevy when it draws the station (option C, D-V3-45); three.js otherwise, or if Bevy stops.
+        const bevy = rendererChoice(window.location.search) === 'three' ? null : mountBevyDistrict(overlay, canvas, color, () => attach(mountDistrict(canvas, color)));
+        attach(bevy ?? mountDistrict(canvas, color));
         return () => { onHandle(null); h.dispose(); handleRef.current = null; };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- one scene per opened district
     }, [zoneId, color]);
@@ -49,7 +62,7 @@ export default function DistrictView({ zoneId, zoneLabel, color, parcels, reside
 
     const mono = "'JetBrains Mono', ui-monospace, monospace";
     return (
-        <div role="region" aria-label={t('districtOf', { zone: zoneLabel })} style={{ position: 'fixed', inset: 0, zIndex: 11, background: '#020610' }}>
+        <div ref={overlayRef} role="region" aria-label={t('districtOf', { zone: zoneLabel })} style={{ position: 'fixed', inset: 0, zIndex: 11, background: '#020610' }}>
             <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
             <div style={{ position: 'absolute', top: 18, left: 22, fontFamily: mono, color: '#f5f0ea' }}>
                 <button

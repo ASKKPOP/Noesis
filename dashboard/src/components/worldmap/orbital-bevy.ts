@@ -12,7 +12,9 @@
 import type { MountOpts, OrbitalHandle, OrbitalObjectEntry } from './orbital-station-scene';
 import type { ParcelFeedEntry } from './OrbitalGenesisMap';
 import type { GridZoneView } from './zone-view';
-import { drawNeonSign } from './neon-sign';
+import { drawLabel, drawNeonSign } from './neon-sign';
+import type { DistrictHandle, DistrictNous } from './district-scene';
+import type { DistrictLot } from './district-layout';
 
 /** The wasm-bindgen exports of viz-rs/src/web.rs. */
 export interface VizModule {
@@ -27,6 +29,14 @@ export interface VizModule {
     set_paused(paused: boolean): void;
     /** `{ parcels, modules, pickables, frames }` as JSON — for checks. */
     stats(): string;
+    district_open(accent: number): void;
+    district_close(): void;
+    district_lots(json: string): void;
+    district_nous(json: string): void;
+    district_act(did: string, sign: string): void;
+    district_pulse(lotId?: string): void;
+    /** `{ open, lots, nous }` as JSON — for checks. */
+    district_stats(): string;
 }
 
 export type OrbitalRenderer = 'bevy' | 'three';
@@ -52,7 +62,7 @@ let importGlue = (): Promise<VizModule> => import(/* webpackIgnore: true */ GLUE
 export const __testing = {
     use(fake: { module: () => Promise<VizModule>; webgl2: boolean }): void {
         importGlue = fake.module; webgl2Available = () => fake.webgl2;
-        modPromise = null; shell = null; earthSent = true; generation = 0; supersede = null;
+        modPromise = null; shell = null; earthSent = true; generation = 0; supersede = null; live = null;
     },
 };
 
@@ -65,7 +75,7 @@ function loadModule(): Promise<VizModule> {
         const mod = await importGlue();
         await mod.default();
         // For inspection (like window.__forestScene): what the Bevy scene holds.
-        (window as unknown as { __noesisViz?: { stats(): unknown } }).__noesisViz = { stats: () => JSON.parse(mod.stats()) };
+        (window as unknown as { __noesisViz?: { stats(): unknown; district(): unknown } }).__noesisViz = { stats: () => JSON.parse(mod.stats()), district: () => JSON.parse(mod.district_stats()) };
         return mod;
     })();
     modPromise.catch(() => { modPromise = null; });
@@ -83,6 +93,11 @@ function bevyShell(): HTMLDivElement {
     c.style.cssText = 'display:block;width:100%;height:100%;outline:none';
     shell.appendChild(c);
     return shell;
+}
+
+function pixels(c: HTMLCanvasElement): { width: number; height: number; data: Uint8Array } {
+    const img = c.getContext('2d')!.getImageData(0, 0, c.width, c.height);
+    return { width: c.width, height: c.height, data: new Uint8Array(img.data.buffer) };
 }
 
 function signPixels(text: string, hex: number): { width: number; height: number; data: Uint8Array } {
@@ -113,6 +128,10 @@ function earthPixels(): Promise<{ width: number; height: number; data: Uint8Arra
  *  show, hide or pause them: an older one (React StrictMode mounts twice; a quick remount)
  *  stops quietly instead of tearing down the newer one. */
 let generation = 0;
+
+/** The mounted Bevy scene, while there is one: the district level borrows its canvas. */
+interface LiveBevy { mod: VizModule; box: HTMLDivElement; home: HTMLCanvasElement; lost: Set<() => void> }
+let live: LiveBevy | null = null;
 /** Ends the previous mount's wait for the first frame when a newer mount starts. */
 let supersede: (() => void) | null = null;
 
@@ -126,8 +145,8 @@ export async function mountOrbitalBevy(canvas: HTMLCanvasElement, opts: MountOpt
     const gen = ++generation;
     supersede?.();
     const mod = await loadModule();
-    const live = (): boolean => gen === generation;
-    if (!live()) throw new Error('bevy: superseded');
+    const isLive = (): boolean => gen === generation;
+    if (!isLive()) throw new Error('bevy: superseded');
     const box = bevyShell();
     canvas.parentElement?.insertBefore(box, canvas);
     let resolveReady!: () => void;
@@ -138,7 +157,8 @@ export async function mountOrbitalBevy(canvas: HTMLCanvasElement, opts: MountOpt
     // The app panicked: it will not draw again on this page. Before ready the mount fails;
     // after it, the caller puts the three.js scene back.
     const fatal = (why: string): void => {
-        if (!live()) return;
+        if (!isLive()) return;
+        if (live) { for (const f of [...live.lost]) f(); live = null; }
         box.remove(); canvas.style.display = 'block';
         if (mounted) onFatal?.(why); else rejectReady(new Error(`bevy: ${why}`));
     };
@@ -147,6 +167,7 @@ export async function mountOrbitalBevy(canvas: HTMLCanvasElement, opts: MountOpt
         onFocusLabel: (l: string) => opts.onFocusLabel?.(l),
         onFocusGrid: (n: string) => opts.onFocusGrid?.(n),
         renderSign: signPixels,
+        renderLabel: (text: string, size: number, color: string) => pixels(drawLabel(text, size, color)),
         onReady: () => resolveReady(),
         onFatal: fatal,
     });
@@ -154,14 +175,16 @@ export async function mountOrbitalBevy(canvas: HTMLCanvasElement, opts: MountOpt
     try {
         await Promise.race([ready, new Promise<never>((_, rej) => { timer = setTimeout(() => rej(new Error('bevy: no frame in time')), READY_TIMEOUT_MS); })]);
     } catch (e) {
-        if (live()) { mod.set_paused(true); box.remove(); }
+        if (isLive()) { mod.set_paused(true); box.remove(); }
         throw e;
     } finally {
         clearTimeout(timer);
     }
-    if (!live()) throw new Error('bevy: superseded');
+    if (!isLive()) throw new Error('bevy: superseded');
     canvas.style.display = 'none';
     mounted = true;
+    const me: LiveBevy = { mod, box, home: canvas, lost: new Set() };
+    live = me;
     if (!earthSent) {
         earthSent = true;
         earthPixels().then(({ width, height, data }) => mod.set_earth(width, height, data))
@@ -174,9 +197,44 @@ export async function mountOrbitalBevy(canvas: HTMLCanvasElement, opts: MountOpt
         focusGrid: (name: string) => mod.focus_grid(name),
         pulse: (parcelId?: string) => mod.pulse(parcelId),
         dispose: () => {
-            if (!live()) return;
+            if (!isLive()) return;
             generation++; // nothing of this mount may act any more
+            if (live === me) live = null;
             mod.set_paused(true); box.remove(); canvas.style.display = 'block';
+        },
+    };
+}
+
+/**
+ * The district level in Bevy (D-V3-44, option C): the same app draws it with its own camera,
+ * so the station's canvas moves into the district overlay (in front of `canvas`, the three.js
+ * district canvas, hidden meanwhile) and goes back on close. Returns null when Bevy is not the
+ * live renderer — the caller then mounts the three.js district. `onLost` is called if Bevy
+ * stops while the district is open (the caller then mounts the three.js district).
+ */
+export function mountBevyDistrict(container: HTMLElement, canvas: HTMLCanvasElement, accent: number, onLost: () => void): DistrictHandle | null {
+    const m = live;
+    if (!m) return null;
+    container.insertBefore(m.box, canvas);
+    canvas.style.display = 'none';
+    m.mod.district_open(accent);
+    let closed = false;
+    const lost = (): void => { closed = true; canvas.style.display = 'block'; onLost(); };
+    m.lost.add(lost);
+    return {
+        setLots: (lots: readonly DistrictLot[]) => { if (!closed) m.mod.district_lots(JSON.stringify(lots)); },
+        setNous: (nous: readonly DistrictNous[]) => { if (!closed) m.mod.district_nous(JSON.stringify(nous)); },
+        act: (did: string, sign: string) => { if (!closed) m.mod.district_act(did, sign); },
+        pulse: (lotId?: string) => { if (!closed) m.mod.district_pulse(lotId); },
+        dispose: () => {
+            if (closed) return;
+            closed = true;
+            m.lost.delete(lost);
+            m.mod.district_close();
+            canvas.style.display = 'block';
+            // Back to the station, unless the station itself has gone meanwhile.
+            if (live === m) m.home.parentElement?.insertBefore(m.box, m.home);
+            else m.box.remove();
         },
     };
 }

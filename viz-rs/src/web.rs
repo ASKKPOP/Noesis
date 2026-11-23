@@ -14,6 +14,7 @@ struct Callbacks {
     on_focus_label: Option<Function>,
     on_focus_grid: Option<Function>,
     render_sign: Option<Function>,
+    render_label: Option<Function>,
     on_ready: Option<Function>,
     on_fatal: Option<Function>,
 }
@@ -53,6 +54,15 @@ impl Host for WebHost {
             (num("width"), num("height"), data)
         })
     }
+    fn label(&self, text: &str, size: u32, css_color: &str) -> (u32, u32, Vec<u8>) {
+        CB.with(|c| {
+            let Some(f) = c.borrow().render_label.clone() else { return (1, 1, vec![0; 4]) };
+            let Ok(img) = f.call3(&JsValue::NULL, &text.into(), &JsValue::from(size), &css_color.into()) else { return (1, 1, vec![0; 4]) };
+            let num = |k: &str| Reflect::get(&img, &k.into()).ok().and_then(|v| v.as_f64()).unwrap_or(1.0) as u32;
+            let data = Reflect::get(&img, &"data".into()).map(|d| Uint8Array::new(&d).to_vec()).unwrap_or_default();
+            (num("width"), num("height"), data)
+        })
+    }
     fn ready(&self) {
         READY.with(|r| r.set(true));
         CB.with(|c| call1(&c.borrow().on_ready, JsValue::TRUE));
@@ -60,12 +70,12 @@ impl Host for WebHost {
 }
 
 /// Start the scene in the canvas matching `selector` (first call), or re-attach the
-/// callbacks (later calls). `callbacks` = { onPick, onFocusLabel, onFocusGrid, renderSign, onReady, onFatal }.
+/// callbacks (later calls). `callbacks` = { onPick, onFocusLabel, onFocusGrid, renderSign, renderLabel, onReady, onFatal }.
 #[wasm_bindgen]
 pub fn start(selector: String, callbacks: JsValue) {
     let get = |k: &str| Reflect::get(&callbacks, &k.into()).ok().and_then(|v| v.dyn_into::<Function>().ok());
     CB.with(|c| {
-        *c.borrow_mut() = Callbacks { on_pick: get("onPick"), on_focus_label: get("onFocusLabel"), on_focus_grid: get("onFocusGrid"), render_sign: get("renderSign"), on_ready: get("onReady"), on_fatal: get("onFatal") };
+        *c.borrow_mut() = Callbacks { on_pick: get("onPick"), on_focus_label: get("onFocusLabel"), on_focus_grid: get("onFocusGrid"), render_sign: get("renderSign"), render_label: get("renderLabel"), on_ready: get("onReady"), on_fatal: get("onFatal") };
     });
     if FATAL.with(|f| f.get()) {
         CB.with(|c| call1(&c.borrow().on_fatal, "the Bevy scene stopped earlier on this page".into()));
@@ -131,5 +141,41 @@ pub fn stats() -> String {
     scene::STATS.with(|s| {
         let (parcels, modules, pickables, frames) = *s.borrow();
         format!(r#"{{"parcels":{parcels},"modules":{modules},"pickables":{pickables},"frames":{frames}}}"#)
+    })
+}
+
+/// Open the district level for a zone drawn in `accent` (0xRRGGBB).
+#[wasm_bindgen]
+pub fn district_open(accent: u32) {
+    scene::push(Cmd::DistrictOpen(accent));
+}
+#[wasm_bindgen]
+pub fn district_close() {
+    scene::push(Cmd::DistrictClose);
+}
+/// The district's lots as district-layout.ts places them (JSON array).
+#[wasm_bindgen]
+pub fn district_lots(json: String) {
+    scene::push(Cmd::DistrictLots(json));
+}
+/// The Nous in the district (JSON array of { did, name, color, asleep }).
+#[wasm_bindgen]
+pub fn district_nous(json: String) {
+    scene::push(Cmd::DistrictNous(json));
+}
+#[wasm_bindgen]
+pub fn district_act(did: String, sign: String) {
+    scene::push(Cmd::DistrictAct(did, sign));
+}
+#[wasm_bindgen]
+pub fn district_pulse(lot_id: Option<String>) {
+    scene::push(Cmd::DistrictPulse(lot_id));
+}
+/// `{ open, lots, nous }` — for checks.
+#[wasm_bindgen]
+pub fn district_stats() -> String {
+    crate::district::DSTATS.with(|s| {
+        let (open, lots, nous) = *s.borrow();
+        format!(r#"{{"open":{open},"lots":{lots},"nous":{nous}}}"#)
     })
 }

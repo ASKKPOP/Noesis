@@ -2,7 +2,8 @@
  * Records the orbital map's layout answers from the TypeScript — the three.js renderer's
  * source of truth — into viz-rs/fixtures/layout-parity.json, which `cargo test` in viz-rs/
  * replays against the Bevy port (option C). The fixture is checked in; this test fails when
- * the TypeScript and the fixture disagree. After a deliberate layout change, re-record with
+ * the TypeScript and the fixture disagree. It also records the district level's lots (as
+ * district-layout.ts places them) and their span, which the Bevy district (viz-rs/src/district.rs) uses. After a deliberate layout change, re-record with
  * `UPDATE_VIZ_PARITY=1 npx vitest run test/orbital-layout-parity.test.ts` and change
  * viz-rs/src/layout.rs in the same PR.
  */
@@ -13,6 +14,7 @@ import { GENESIS_SEED, type ParcelFeedEntry } from '@/components/worldmap/Orbita
 import { layoutParcels, renderStatus } from '@/components/worldmap/orbital-layout';
 import { TEMPLATE_ZONES, zoneColor, zoneSign, type GridZoneView } from '@/components/worldmap/zone-view';
 import { fitDistance } from '@/components/worldmap/grid-focus';
+import { FLOOR_RADIUS, LOT_PITCH, ROW_OFFSET, districtSpan, layoutDistrict } from '@/components/worldmap/district-layout';
 
 const FIXTURE = path.resolve(__dirname, '../../viz-rs/fixtures/layout-parity.json');
 
@@ -39,6 +41,12 @@ const EXTRA: ParcelFeedEntry[] = [
     p('x:rneg', 'harbor', -1, 0),
     p('x:emptyhash', 'business', 2, 30, { owner_civic_did_hash: '' }),
     p('x:feedkind', 'mystery', 2, 60, { zone_kind: 'civic' }),
+    // District level: every kind of building, every condition, someone inside.
+    p('x:home', 'harbor', 4, 40, { zone_kind: 'business', status: 'owned', structure: { type: 'home', visibility: 'public' }, occupant_count: 2 }),
+    p('x:shop', 'harbor', 4, 70, { zone_kind: 'business', status: 'owned', structure: { type: 'shop', visibility: 'public' }, condition: 'worn' }),
+    p('x:workshop', 'harbor', 4, 130, { zone_kind: 'business', status: 'owned', structure: { type: 'workshop', visibility: 'public' }, occupant_count: 1 }),
+    p('x:venue', 'harbor', 4, 160, { zone_kind: 'business', status: 'owned', structure: { type: 'venue', visibility: 'public' }, condition: 'derelict' }),
+    p('x:tower', 'harbor', 4, 220, { zone_kind: 'business', status: 'owned', structure: { type: 'tower', visibility: 'public' } }),
 ];
 
 const CUSTOM_ZONES: GridZoneView[] = [
@@ -66,6 +74,13 @@ function record(): unknown {
         colors: COLOR_IDS.map((id) => ({ id, color: zoneColor(id) })),
         signs_template: TEMPLATE_ZONES.map(zoneSign),
         signs_custom: CUSTOM_ZONES.map(zoneSign),
+        district: {
+            constants: { floor_radius: FLOOR_RADIUS, lot_pitch: LOT_PITCH, row_offset: ROW_OFFSET },
+            zones: [...new Set(parcels.map((q) => q.zone)), 'nowhere'].map((zone) => {
+                const lots = layoutDistrict(parcels, zone);
+                return { zone, lots, span: districtSpan(lots) };
+            }),
+        },
         fit: FIT.map(([r, fov, aspect]) => ({ radius: r, fov, aspect, distance: fitDistance(r, fov, aspect) })),
     };
 }

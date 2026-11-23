@@ -24,6 +24,10 @@ impl Host for TestHost {
         self.0.borrow_mut().signs.push(text.into());
         (4, 1, vec![255; 16])
     }
+    fn label(&self, text: &str, _size: u32, _css: &str) -> (u32, u32, Vec<u8>) {
+        self.0.borrow_mut().signs.push(format!("label:{text}"));
+        (3, 1, vec![255; 12])
+    }
     fn ready(&self) {
         self.0.borrow_mut().ready = true;
     }
@@ -100,4 +104,77 @@ fn scene_runs_and_builds_the_feed() {
     scene::push(Cmd::Earth(10, 10, vec![0; 3]));
     app.update();
     assert_eq!(scene::pickable_ids(app.world_mut()).len(), modules + 3 + 2);
+}
+
+fn district_lots(f: &Value, zone: &str) -> String {
+    f["district"]["zones"].as_array().unwrap().iter().find(|z| z["zone"] == zone).unwrap()["lots"].to_string()
+}
+
+fn dstats() -> (bool, usize, usize) {
+    noesis_viz::district::DSTATS.with(|s| *s.borrow())
+}
+
+fn active_cameras(app: &mut App) -> usize {
+    let mut q = app.world_mut().query::<&Camera>();
+    q.iter(app.world()).filter(|c| c.is_active).count()
+}
+
+#[test]
+fn district_opens_draws_and_closes() {
+    let seen = Rc::new(RefCell::new(Seen::default()));
+    let mut app = headless(seen.clone());
+    for _ in 0..3 {
+        app.update();
+    }
+    let f = fixture();
+    let harbor = district_lots(&f, "harbor");
+    let n = serde_json::from_str::<Vec<Value>>(&harbor).unwrap().len();
+
+    scene::push(Cmd::DistrictOpen(0x3fa6bd));
+    scene::push(Cmd::DistrictLots(harbor.clone()));
+    scene::push(Cmd::DistrictNous(r#"[{"did":"did:noesis:a1","name":"Hermes","color":16737095,"asleep":false},{"did":"did:noesis:b2","name":"Sophia","color":13434726,"asleep":true}]"#.into()));
+    app.update();
+    app.update();
+    assert_eq!(dstats(), (true, n, 2), "open, every lot placed, two Nous");
+    assert_eq!(active_cameras(&mut app), 1, "one camera draws");
+    assert!(noesis_viz::district::camera_active(app.world_mut()), "and it is the district's");
+    assert!(seen.borrow().signs.iter().any(|s| s == "label:Hermes"), "names are drawn by the page");
+
+    // A Nous acts, a lot flashes, one Nous leaves (it walks off, then is gone).
+    scene::push(Cmd::DistrictAct("did:noesis:a1".into(), "⇄".into()));
+    scene::push(Cmd::DistrictPulse(Some("x:home".into())));
+    scene::push(Cmd::DistrictPulse(Some("not-here".into())));
+    scene::push(Cmd::DistrictNous(r#"[{"did":"did:noesis:a1","name":"Hermes","color":16737095,"asleep":false}]"#.into()));
+    for _ in 0..400 {
+        app.update();
+    }
+    assert!(seen.borrow().signs.iter().any(|s| s == "label:⇄"));
+    // Time in the headless app barely moves, so the leaver may still be walking; it must not have duplicated.
+    assert!(dstats().2 <= 2);
+
+    // New lots replace the old ones; bad input is ignored.
+    scene::push(Cmd::DistrictLots(district_lots(&f, "residential")));
+    scene::push(Cmd::DistrictLots("nope".into()));
+    scene::push(Cmd::DistrictNous("[1]".into()));
+    app.update();
+    app.update();
+    let residential = serde_json::from_str::<Vec<Value>>(&district_lots(&f, "residential")).unwrap().len();
+    assert_eq!(dstats().1, residential);
+
+    // Closing puts the station's camera back and leaves nothing of the district.
+    scene::push(Cmd::DistrictClose);
+    app.update();
+    app.update();
+    assert_eq!(dstats(), (false, 0, 0));
+    assert_eq!(active_cameras(&mut app), 1, "one camera draws");
+    assert!(!noesis_viz::district::camera_active(app.world_mut()), "and it is the station's");
+    // Reopening works, and district commands while closed do nothing.
+    scene::push(Cmd::DistrictLots(harbor.clone()));
+    app.update();
+    assert_eq!(dstats().1, 0);
+    scene::push(Cmd::DistrictOpen(0x5a84c4));
+    scene::push(Cmd::DistrictLots(harbor));
+    app.update();
+    app.update();
+    assert_eq!(dstats(), (true, n, 0));
 }

@@ -72,3 +72,20 @@ fn fit_distance_matches_typescript() {
         assert!(close(d, c["distance"].as_f64().unwrap()), "{c}");
     }
 }
+
+#[cfg(feature = "render")]
+#[test]
+fn district_matches_typescript() {
+    use noesis_viz::district::{district_span, DistrictLot, FLOOR_RADIUS, LOT_PITCH, ROW_OFFSET};
+    let f = fixture();
+    let c = &f["district"]["constants"];
+    assert_eq!(FLOOR_RADIUS as f64, c["floor_radius"].as_f64().unwrap());
+    assert_eq!(LOT_PITCH as f64, c["lot_pitch"].as_f64().unwrap());
+    assert_eq!(ROW_OFFSET as f64, c["row_offset"].as_f64().unwrap());
+    for z in f["district"]["zones"].as_array().unwrap() {
+        let lots: Vec<DistrictLot> = serde_json::from_value(z["lots"].clone()).unwrap();
+        let want = z["span"].as_f64().unwrap();
+        // The page computes angles in f64; the scene draws in f32.
+        assert!((district_span(&lots) as f64 - want).abs() < 1e-5, "span of {}", z["zone"]);
+    }
+}
