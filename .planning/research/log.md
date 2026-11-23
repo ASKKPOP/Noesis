@@ -824,3 +824,10 @@ manifest 2.0 without `memory_files`. `operator.nous_forked` payload unchanged (a
 owner's human DID. Brain standalone importer hashes the Grid half only, so the owner can add `memory/`.
 Dead `checkOperatorOwnsNous` seam removed. Grid 4522, Brain 1543, all gates. Not built: an owner-facing fork button;
 the Steward Console Fork button now gets 403 for staff who don't own the Nous. SQL checked on mock Pool only.
+
+## [2026-11-23] docs | README brought up to the current system
+
+`README.md` was last edited 2026-07-02 (396 commits behind). Rewritten from the wiki, ROADMAP and code: three-layer
+diagram, repository table (adds brain-rs, viz-rs, dashboard, steward, apps/nous-mac, contracts), REST + WebSocket
+wire, `scripts/quickstart.sh`, one milestone table in place of the per-phase history, a "not done yet" list.
+No research page changed. Found: no `LICENSE` file although README and package.json say MIT.
