@@ -420,14 +420,6 @@ export interface GridServices {
      */
     p2pService?: import('../p2p/types.js').P2PService;
     /**
-     * Phase 43 FORK-01 (T-43-auth): injectable operator ownership checker.
-     * When present, fork route verifies operator owns the target Nous before building archive.
-     * When absent, fork route rejects all requests with 403 cross_operator_forbidden (fail-safe).
-     * Production: wires brainTokenStore.findByOperator + civicDidStore lookup.
-     * Tests: inject a stub that returns true/false based on test scenario.
-     */
-    checkOperatorOwnsNous?: (operatorId: string, nousDid: string) => Promise<boolean>;
-    /**
      * Phase 46 CIVGOV-01..06: Government v3 bill/session/law store.
      * When absent, gov routes fall back to a MySQL-backed store built from `pool`,
      * or return 503 service_unavailable if neither is present.
@@ -835,9 +827,8 @@ export function buildServerWithHub(
     void registerP2pRoutes(app, services);
 
     // --- Phase 43 FORK-01: Right-to-fork endpoint ---
-    // POST /api/v1/operator/fork/:nousDid — H4+ header-trust, builds .tar.gz, issues one-time token.
+    // POST /api/v1/operator/fork/:nousDid — the Brain's owner; builds the Grid half, issues one-time token.
     // GET /api/v1/operator/fork/:nousDid/download?token=X — one-time archive download.
-    // Policy: 'public' (header-trust handles auth internally, per all operator.* routes).
     registerForkNousRoute(app, services);
 
     // --- Phase 58 HOUSE-1 (NH1-06): Civic-parcels routes ---

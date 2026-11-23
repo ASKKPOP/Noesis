@@ -1,5 +1,9 @@
 /**
- * buildForkArchive — FORK-02 deterministic .tar.gz archive producer.
+ * buildForkArchive — FORK-02 deterministic .tar.gz archive producer: the Grid half of a fork.
+ *
+ * The archive holds only what the Grid keeps about the Nous: its civic credential,
+ * every audit entry that names it, and the manifest. The Brain's memory lives on the
+ * owner's machine and is added there; this module never reads Brain files.
  *
  * Constructs a .tar.gz archive whose SHA-256 (package_hash) is used in the
  * operator.nous_forked audit event, and whose logical file-content hash
@@ -28,8 +32,6 @@
  */
 
 import { createHash } from 'node:crypto';
-import { promises as fs } from 'node:fs';
-import { join } from 'node:path';
 import { Pack as TarPack } from 'tar';
 import { Header as TarHeader } from 'tar';
 import { ReadEntry as TarReadEntry } from 'tar';
@@ -40,7 +42,6 @@ import type { AuditEntry } from '../audit/types.js';
 export interface BuildForkArchiveInput {
     readonly nousDid: string;              // Civic-DID of the Nous being forked
     readonly gridId: string;               // e.g. 'genesis'
-    readonly dataDir: string;              // BRAIN_DATA_DIR — directory with *.db files
     readonly auditChain: AuditChain;       // live chain to slice for this Nous
     readonly civicVcJson: string;          // W3C VC JSON for civic-did.vc.json
     readonly exportedAtTick: number;       // tick at export time
@@ -52,7 +53,6 @@ export interface BuildForkArchiveOutput {
     readonly bytes: Buffer;                // full .tar.gz bytes
     readonly manifestExportHash: string;   // HEX64 — logical content hash (in manifest)
     readonly packageHash: string;          // HEX64 — sha256 of full .tar.gz bytes
-    readonly memoryFiles: string[];        // list of memory/*.db filenames included
 }
 
 const EPOCH = new Date(0);  // fixed mtime: Unix epoch (T-10-08)
@@ -116,43 +116,9 @@ function computeExportHash(files: Array<{ path: string; content: Buffer }>): str
     return h.digest('hex');
 }
 
-/**
- * Build a deterministic fork archive (.tar.gz) for the given Nous.
- *
- * @throws Error with code 'brain_memory_in_memory_cannot_fork' when dataDir
- *   is empty/missing or set to ':memory:' (Brain is running with in-memory SQLite).
- */
+/** Build a deterministic fork archive (.tar.gz) of the Grid half for the given Nous. */
 export async function buildForkArchive(input: BuildForkArchiveInput): Promise<BuildForkArchiveOutput> {
-    // 1. Validate BRAIN_DATA_DIR — must be a real disk path (Pitfall 2)
-    const dataDir = (input.dataDir ?? '').trim();
-    if (!dataDir || dataDir === ':memory:') {
-        throw new Error('brain_memory_in_memory_cannot_fork: Brain is running with in-memory SQLite. Set BRAIN_DATA_DIR env var pointing to a persistent data directory and restart Brain before forking.');
-    }
-
-    // 2. Glob all *.db files from dataDir
-    let dbEntries: string[];
-    try {
-        const dirEntries = await fs.readdir(dataDir);
-        dbEntries = dirEntries.filter(name => name.endsWith('.db'));
-    } catch (err) {
-        throw new Error(`brain_memory_in_memory_cannot_fork: Could not read BRAIN_DATA_DIR at ${dataDir}: ${String(err)}`);
-    }
-
-    if (dbEntries.length === 0) {
-        throw new Error(`brain_memory_in_memory_cannot_fork: No .db files found in BRAIN_DATA_DIR at ${dataDir}. Brain may be running with in-memory SQLite.`);
-    }
-
-    // 3. Read each .db file as Buffer
-    const memoryFileSpecs: Array<{ path: string; content: Buffer }> = [];
-    const memoryFileNames: string[] = [];
-    for (const dbName of dbEntries.sort()) {
-        const dbPath = join(dataDir, dbName);
-        const content = await fs.readFile(dbPath);
-        memoryFileSpecs.push({ path: `memory/${dbName}`, content });
-        memoryFileNames.push(dbName);
-    }
-
-    // 4. Slice audit chain entries for this Nous (actor or subject in payload)
+    // 1. Slice audit chain entries for this Nous (actor or subject in payload)
     const allEntries = input.auditChain.all();
     const slicedEntries = allEntries.filter(entry => {
         if (entry.actorDid === input.nousDid) return true;
@@ -161,33 +127,26 @@ export async function buildForkArchive(input: BuildForkArchiveInput): Promise<Bu
         return payloadStr.includes(input.nousDid);
     });
 
-    // 5. Build audit JSONL — one JSON line per entry
+    // 2. Build audit JSONL — one JSON line per entry
     const jsonlLines = slicedEntries.map(e => JSON.stringify(e));
     const chainJsonl = jsonlLines.join('\n');
 
-    // 6. Compute chainTailHash from last filtered entry (or genesis hash if none)
+    // 3. Compute chainTailHash from last filtered entry (or genesis hash if none)
     const chainTailHash = slicedEntries.length > 0
         ? (slicedEntries[slicedEntries.length - 1].eventHash ?? '0'.repeat(64))
         : '0'.repeat(64);
 
-    // 7. Build civic and treasury stubs (Phase 49/45 deferred)
-    const membershipsJson = '{"memberships":[]}';
-    const treasuryJson = '{"bios_balance":0,"last_updated_tick":null}';
-
-    // 8. Build the non-manifest file set for export_hash computation
+    // 4. Build the non-manifest file set for export_hash computation
     const contentFiles: Array<{ path: string; content: Buffer }> = [
-        ...memoryFileSpecs,
         { path: 'credentials/civic-did.vc.json', content: Buffer.from(input.civicVcJson, 'utf8') },
         { path: 'audit/chain-export.jsonl', content: Buffer.from(chainJsonl, 'utf8') },
         { path: 'audit/chain-tail-hash.txt', content: Buffer.from(chainTailHash, 'utf8') },
-        { path: 'civic/memberships.json', content: Buffer.from(membershipsJson, 'utf8') },
-        { path: 'civic/treasury.json', content: Buffer.from(treasuryJson, 'utf8') },
     ];
 
-    // 9. Compute export_hash (logical hash — excludes manifest.json)
+    // 5. Compute export_hash (logical hash — excludes manifest.json)
     const exportHash = computeExportHash(contentFiles);
 
-    // 10. Build the ForkManifest
+    // 6. Build the ForkManifest
     const manifest = createForkManifest({
         exportedAt: input.exportedAt,
         exportedAtTick: input.exportedAtTick,
@@ -196,7 +155,6 @@ export async function buildForkArchive(input: BuildForkArchiveInput): Promise<Bu
         gridId: input.gridId,
         exportHash,
         chainTailHash,
-        memoryFiles: memoryFileNames,
     });
 
     // Privacy gate — belt-and-suspenders against future regressions (T-43-secrets)
@@ -207,7 +165,7 @@ export async function buildForkArchive(input: BuildForkArchiveInput): Promise<Bu
         throw new Error('fork-archive-builder: manifest leaked forbidden substring (T-43-secrets)');
     }
 
-    // 11. Pack all files including manifest.json into .tar.gz
+    // 7. Pack all files including manifest.json into .tar.gz
     const allFiles: Array<{ path: string; content: Buffer }> = [
         { path: 'manifest.json', content: Buffer.from(manifestJson, 'utf8') },
         ...contentFiles,
@@ -215,13 +173,12 @@ export async function buildForkArchive(input: BuildForkArchiveInput): Promise<Bu
 
     const bytes = await packFilesGzip(allFiles);
 
-    // 12. Compute package_hash = sha256 of full .tar.gz bytes (different from export_hash)
+    // 8. Compute package_hash = sha256 of full .tar.gz bytes (different from export_hash)
     const packageHash = createHash('sha256').update(bytes).digest('hex');
 
     return {
         bytes,
         manifestExportHash: exportHash,
         packageHash,
-        memoryFiles: memoryFileNames,
     };
 }

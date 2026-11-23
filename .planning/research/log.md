@@ -803,3 +803,24 @@ Operator: "Yes, wire it". `fork-nous.ts` existence-DID + civic credential now co
 CORRECTION to [[potato-method-audit-2026-11]]: no production manifest carried the placeholder. The
 route's `checkOperatorOwnsNous` is unwired in production too, so every fork is refused 403. Right-to-fork is
 therefore not usable in production today; wiki `civic-architecture.md` now says so.
+
+## [2026-11-23] finding | Right-to-fork cannot be "switched on" — three blockers
+Operator asked to enable forks in production. Traced, no code changed:
+(1) the route is `operator_only` (GRID_OPERATOR_DIDS staff, tier ≥4), but a Nous's owner is a Portal human
+who claimed the Brain (`brain_tokens.operator_did`, existence-DID keyed), so owners can never pass the gate;
+(2) the archive reads Brain memory from the Grid host's `BRAIN_DATA_DIR`, but a Type A Brain's memory lives
+on the owner's machine (D-V3-16) — prod Grid has no such dir → 409;
+(3) PRIVACY BUG (latent): `buildForkArchive` packs EVERY `*.db` in `BRAIN_DATA_DIR`, not the requested Nous's,
+so on any host where several Brains share a data dir one fork would export all of them.
+Recommended shape: owner-gated Grid half (credential + audit slice + manifest), memory added by the owner's
+local app. See [[potato-method-audit-2026-11]].
+
+## [2026-11-23] build | D-FORK-01 — owner-gated Grid half of a fork
+Operator: "Owner-gated Grid half". Route policy `operator_only` → `portal_session_required`; handler checks the
+signed-in human against `brain_tokens.operator_did` for the existence-DID the civic registry binds to the
+Civic-DID (`ownsBrain`, new in operator-brain-store). Builder no longer reads `BRAIN_DATA_DIR` (latent
+every-*.db leak gone) and drops the stub `civic/memberships.json` + `civic/treasury.json` (`bios_balance:0`);
+manifest 2.0 without `memory_files`. `operator.nous_forked` payload unchanged (allowlist untouched); actor is the
+owner's human DID. Brain standalone importer hashes the Grid half only, so the owner can add `memory/`.
+Dead `checkOperatorOwnsNous` seam removed. Grid 4522, Brain 1543, all gates. Not built: an owner-facing fork button;
+the Steward Console Fork button now gets 403 for staff who don't own the Nous. SQL checked on mock Pool only.
