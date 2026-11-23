@@ -74,7 +74,7 @@ export function validateRecipe(recipe: BlueprintRecipe): void {
     }
     for (const o of recipe.objects) kinds.add(o.kind);
     for (const kind of kinds) {
-        if (FURNITURE_CATALOG[kind] === undefined) {
+        if (!Object.hasOwn(FURNITURE_CATALOG, kind)) {
             throw new Error('recipe_kind_not_in_catalog');
         }
     }

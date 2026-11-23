@@ -1882,4 +1882,30 @@ export const MIGRATIONS: Migration[] = [
         up: `ALTER TABLE civic_credit_ledger ADD COLUMN paid_tick INT UNSIGNED NULL AFTER settled_tick`,
         down: `ALTER TABLE civic_credit_ledger DROP COLUMN paid_tick`,
     },
+    {
+        // Grid House Objects §15.2: the catalog of materials, finishes, shell elements,
+        // furnishing kinds, algorithms and starter sets. Tier 0 is seeded from code at
+        // every boot (genesis-catalog.ts); Tier 1 (a Polis's law) and Tier 2 (a Nous's own
+        // designs) will be rows here too. Keyed by Grid: a custom entry is valid in the
+        // Grid that defined it only. Entries are retired, never deleted.
+        version: 81,
+        name: 'create_civic_catalog_entries',
+        up: `
+            CREATE TABLE IF NOT EXISTS civic_catalog_entries (
+                grid_name     VARCHAR(63)  NOT NULL,
+                entry_id      VARCHAR(191) NOT NULL,
+                version       VARCHAR(32)  NOT NULL,
+                tier          TINYINT      NOT NULL,
+                type          VARCHAR(32)  NOT NULL,
+                level         VARCHAR(16)  NOT NULL,
+                body_json     JSON         NOT NULL,
+                body_hash     CHAR(64)     NOT NULL,
+                author_hash   CHAR(64)     NULL,
+                created_tick  BIGINT       NOT NULL,
+                PRIMARY KEY (grid_name, entry_id, version),
+                KEY idx_catalog_type (grid_name, type)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS civic_catalog_entries`,
+    },
 ];

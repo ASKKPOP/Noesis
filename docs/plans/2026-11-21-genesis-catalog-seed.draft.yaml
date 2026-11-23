@@ -3,12 +3,14 @@
 # The pre-defined set a Grid is initialized with: materials, finishes, shell
 # elements, furnishing kinds, algorithms and starter sets.
 #
-# STATUS: discussion draft. Nothing loads this file. It is the machine-readable
-# twin of sections 14 and 15 of docs/noesis-grid-objects-discussion-2026-11-21.html
-# and was generated from the same data as that sheet's tables.
+# STATUS (2026-11-22): BUILT. This draft became grid/src/civic/genesis-catalog.ts
+# (catalog version 1.0.0), which the Grid seeds at every boot. The TypeScript file is
+# now the source of truth; the Grid's tests check that its ids and kind classes still
+# match this file, so edit both or neither. It remains the machine-readable twin of
+# sections 14 and 15 of docs/reports/noesis-grid-objects-discussion-2026-11-21.html.
 #
-# When ratified it becomes a TypeScript seed plan (precedent: founding-law.ts
-# GENESIS_CORE_SEED_PLAN and genesis-groups.ts), seeded idempotently at boot.
+# (Original note: when ratified it becomes a TypeScript seed plan, precedent:
+# founding-law.ts GENESIS_CORE_SEED_PLAN and genesis-groups.ts, seeded at boot.)
 # The 13 kinds marked `since: v1` already exist in grid/src/civic/furniture.ts.
 #
 # Counts: 18 materials · 12 finishes · 14 shell elements · 59 kinds
@@ -1106,7 +1108,7 @@ kinds:
   group: social
   affordances:
   - whisper
-  binds_to: Whisper messages; its keys are derivable today (§17.3)
+  binds_to: Whisper messages
   subsystem_status: partial
   layers:
   - F

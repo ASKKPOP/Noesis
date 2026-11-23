@@ -14,6 +14,7 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
+import { genesisKind } from '../civic/genesis-catalog.js';
 
 const PARCEL_ID_RE = /^[a-z0-9_-]+:[a-z0-9_]+:\d{4}$/;
 const OBJECT_CLASSES = ['mirror', 'functional'] as const;
@@ -41,9 +42,11 @@ export function appendZoningInteriorExtended(
         || !OBJECT_CLASSES.includes(payload.object_class as typeof OBJECT_CLASSES[number])) {
         throw new TypeError(`appendZoningInteriorExtended: object_class must be one of ${JSON.stringify(OBJECT_CLASSES)}, got ${JSON.stringify(payload.object_class)}`);
     }
-    // 3. object_kind must be a non-empty string (catalog membership enforced at the route/registry).
-    if (typeof payload.object_kind !== 'string' || payload.object_kind.length === 0) {
-        throw new TypeError(`appendZoningInteriorExtended: object_kind must be a non-empty string, got ${JSON.stringify(payload.object_kind)}`);
+    // 3. object_kind must be a Tier 0 catalog kind of that class. The chain carries a
+    //    closed enum, so a kind outside the core catalog never reaches it (sheet §15.5).
+    const kind = typeof payload.object_kind === 'string' ? genesisKind(payload.object_kind) : undefined;
+    if (kind === undefined || kind.class !== payload.object_class) {
+        throw new TypeError(`appendZoningInteriorExtended: object_kind must be a core catalog kind of class ${JSON.stringify(payload.object_class)}, got ${JSON.stringify(payload.object_kind)}`);
     }
     // 4. Regex: parcel_id (slug address).
     if (typeof payload.parcel_id !== 'string' || !PARCEL_ID_RE.test(payload.parcel_id)) {

@@ -51,6 +51,7 @@ import { registerMarketRoutes } from './routes/market.js';
 import { registerIrsRoutes } from './routes/irs.js';
 import { registerSystemMapRoute } from './routes/system-map.js';
 import { registerOrbitalRoutes } from './routes/orbital.js';
+import { registerCivicCatalogRoutes } from './routes/civic-catalog.js';
 import { registerPhysicsRoutes } from './routes/physics.js';
 import { registerGroupRoutes } from './routes/groups.js';
 import { registerGovRoutes } from './routes/gov.js';
@@ -178,6 +179,8 @@ export interface GridServices {
     /** GroupStore — backs the portal discovery endpoint (organizations to join).
      *  Optional so legacy tests without Groups wiring still compile; route 503s when absent. */
     groupStore?: GroupStore;
+    /** CatalogStore — the seeded Grid catalog (Grid House Objects §15). Route 503s when absent. */
+    catalogStore?: import('../civic/catalog-store.js').CatalogStore;
     /** GridRegistry — backs the portal "search active Grids" endpoint (multi-Grid framework).
      *  Optional so legacy tests still compile; route 503s when absent. */
     gridRegistry?: GridRegistry;
@@ -899,6 +902,7 @@ export function buildServerWithHub(
     registerOrbitalRoutes(app, services);
     registerPhysicsRoutes(app);
     registerGroupRoutes(app, services);   // W-B4 — Nous group join-sight
+    registerCivicCatalogRoutes(app, services);  // Grid House Objects §15 — the seeded catalog
     void registerGovRoutes(app, services);
     registerPolisBillsRoute(app, services);
     registerNousPublicProfileRoute(app, services);

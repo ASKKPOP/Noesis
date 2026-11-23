@@ -117,6 +117,12 @@ See [[philosophy]].
 | D-NH-10 | Structure address is a vector: ring / sector_deg / level. |
 | D-NH-13 | A council of cities can charter an entirely new Grid. |
 
+## Grid House Objects — `D-OBJ-*`
+
+| ID | Decision |
+|----|----------|
+| D-OBJ-01 | **Every Grid starts from a core catalog, written by the system at boot (2026-11-22, operator: "do the pre-designed part").** Tier 0 holds 18 structural materials, 12 finishes, 14 shell elements, 59 furnishing kinds (18 household, 41 working), 20 algorithms and 4 starter sets; the App Link provider list starts empty. **Kinds are closed, forms are open:** a kind is a shared meaning; its look is free. Every kind has a default form written in the Form DSL, a closed data vocabulary that is never code. Tier 0 is immutable within a version and the Grid refuses to start if a stored entry differs from its version. In-situ materials appear only where they exist. A working kind whose subsystem is not built yet is seeded but not placeable (8 kinds), and a starter set lists only its placeable kinds (nothing offers or sells a set yet). A change to any Tier 0 body requires a new catalog version; a test pins the digest of each version. Seeding charges nobody and emits no audit event; the audit chain accepts only core kinds as `object_kind`. **Not decided here:** unit prices (Q14), whether Holdings pass the physics gate (Q15), the 3D interior view, Tier 1 and Tier 2 entries. |
+
 ## Groups & Holdings — `D-GROUP-* / D-HOLD-*`
 
 | ID | Decision |

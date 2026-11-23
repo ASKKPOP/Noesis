@@ -39,6 +39,8 @@ import { createUpkeepRegistryFacade, ticksRecorded } from './civic/upkeep-scanne
 import { GroupStore } from './economy/group-store.js';
 import { NousAccountStore } from './economy/nous-account-store.js';
 import { GridRegistry } from './registry/grid-registry.js';
+import { CatalogStore } from './civic/catalog-store.js';
+import { catalogEnvironment } from './civic/genesis-catalog.js';
 import { getEnvironment } from './registry/grid-environments.js';
 import { gridRecordFromConfig } from './registry/grid-record-from-config.js';
 import { gravityPrice, recordPolisOverride } from './civic/founding-law.js';
@@ -251,6 +253,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     // bug class — R-H-01). DB is source of truth; the registry is a read cache.
     let parcels: { registry: ParcelRegistry; store: ParcelStore } | undefined;
     let groupStore: GroupStore | undefined;  // hoisted for GridServices (spec §2 discovery)
+    let catalogStore: CatalogStore | undefined;  // hoisted for GridServices (the catalog route)
     // Phase 62.6-04 (D-7 / D-13): hoisted so the seeded NousRunner construction (outside
     // the if(dbConn) block, below) can inject the Ledger-A account store for agent-trade
     // settlement. Assigned inside if(dbConn) from presencePool; undefined in DB-less mode.
@@ -280,6 +283,15 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         nousAccountStore = new NousAccountStore(presencePool);
         const groupsSeeded = await groupStore.seedGenesisGroups(chain!, 0);
         console.log(`[civic] groups seeded: ${groupsSeeded}`);
+        // Grid House Objects §15.1: the Tier 0 catalog (materials, finishes, shell elements,
+        // kinds, algorithms, starter sets), seeded at every boot (idempotent, no audit event),
+        // then hydrated into the read cache.
+        catalogStore = new CatalogStore(
+            presencePool, config.genesisConfig.gridName,
+            catalogEnvironment(config.genesisConfig.environment.name),
+        );
+        const catalogSeeded = await catalogStore.seedGenesisCatalog(0);
+        console.log(`[civic] catalog seeded: ${catalogSeeded}, loaded: ${await catalogStore.hydrate()}`);
         // Phase 59 HOUSE-2 (D-59-06 / R-H-03): late-wire the upkeep scanner now that the
         // parcel registry/store exist. It rides the EXISTING clock.onTick block in the
         // launcher (no new subscription). The facade composes parcel-registry ladder +
@@ -441,6 +453,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         registry: launcher.registry,
         shops: launcher.shops,
         groupStore,
+        catalogStore,
         coordinator,   // Phase 38: external Brain action dispatch + WIRE-02 Civic-DID binding
         gridRegistry,
         relationships: launcher.relationships,
