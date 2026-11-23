@@ -327,7 +327,7 @@ def _context_section(
     raw float need values (defense-in-depth, even though this is Brain-local).
     Per T-10b-04-04: enum values are untamperable strings from the Bios state.
     """
-    lines = [f"## Current Context", f"- Location: {location}"]
+    lines = ["## Current Context", f"- Location: {location}"]
 
     if bios_snapshot is not None:
         # bios_snapshot is a NeedState; access .levels dict keyed by NeedName.

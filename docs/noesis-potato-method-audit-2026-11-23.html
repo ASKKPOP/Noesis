@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Noēsis — Potato Method audit (2026-11-23)</title>
+<style>
+  :root{
+    --bg:#F5F1E8; --surface:#FBF9F3; --surface2:#EFEADD; --line:#DDD5C3; --line2:#C9BFA9;
+    --ink:#1F1D1A; --ink2:#4A463F; --mut:#7A7366;
+    --accent:#C96442; --accent-soft:#F1DDD2;
+    --good:#2E7D4F; --good-bg:#DDEFE2; --warn:#A8690A; --warn-bg:#F6E7C6; --crit:#B3372C; --crit-bg:#F6D9D5;
+    --serif:"Tiempos Headline","Source Serif 4","Iowan Old Style","Palatino Linotype",Georgia,serif;
+    --sans:"Styrene B","Söhne",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1F1E1B; --surface:#272622; --surface2:#302E29; --line:#3D3A33; --line2:#555147;
+      --ink:#EFEAE0; --ink2:#C9C3B6; --mut:#989182;
+      --accent:#DD7B5A; --accent-soft:#4A2E24;
+      --good:#6CC08D; --good-bg:#1E3A2A; --warn:#E0A84A; --warn-bg:#40321A; --crit:#EE8479; --crit-bg:#4A2320;
+      color-scheme:dark;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 20px 80px;display:flex;flex-direction:column;gap:44px}
+  h1,h2,h3{font-family:var(--serif);font-weight:500;margin:0;letter-spacing:-.01em;text-wrap:balance}
+  h1{font-size:clamp(30px,5vw,44px);line-height:1.1}
+  h2{font-size:27px;line-height:1.2}
+  h3{font-size:18px;line-height:1.3}
+  p{margin:0;max-width:74ch}
+  code{font-family:var(--mono);font-size:.87em;background:var(--surface2);padding:1px 5px;border-radius:4px}
+  .eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:600}
+  .lede{font-size:18px;color:var(--ink2);max-width:70ch}
+  .mut{color:var(--mut)} .small{font-size:13px}
+  section{display:flex;flex-direction:column;gap:18px}
+  .sec-head{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:22px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media (max-width:760px){.grid3{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px}
+  .card.accent{border-left:4px solid var(--accent)} .card.crit{border-left:4px solid var(--crit)} .card.good{border-left:4px solid var(--good)}
+  .big{font-family:var(--serif);font-size:34px;line-height:1}
+  .pill{display:inline-flex;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap}
+  .pill.yes{background:var(--good-bg);color:var(--good)} .pill.partly{background:var(--warn-bg);color:var(--warn)} .pill.no{background:var(--crit-bg);color:var(--crit)} .pill.new{background:var(--accent-soft);color:var(--accent)}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:600;background:var(--surface2)}
+  tr:last-child td{border-bottom:0}
+  ul,ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:76ch}
+  .diagram{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+  .diagram svg{display:block;width:100%;min-width:620px;height:auto}
+  svg text{font-family:var(--sans);fill:var(--ink)}
+  .lay{stroke-width:1.5} .lay.yes{fill:var(--good-bg);stroke:var(--good)} .lay.partly{fill:var(--warn-bg);stroke:var(--warn)} .lay.no{fill:var(--crit-bg);stroke:var(--crit)} .lay.mute{fill:var(--surface2);stroke:var(--line2)}
+  .lt{font-size:15px;font-weight:600} .ls{font-size:12.5px;fill:var(--ink2)}
+  .sentence{font-family:var(--serif);font-size:clamp(20px,3vw,28px);line-height:1.3;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;padding:22px 24px;max-width:none}
+  .sentence b{color:var(--accent);font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:12px">
+  <div class="eyebrow">Noēsis · engineering audit · 2026-11-23 · branch research/atlas-simulator @ 416faea5</div>
+  <h1>The Potato Method, applied to Noēsis</h1>
+  <p class="lede">Lauren Tan's argument: agents copy whatever the codebase already does, so you make agent output trustworthy by investing in the <em>environment</em>, meaning deterministic checks first, verification second and prose last. This audit measures every layer of that pyramid on this repository, applies the first fixes, and sets the order for the rest.</p>
+</header>
+
+<p class="sentence">Noēsis already turns its <b>constitution</b> into code (31 CI gates). It has not done the same for <b>everyday code quality</b>, so copied patterns spread unchecked. One example is 193 hand-copied ID regexes in a dozen shapes that disagree with each other.</p>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">At a glance</div><h2>The pyramid, scored</h2></div>
+  <div class="diagram">
+  <svg viewBox="0 0 900 360" role="img" aria-label="Inverted pyramid of five layers scored for Noēsis">
+    <polygon class="lay partly" points="40,10 860,10 820,72 80,72"/>
+    <text class="lt" x="450" y="36" text-anchor="middle">1 · Codebase: weak</text>
+    <text class="ls" x="450" y="56" text-anchor="middle">193 inline id regexes · dashboard copies the wire types · 5 duplicated Brain methods (now removed)</text>
+    <polygon class="lay partly" points="84,78 816,78 776,140 124,140"/>
+    <text class="lt" x="450" y="104" text-anchor="middle">2 · Static analysis: strong on invariants, no general lint</text>
+    <text class="ls" x="450" y="124" text-anchor="middle">31 constitutional gates ✓ · ESLint has no config ✗ · brain ruff now in CI ✓ · mypy 212 errors ✗</text>
+    <polygon class="lay partly" points="128,146 772,146 732,208 168,208"/>
+    <text class="lt" x="450" y="172" text-anchor="middle">3 · Verification: medium</text>
+    <text class="ls" x="450" y="192" text-anchor="middle">~700 test files · real-MySQL CI · parity fixtures ✓ · 3 e2e specs for 71 routes · no feature map</text>
+    <polygon class="lay no" points="172,214 728,214 688,276 212,276"/>
+    <text class="lt" x="450" y="240" text-anchor="middle">4 · Prose: too heavy</text>
+    <text class="ls" x="450" y="260" text-anchor="middle">CLAUDE.md 206 lines + 12 feedback memories · 27% of grid/src is comments</text>
+    <polygon class="lay mute" points="216,282 684,282 644,344 256,344"/>
+    <text class="lt" x="450" y="308" text-anchor="middle">5 · Human review</text>
+    <text class="ls" x="450" y="328" text-anchor="middle">12 of 111 commits in 30 days are fixes for bugs the layers above missed</text>
+  </svg>
+  </div>
+  <div class="grid3">
+    <div class="card good"><div class="big">31</div><b>constitutional gates</b><span class="small mut">Privacy, VOTE-05, Portal-gating, money. These are already the Potato method's layer 2, built for the invariants.</span></div>
+    <div class="card crit"><div class="big">193</div><b>inline DID / HEX64 / address regexes</b><span class="small mut">12+ DID shapes. HEX64 is case-insensitive in 77 copies and strict in 28, so one hash passes some emitters and fails others.</span></div>
+    <div class="card crit"><div class="big">0</div><b>ESLint configs</b><span class="small mut"><code>grid</code>'s <code>lint</code> script fails on ESLint 9. <code>@typescript-eslint</code> is installed but never used.</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">Layer 1 · Codebase</div><h2>What agents are copying</h2></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Pattern</th><th>Count</th><th>Why it spreads</th></tr></thead>
+    <tbody>
+      <tr><td>Inline id regex (<code>const DID_RE = /^…/</code>)</td><td>193 defs</td><td>Every <code>append-*.ts</code> emitter starts by copying the last one, so variants drift: <code>[a-z0-9_\-]+</code> vs <code>[a-z0-9_:\-]+</code>, with <code>/i</code> or without.</td></tr>
+      <tr><td>Hand-written audit emitters (<code>grid/src/audit/append-*.ts</code>)</td><td>120 files · 9,134 lines</td><td>Each one rebuilds the same validate → hash → append steps by hand.</td></tr>
+      <tr><td>Wire types duplicated in the dashboard (<code>dashboard/src/lib/protocol/*</code>)</td><td>9 files</td><td>The dashboard never imports <code>@noesis/protocol</code>, so a field added in grid is silently missing in the UI.</td></tr>
+      <tr><td><code>as unknown as</code> / <code>any</code></td><td>553</td><td>432 of them are in <code>protocol/src</code>. Each one is a place where the types stop telling the agent what the data is.</td></tr>
+      <tr><td><code>useEffect</code> in dashboard + steward</td><td>119</td><td>The talk's flagship ban. A store layer (<code>useSyncExternalStore</code>) already exists to use instead.</td></tr>
+      <tr><td>Brain: identical methods defined twice in <code>BrainHandler</code></td><td>5 methods, ~250 lines</td><td>A copy-paste merge. Python keeps the later copy silently. <span class="pill new">removed</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">Layer 2 · Static analysis</div><h2>Bugs a linter found the first time it ran</h2></div>
+  <ul>
+    <li><b>A latent crash in the Brain skill sweep</b> <span class="pill new">fixed</span>: <code>rpc/handler.py</code> catches <code>json.JSONDecodeError</code>, but the module imports <code>json</code> only as <code>_json</code>. A malformed <code>payload_json</code> would raise <code>NameError</code> instead of falling back. Ruff F821 found it.</li>
+    <li><b>Shadowed methods</b> <span class="pill new">fixed</span>: <code>hash_state</code>, <code>query_memory</code>, <code>force_telos</code>, <code>_build_refined_telos</code> and <code>_dialogue_driven_goal_set</code> were each defined twice. ASTs compared identical, so the second copies were deleted with no behaviour change.</li>
+    <li>19 unused imports, 6 dead variables, and undefined names in type hints for the lazily imported <code>anthropic</code>, <code>openai</code> and <code>GridWireClient</code> <span class="pill new">fixed</span>.</li>
+    <li><b>mypy strict: 212 errors in 49 files</b> <span class="pill no">open</span>. Configured, but never run.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">Layer 3 · Verification</div><h2>Strong on the backend, thin on the user's path</h2></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Technique (from the talk)</th><th>Noēsis</th><th></th></tr></thead>
+    <tbody>
+      <tr><td>Unit and integration tests</td><td>515 grid · 154 brain · 44 protocol · 97 dashboard unit</td><td><span class="pill yes">yes</span></td></tr>
+      <tr><td>Real-environment checks</td><td><code>real-mysql-migrations.yml</code>, written after mock-Pool SQL crashes in deploy</td><td><span class="pill yes">yes</span></td></tr>
+      <tr><td>Cross-implementation parity</td><td>Brain (Python) ↔ brain-rs fixtures · viz-rs layout parity</td><td><span class="pill yes">yes</span></td></tr>
+      <tr><td>Runtime UI driving + evidence</td><td>3 Playwright specs for 49 dashboard + 22 steward routes. No feature map, no driver CLI, no screenshot evidence per PR</td><td><span class="pill no">no</span></td></tr>
+      <tr><td>Property-based tests</td><td>1 file (fast-check is installed). None in brain (no Hypothesis)</td><td><span class="pill partly">barely</span></td></tr>
+      <tr><td>Formal specs / statecharts</td><td>None. The Portal → Polis registration flow and settlement are the obvious first candidates</td><td><span class="pill no">no</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">Layer 4 · Prose</div><h2>Correction log: which rules could be code</h2></div>
+  <p>Every standing instruction in <code>CLAUDE.md</code> and the feedback memories, checked for whether something mechanical already enforces it.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Rule</th><th>Enforced by code?</th><th>Turn it into</th></tr></thead>
+    <tbody>
+      <tr><td>Portal-gating (D-V3-33), VOTE-05, Ledger-B retired</td><td><span class="pill yes">yes</span></td><td>—</td></tr>
+      <tr><td>Zone code keys on <code>kind</code>, never name (D-V3-40)</td><td><span class="pill no">prose</span></td><td>A gate on zone-name literals compared outside the template</td></tr>
+      <tr><td>Polis naming (D-V3-31)</td><td><span class="pill no">prose</span></td><td>A gate on "Genesis Government/Council/Senate"</td></tr>
+      <tr><td>No mock or hardcode in product</td><td><span class="pill no">prose, and violated</span></td><td><code>fork-nous.ts</code> records <code>did:noesis:nous:unknown</code> in production because <code>getExistenceDid</code> is never wired. Wire it, then ban placeholder DIDs</td></tr>
+      <tr><td>Re-pin allowlist baselines</td><td><span class="pill partly">gate on line count</span></td><td>A member-set snapshot. Today editing a comment fails CI (<code>fix(audit): keep the frozen allowlist at its baseline line count</code>)</td></tr>
+      <tr><td>Force-recreate nginx after deploy; never deploy nous-*</td><td><span class="pill no">prose</span></td><td>Make <code>deploy.sh</code> do the first and refuse the second</td></tr>
+      <tr><td>Wiki updated with every task</td><td><span class="pill partly">integrity only</span></td><td>A gate: a changed <code>src/</code> subsystem must touch its wiki page</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small mut"><b>On comments:</b> the talk bans 99% of them. Noēsis should not do that. 1,902 of grid's comment lines cite decisions (D-…), and that traceability to the constitution is a real requirement. Ban the <em>justification</em> comments ("is fine", "for now", "intentional"; 31 found) and replace each with a gate.</p>
+</section>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">Applied today</div><h2>Block new occurrences first, clean up second</h2></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Change</th><th>Where</th><th>Verified</th></tr></thead>
+    <tbody>
+      <tr><td>Brain made ruff-clean, and ruff added to CI</td><td>26 brain files, <code>.github/workflows/tests.yml</code></td><td>ruff 0.15.10 (the locked version) clean · brain 1542 passed</td></tr>
+      <tr><td><code>scripts/check-ratchet.mjs</code>: 5 counts that may only go down, each failure telling the agent what to do instead</td><td><code>scripts/ratchet-baseline.json</code>, <code>rig-invariants.yml</code></td><td>exit 1 on an added inline regex and an added <code>as any</code> · <code>check-gates-wired</code> OK (31)</td></tr>
+      <tr><td><code>grid/src/util/id-patterns.ts</code>, the one home for id regexes; <code>civic/blueprint.ts</code> migrated</td><td>grid</td><td>tsc clean · civic suite 347 passed</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small mut">Baselines: inline-id-regex 201 · react-use-effect 119 · type-escape 553 · suppression 109 · ui-timer 21. Run <code>node scripts/check-ratchet.mjs --update</code> after a cleanup; it lowers counts and never raises them.</p>
+</section>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">Next</div><h2>Recommended order</h2></div>
+  <ol>
+    <li><b>Decide whether HEX64 hashes are lowercase-only</b>, then fold the 193 regexes into <code>id-patterns.ts</code> (one named export per DID kind). This needs a decision because it changes what some emitters accept.</li>
+    <li><b>Wire <code>getExistenceDid</code></b> in production so fork manifests stop recording a placeholder.</li>
+    <li><b>ESLint flat config</b> with <code>@typescript-eslint</code>: move the ratchet rules into real lint rules with the same messages, and run it in CI.</li>
+    <li><b>Replace the allowlist line-count gate</b> with a member-set snapshot.</li>
+    <li><b>A feature map</b> of every dashboard and steward route, a gate that keeps it complete, and a Playwright screenshot per route as PR evidence.</li>
+    <li><b>Property tests</b> for economy and settlement invariants, and a statechart for Portal → Polis registration.</li>
+    <li><b>Automate the outer loop last</b>: agent-merged PRs, per category, only while the revert rate stays low.</li>
+  </ol>
+</section>
+
+<p class="small mut">Source: <code>potato-agent-guide.md</code> (Lauren Tan, "All Code Is Slop (Except Mine)"). Private research note: <code>.planning/research/potato-method-audit-2026-11.md</code>. All counts were measured on 2026-11-23.</p>
+</div>
+</body>
+</html>

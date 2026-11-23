@@ -28,7 +28,6 @@ See: 11-CONTEXT.md D-11-06. receiver.py for the call site.
 import base64
 import hashlib
 
-from nacl.bindings import crypto_box_open  # type: ignore[import]
 
 from noesis_brain.whisper.keyring import Keyring
 

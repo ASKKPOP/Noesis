@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from noesis_brain.telos.types import Goal, GoalDomain, GoalStatus, GoalType
+from noesis_brain.telos.types import Goal, GoalDomain, GoalType
 
 # D-MONEY-01: money is compute-labor (+ ETH), never Ousia. The standing economic
 # target is framed as work, not currency accumulation.

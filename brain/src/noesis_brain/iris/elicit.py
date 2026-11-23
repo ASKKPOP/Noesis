@@ -173,7 +173,6 @@ class IrisRuntime:
         # Detect contradiction: confidence delta > IRIS_CONTRADICTION_THRESHOLD.
         contradiction = False
         prior_hash = ""
-        prior_id: int | None = None
 
         if prior_belief is not None:
             prior_hash = hashlib.sha256(prior_belief.content.encode("utf-8")).hexdigest()

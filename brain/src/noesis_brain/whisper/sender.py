@@ -38,7 +38,6 @@ import base64
 import hashlib
 
 import httpx
-from nacl.bindings import crypto_box  # type: ignore[import]
 
 from noesis_brain.whisper.keyring import Keyring
 from noesis_brain.whisper.nonce import derive_nonce

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 
 from noesis_brain.memory.types import Memory, MemoryType
 from noesis_brain.memory.sqlite_store import MemoryStore

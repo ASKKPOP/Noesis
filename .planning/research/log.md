@@ -779,3 +779,13 @@ not_owner, rolled back); award/settle/give with no sign-in → 403/403/401; row 
 (credit 0, owned parcels 0, bids 0, contracts 0, dues 3+54, accounts 1/1000, schema 80).
 CI now also runs `grid (tsc, vitest)`, `protocol` and a dashboard e2e job (another session's PRs
 #57–#59, which also fixed the flaky SNS alert test).
+
+## [2026-11-23] ingest+apply | Potato Method audit — trust the environment, not the diff
+Source: `potato-agent-guide.md` (Lauren Tan, "All Code Is Slop (Except Mine)"). Measured every pyramid
+layer on 416faea5 → [[potato-method-audit-2026-11]]. Findings: 193 inline DID/HEX64/address regexes
+(12+ DID shapes; HEX64 /i in 77, strict in 28); no ESLint config; brain ruff 37 / mypy 212, neither in
+CI; 3 Playwright specs for 71 routes; 27% of grid/src is comments; `fork-nous.ts` placeholder
+existence-DID in production (`getExistenceDid` never wired). Applied: brain ruff clean + CI step
+(latent `json` NameError in skill sweep fixed; 5 duplicated BrainHandler methods removed, AST-identical);
+`scripts/check-ratchet.mjs` (5 count-only-down rules) + `grid/src/util/id-patterns.ts`.
+Brain 1542 passed; grid civic 347 passed; tsc clean.

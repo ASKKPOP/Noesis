@@ -111,6 +111,9 @@ jobs:
       - name: Every scripts/check-*.mjs gate is run by a workflow
         run: node scripts/check-gates-wired.mjs
 
+      - name: Ratchet — copied anti-patterns may only go down (inline id regex, useEffect, type escapes, suppressions, UI timers)
+        run: node scripts/check-ratchet.mjs
+
       - name: Fast Vitest rig suite (Wave 0/1/2 — NOESIS_RUN_NIGHTLY unset, rig-bench skips)
         working-directory: grid
         run: |

@@ -11,7 +11,6 @@ from typing import Any
 from noesis_brain.llm.base import LLMAdapter, LLMError
 from noesis_brain.llm.types import GenerateOptions
 from noesis_brain.memory.stream import MemoryStream
-from noesis_brain.memory.types import MemoryType
 
 
 REFLECTION_PROMPT = """Review these recent experiences and generate a brief reflection.

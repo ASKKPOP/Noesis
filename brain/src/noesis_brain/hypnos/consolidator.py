@@ -33,9 +33,9 @@ def hebbian_pass(store: LtmStore, episodes: list[Episode], eta: float, tick: int
             hash_j = hashlib.sha256(ep_j.content.encode("utf-8")).hexdigest()
             # Canonical undirected edge: src < dst
             if node_i < node_j:
-                src, dst, sh, dh = node_i, node_j, hash_i, hash_j
+                src, dst = node_i, node_j
             else:
-                src, dst, sh, dh = node_j, node_i, hash_j, hash_i
+                src, dst = node_j, node_i
             store.upsert_node(node_i, hash_i, tick)
             store.upsert_node(node_j, hash_j, tick)
             store.strengthen_edge(src, dst, delta=eta, tick=tick)

@@ -63,7 +63,6 @@ async def _ddg_search(
     """DuckDuckGo text search via ddgs (no API key)."""
     try:
         from ddgs import DDGS
-        from ddgs.exceptions import RatelimitException
     except ImportError:
         logger.debug("ddgs not installed; skipping DuckDuckGo search")
         return []

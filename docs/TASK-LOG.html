@@ -64,6 +64,16 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 29 ============================ -->
+  <h2>Session 29 — 2026‑11‑23 · “Potato Method: deep analysis + apply”</h2>
+  <p class="sub">Operator supplied <code>potato-agent-guide.md</code> (Lauren Tan, “All Code Is Slop (Except Mine)”) and asked for a deep analysis applied to the project. Every pyramid layer measured; Week‑1 changes applied; the rest ordered.</p>
+  <ul>
+    <li><b>Audit</b> <span class="tag done">done</span> — report <code>docs/noesis-potato-method-audit-2026-11-23.html</code>; research note <code>.planning/research/potato-method-audit-2026-11.md</code> (scorecard, correction log of prose rules → checks, order). Key findings: 193 inline DID/HEX64/address regexes (HEX64 case-insensitive in 77, strict in 28); no ESLint config; brain ruff 37 / mypy 212, neither in CI; 3 Playwright specs for 71 routes; allowlist gate counts lines; <code>fork-nous.ts</code> records a placeholder existence-DID in production (<code>getExistenceDid</code> never wired).</li>
+    <li><b>Brain ruff-clean + CI step</b> <span class="tag done">done</span> — latent <code>NameError</code> in the skill-sweep promotion (<code>json.JSONDecodeError</code> with only <code>_json</code> imported) fixed; 5 duplicated <code>BrainHandler</code> methods removed (AST-identical); unused imports / dead variables; <code>TYPE_CHECKING</code> imports. <code>ruff check src</code> added to the brain job. Brain 1542 pass.</li>
+    <li><b><code>check-ratchet</code> gate</b> <span class="tag done">done</span> — 5 count-only-down rules (inline-id-regex 201, react-use-effect 119, type-escape 553, suppression 109, ui-timer 21) with fix-it messages; wired into <code>rig-invariants.yml</code>; <code>grid/src/util/id-patterns.ts</code> + <code>civic/blueprint.ts</code> migrated. Grid tsc clean, civic 347 pass. <code>.planning/implementation/ci-gates.md</code> updated. No public-wiki change: no system truth changed (dev tooling is private per D‑WIKI‑07).</li>
+    <li><b>Open</b> — HEX64 case decision before consolidating regexes; wire <code>getExistenceDid</code>; ESLint flat config; allowlist member-set snapshot; feature map + evidence; property tests. Not deployed.</li>
+  </ul>
+
   <!-- ============================ SESSION 27 ============================ -->
   <h2>Session 28 — 2026‑11‑17 · “Re-plan: Portal Grid map, unfixed Grid identity, Rust Nous for Mac”</h2>
   <p class="sub">Operator asked for a plan report (HTML, visualization + demo screens) for three changes: public all-Grid map at noesiis.com with public/private Grids; Grid at grid.noesiis.com with no fixed identity; Brain rewritten in Rust as a Mac desktop app. Plan only — no code, schema, wiki or decision-log change.</p>

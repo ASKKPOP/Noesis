@@ -5,7 +5,7 @@ Only content_hash (sha256 hex) is audit-chain visible.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Literal
 
 # Closed dimension enum — locked for v2.3.

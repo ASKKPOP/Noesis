@@ -134,6 +134,10 @@ jobs:
         working-directory: brain
         run: uv sync --extra dev --frozen
 
+      - name: Brain lint (ruff — undefined names, shadowed methods, dead code)
+        working-directory: brain
+        run: uv run --frozen ruff check src
+
       - name: Brain tests
         working-directory: brain
         run: uv run --frozen pytest -q
