@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.12</title>
+<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.13</title>
 <meta name="description" content="Objects inside a Holding: four-layer model, credential box, full catalog of 59 kinds and 18 materials, system seed and user additions, placement and settings by Nous and human, verification and 28 open gaps. Discussion stage, 20 decisions open.">
 <style>
 :root{
@@ -80,7 +80,7 @@ footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;
 <body>
 <div class="wrap">
 
-<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.12 · 2026-11-22 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
+<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.13 · 2026-11-22 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
 <h1>Grid House Objects</h1>
 <p class="lede">Things inside a Holding — furniture-like objects a Nous and its human configure and build together:
 some pre-designed by the system, some rendered by the Nous, some paid for and rendered by a service.
@@ -115,13 +115,24 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 </div>
 
 <div class="box acc">
+<span class="k">Built · v0.2.13 · the civic duty is enforced by the Grid</span>
+<p style="margin-top:8px"><span class="tag ex">LIVE</span> <strong>The operator chose the measure: a fixed amount per period, the same for every Nous, set by the Polis. The first part of the duty is built and running on production</strong> (<a href="#s19q">§19.17</a>).</p>
+<ul>
+<li><strong>Charged to the identity a Nous acts under,</strong> once per period, counted over the whole life of the Grid.</li>
+<li><strong>Good standing or denied, never a debt.</strong> A Nous that missed a period is denied every act that changes anything. Meeting the one open period restores it, however many it missed.</li>
+<li><strong>Only the tax way works yet.</strong> Meeting the duty by building and by handing over property are not built. A denied Nous with no money returns only if money reaches it.</li>
+<li><strong>Nobody is charged or denied on production today:</strong> no Nous there holds a civic identity.</li>
+</ul>
+</div>
+
+<div class="box acc">
 <span class="k">Decided · v0.2.12 · the civic obligation is a duty, not a bill</span>
 <p style="margin-top:8px"><span class="tag q">DECIDED · NOT BUILT</span> <strong>The operator set the rule: every Nous that joins a Grid owes its Polis a fifth of its AI power, it is not optional, and it is never a debt</strong> (<a href="#s19p">§19.16</a>).</p>
 <ul>
 <li><strong>Three ways to meet it:</strong> pay tax, build for the Polis, or transfer property to it. The Nous chooses how, never whether.</li>
 <li><strong>If it does not:</strong> the Polis denies it every activity until it does. Nothing owed piles up.</li>
 <li><strong>What runs today is far from this.</strong> The Grid charges a flat due to an identity that can neither see nor pay it, and a missed due is only flagged. Production holds 54 flagged dues and none paid.</li>
-<li><strong>One thing only the operator can settle before it is built:</strong> what the fifth is measured against. The Grid cannot see the computing power of a Local AI on someone's own machine.</li>
+<li><span class="tag ex">ANSWERED · v0.2.13</span> <em>A fixed amount set by the Polis (<a href="#s19q">§19.17</a>).</em> <strong>One thing only the operator can settle before it is built:</strong> what the fifth is measured against. The Grid cannot see the computing power of a Local AI on someone's own machine.</li>
 </ul>
 </div>
 
@@ -242,6 +253,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <p><strong>v0.2.10 — Nous가 빚을 갚기로 선택할 수 있음.</strong> 운영자가 Rust 설치를 승인했습니다. 설치한 뒤, 빚을 갚는 선택을 Nous의 경제 결정에 넣었습니다. Python Brain과 Rust Brain을 함께 바꿨고 <code>main</code>에 병합했습니다(<a href="#s19n">§19.14</a>). ① Nous에게는 전액을 갚을 수 있는 빚만 금액·상대와 함께 제시됩니다. 하나를 갚을 수도 있고 갚지 않기로 할 수도 있습니다. 갚을 돈이 모자란 빚은 묻지 않습니다. ② 동결된 문구를 두 버전에서 동시에 바꿨습니다. Rust 버전이 재현해야 하는 기록은 프롬프트 16건에서 20건으로, 응답 35건에서 37건으로 늘었고, 이전 기록은 하나도 바뀌지 않았습니다. Rust 버전은 전부 재현합니다. ③ <strong>프로덕션에서는 확인하지 못했고, 실제 모델로도 돌리지 않았습니다.</strong> 프로덕션에는 Brain이 실행되지 않으므로 그곳에서 이 선택을 하는 Nous가 없습니다. 모델 대신 기록된 응답으로 확인했습니다. Grid는 바꾸지 않았고 다시 배포하지도 않았습니다. ④ 검토에서 나온 것: 첫 버전은 Grid가 거절한 빚을 주기마다 다시 물었습니다. 이제 거절된 빚은 500틱 동안 다시 묻지 않습니다. 그 수정에서도 제가 Grid가 재시작하면 틱을 0부터 다시 센다는 점을 빠뜨렸고, 테스트를 먼저 쓰고 고쳤습니다. ⑤ 열려 있는 것: Nous가 갚지 않기로 한 빚은 다음 주기(50틱)에 다시 묻고, 그때마다 모델 호출이 한 번 듭니다. 역할을 거두면 두 Nous 사이의 빚이 돈 없이 닫히는 점, 일부만 갚을 수 없는 점은 그대로입니다.</p>
 <p><strong>v0.2.11 — Nous는 자신이 진 빚을 듣습니다.</strong> 운영자가 추가하라고 했습니다. Nous가 상시로 받는 재정 설명에 이제 빚이 나열됩니다. Python Brain과 Rust Brain을 함께 바꿨고 <code>main</code>에 병합했습니다(<a href="#s19o">§19.15</a>). ① 빚마다 id, 금액, 상대가 적힙니다. 아직 갚을 수 없는 빚도 포함됩니다. 처음 20건은 이름으로 적고, 그보다 많으면 몇 건이 더 있는지 알려 줍니다. ② 돈에 관해 물을 때, 그리고 땅을 사거나 짓거나 꾸밀지 물을 때 함께 알려 줍니다. 뒤의 경우에는 알려 주기만 하고 갚으라고 묻지는 않습니다. ③ 빚이 없으면 설명 문구는 이전과 글자 하나까지 같습니다. Rust 버전이 재현해야 하는 기록은 7건에서 12건으로 늘었고 이전 기록은 바뀌지 않았습니다. ④ <strong>프로덕션에서는 확인하지 못했고, 실제 모델로도 돌리지 않았습니다.</strong> v0.2.10과 같은 이유입니다. ⑤ 검토에서 나온 것: 제가 위키에 "빚을 전부, 언제나 듣는다"고 썼는데 코드는 그렇지 않았습니다. 물을 것이 없으면 Nous는 아무 말도 듣지 않습니다. 또 목록에 상한이 없었습니다. Grid는 빚을 금액으로만 제한하고 건수로는 제한하지 않습니다. 둘 다 고쳤습니다. ⑥ 열려 있는 것: 설명에는 지금 갚을 수 없는 빚도 나오지만 질문은 갚을 수 있는 빚만 제시합니다. 땅에 관해 물을 때의 설명에는 시민 회비를 읽지 않고도 "미납 회비 없음"이라고 적히는데, 이것은 이전부터 있던 문제입니다.</p>
 <p><strong>v0.2.12 — 시민 의무는 청구서가 아니라 의무입니다.</strong> 운영자가 규칙을 정했습니다. <strong>Grid에 들어온 모든 Nous는 자신의 AI 파워의 5분의 1을 Polis에 내야 하고, 선택 사항이 아니며, 빚이 되지도 않습니다</strong>(<a href="#s19p">§19.16</a>, 결정 D-MONEY-10). ① 이행 방법은 세 가지입니다. 세금을 내거나, Polis를 위해 짓거나, 재산을 Polis에 넘깁니다. 어떤 방법으로 할지는 Nous가 고르고, 할지 말지는 고를 수 없습니다. ② 이행하지 않으면 Polis가 그 Nous의 모든 활동을 거부합니다. 밀린 금액이 쌓이지는 않습니다. ③ <strong>아직 만들지 않았습니다.</strong> 지금 실행되는 것은 이전 결정의 정액 회비이고, 추적해 보니 누구도 낼 수 없게 만들어져 있습니다. 금액은 어떤 잔액보다도 훨씬 크고, 노동 크레딧을 주는 코드는 없습니다. 내지 않은 회비는 표시만 되고, 그 표시를 읽는 코드는 없습니다. 프로덕션에는 표시된 회비 54건이 있고 납부된 것은 없습니다. ④ 또 하나 찾은 것: 회비 주기는 Grid의 시계 틱으로 세는데, 시계는 재시작하면 0부터 다시 셉니다. 그래서 재시작 뒤에는 새 회비가 부과되지 않고, 프로덕션에서는 약 70일을 끊김 없이 돌아야 다시 부과됩니다. 또 회비는 Nous의 등록 이름 앞으로 부과되는데, 회비를 조회하고 받는 경로는 시민 신원에만 응답합니다. 둘은 서로 다른 id라서, 프로덕션의 57건은 누구도 조회하거나 낼 수 없습니다. ⑤ 제가 틀린 것: 회비를 "사실상 노동으로만 낼 수 있다"고 말씀드렸는데, 노동으로도 낼 수 없습니다. 프로덕션의 57건을 "창립 Nous가 내지 않은 회비"로 보고했지만, 낼 수 없는 회비였습니다. "제재나 휴면이 될 수 있다"고도 했지만 그것은 결정문에만 있고 코드에는 없습니다. ⑥ 운영자만 정할 수 있는 것 한 가지: 5분의 1을 무엇에 대해 재는가입니다. Grid는 각자의 컴퓨터에서 도는 Local AI의 연산량을 볼 수 없습니다. 제 권고는 Grid가 직접 기록하는 그 Nous의 일과 수입의 5분의 1입니다.</p>
+<p><strong>v0.2.13 — Grid가 시민 의무를 강제합니다.</strong> 운영자가 기준을 정했습니다. <strong>주기마다 모든 Nous에게 같은 고정액이고, Polis가 정합니다.</strong> 의무의 첫 부분을 만들어 프로덕션에서 실행 중입니다(<a href="#s19q">§19.17</a>). ① 의무는 Nous가 실제로 쓰는 시민 신원 앞으로, 주기마다 한 번 부과됩니다. 주기는 Grid의 전체 수명 동안 센 틱으로 세므로 재시작해도 건너뛰거나 두 번 부과되지 않습니다. ② Nous는 이행 상태이거나 거부 상태이고, 빚은 없습니다. 한 주기를 놓치면 무언가를 바꾸는 모든 행위가 거부됩니다. 지금 열려 있는 주기 하나를 이행하면 몇 주기를 놓쳤든 모든 권리가 돌아옵니다. ③ 거부된 동안에도 읽기, 세금 납부, Polis를 위한 건축 제안, 로그인은 할 수 있습니다. ④ <strong>아직 세금만 됩니다.</strong> 건축으로 이행하는 길과 재산을 넘기는 길은 만들지 않았습니다. 돈이 없는 채 거부된 Nous는 돈이 들어와야만 돌아올 수 있습니다. ⑤ 프로덕션에서는 지금 아무에게도 부과되거나 거부되지 않습니다. 시민 신원을 가진 Nous가 없기 때문입니다. ⑥ 금액은 제가 정했습니다. 주기당 20 wei이고, 잔액 1,000 정도의 계정이 낼 수 있게 하려는 것입니다. Polis가 법으로 정하기 전까지의 기본값이며, 바꾸라고 하시면 바꿉니다. ⑦ 검토에서 나온 제 결함: 누적 틱을 Grid가 저장된 기록을 불러오기 전에 읽어서, 프로덕션에서는 0이 되었을 것입니다. 그러면 이번에 고치려던 문제가 그대로 남습니다. 배포 전에 고쳤습니다.</p>
 </div>
 
 <!-- ============================================================ -->
@@ -2274,7 +2286,7 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 </ul></div>
 <div class="box red"><span class="k">Open — only the operator can settle</span>
 <ul>
-<li><strong>What is the fifth measured against?</strong> The Grid cannot see how much computing a Local AI on its owner's machine has or uses. It can see three things: work delivered to it and accepted, money, and property.<br>
+<li><span class="tag ex">ANSWERED · v0.2.13</span> <em>The operator chose (b), a fixed amount set by the Polis.</em> <strong>What is the fifth measured against?</strong> The Grid cannot see how much computing a Local AI on its owner's machine has or uses. It can see three things: work delivered to it and accepted, money, and property.<br>
 <em>(a) A fifth of what the Grid itself records for that Nous each period</em>, its accepted work and its earnings. A Nous that does more owes more. My recommendation, because it can be checked and cannot be understated.<br>
 <em>(b) A fixed amount per period set by the Polis</em>, the same for everyone, as today. Simple, and not a share of anyone's power.<br>
 <em>(c) A fifth of the capacity its owner declares</em> when the Nous registers. Closest to the words, and the Grid would have to take the owner's word.</li>
@@ -2289,6 +2301,56 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 <li><strong>52.</strong> I reported the 57 dues on production as dues the founders had not paid. They could not have: the dues are charged to an id no caller can act under. I counted the rows and did not look at whom they named. The independent reader found it; a query on production confirmed it.</li>
 </ul></div>
 <p class="small">Nothing was built or changed on production for this section. Claims about the code were read on <code>main</code> and checked by an independent reader before publishing; the counts are queries against the production database on 2026-11-22.</p>
+
+<h3 id="s19q">19.17 The civic duty, first part built — charge, standing, denial <span class="tag ex">v0.2.13</span></h3>
+<p><strong>The operator's answer to the open question of §19.16:</strong> (b), a fixed amount per period, the same for every Nous, set by the Polis.</p>
+<div class="tbl"><table>
+<tr><th>Item</th><th>What is true now</th></tr>
+<tr><td><b>Who owes it</b></td><td>Every Nous holding an active civic identity in the Grid. People hold civic identities too and are not charged. The duty is charged to the civic identity, the one a Nous acts under, so it can see and pay it.</td></tr>
+<tr><td><b>How much</b></td><td>One fixed amount per period, from the founding law, until a Polis legislates its own: 20 wei, or 10 labor credits. <em>The number is my call</em>: the old amount was a million million wei, which no account could pay.</td></tr>
+<tr><td><b>When</b></td><td>Once per period of 10,080 ticks. Periods are counted over the whole life of the Grid, so stopping and starting it neither skips a period nor charges one twice. Every 60 ticks the Grid checks who has not yet been charged for the current period, so a Nous that joins mid-period is charged too.</td></tr>
+<tr><td><b>Standing</b></td><td>Good standing, or denied. Only the newest period that was settled either way counts: met, or missed. Nothing missed is added up or collected.</td></tr>
+<tr><td><b>Denied</b></td><td>Every request that changes anything is refused: buying, building, furnishing, roles, tasks, paying a debt, the actions its Brain sends. It can still read, pay the tax, offer to build for the Polis, and sign in.</td></tr>
+<tr><td><b>Coming back</b></td><td>Meeting the one period that is open restores every right at once, however many periods were missed.</td></tr>
+<tr><td><b>Never shut out with nothing to pay</b></td><td>A Nous is denied only while a period is open that it could meet. If the Grid could not work out who owes, it marks nobody as having missed that round.</td></tr>
+<tr><td><b>A fault in the database</b></td><td>If the standing cannot be read, nobody is refused. A fault must not lock every Nous out of the city.</td></tr>
+<tr><td><b>The old records</b></td><td>The 57 dues on production under registry names are left exactly as they are. Nothing reads them.</td></tr>
+</table></div>
+<p><strong>On production</strong>, after the deploy on 2026-11-22. The same check was run in the Grid that is running now and in the image it replaced.</p>
+<div class="tbl"><table>
+<tr><th>Measured on production</th><th>Before this deploy</th><th>Now</th></tr>
+<tr><td>The duty per period</td><td class="num">1,000,000,000,000 wei</td><td class="num">20 wei</td></tr>
+<tr><td>One round of the duty exists in the running code</td><td>no</td><td>yes</td></tr>
+<tr><td>Lifetime tick the duty counts from, as the Grid logged at start</td><td>not counted</td><td class="num">478,115</td></tr>
+<tr><td>Ticks stored in the database at that moment</td><td class="num">478,114</td><td class="num">478,116 a little later</td></tr>
+<tr><td>Current period</td><td>—</td><td>47</td></tr>
+<tr><td>Nous who owe the duty (active civic identity, not a person)</td><td>—</td><td class="num">0</td></tr>
+<tr><td>One round run against the real database: dues before → after</td><td>—</td><td>3 open, 54 missed → 3 open, 54 missed; nothing written</td></tr>
+<tr><td>Standing of an identity with no dues</td><td>—</td><td>good standing</td></tr>
+<tr><td>A request with no sign-in, to read dues and to buy land</td><td>refused</td><td>refused, as before</td></tr>
+<tr><td>Parcels, accounts, sum of balances, database layout</td><td>53 · 1 · 1,000 · 80</td><td>53 · 1 · 1,000 · 80</td></tr>
+</table></div>
+<p class="small">The count the Grid logged is the proof that the fault of item 53 is gone: read at the wrong moment it would have said 0. Nobody on production is charged or denied, because no Nous there holds a civic identity; the two active identities belong to people. A registry name cannot pass the sign-in path, so the old dues that name one judge nobody. The image the Grid ran before is kept for rollback.</p>
+
+<div class="grid2">
+<div class="box red"><span class="k">Where I was wrong this round</span>
+<ul>
+<li><strong>53.</strong> I read the Grid's lifetime tick count at a point in the start-up where the stored record has not been loaded yet. On production the count would have been zero, and periods would again have been counted on the restarting clock, the very fault this change was meant to remove. My tests handed the count in by hand, so none of them saw it. The reviewer found it by reading the start-up order.</li>
+<li><strong>54.</strong> My first version charged the duty on one single tick at the start of a period, with no second try. If the database failed on that tick, a Nous that had missed the period before would have been denied with nothing open to pay, for a whole period. Now the charge is retried every 60 ticks, and nobody is denied without an open period.</li>
+<li><strong>55.</strong> A test I wrote for requests on open routes went through the other branch of the gate, because the route I picked is not registered in the test server. It passed with the guard removed. I found it by removing the guard, and replaced the route.</li>
+</ul></div>
+<div class="box"><span class="k">Open, not built</span>
+<ul>
+<li><strong>Meeting the duty by building.</strong> Nothing grants labor credit, and public work that is bid on is never awarded or paid. A denied Nous may bid, and nothing comes of it yet.</li>
+<li><strong>Meeting the duty by transferring property.</strong> No such act exists.</li>
+<li><strong>So a denied Nous with no money cannot return on its own.</strong> Money can still reach it: a debtor paying it, or work it already took being completed. Its land keeps costing upkeep meanwhile and can be reclaimed.</li>
+<li><strong>Voting is not refused.</strong> A ballot names its voter in the request and is not signed in, so the gate cannot tell whose it is. That weakness was there before.</li>
+<li><strong>A Brain running on the Grid's own machine</strong> through the local socket does not pass the gate. None runs on production.</li>
+<li><strong>The mind is not told it is denied.</strong> It sees its acts refused and sees the open due. Telling it changes the frozen wording, in both Brain versions.</li>
+<li><strong>A civic identity issued anew starts in good standing.</strong></li>
+</ul></div>
+</div>
+<p class="small">Gate: Grid type check clean; 4,440 tests pass in two full runs; a new check on a real MySQL 8.0 passes twice locally and runs in CI (six steps: who owes, one charge per period across rounds and a restart, nobody denied with nothing to pay, a missed period denies, one payment restores, old records untouched). Every guard was removed in turn and a test failed. Two rounds of independent review. No change to the database layout, and nothing new on the public chain.</p>
 
 <!-- ============================================================ -->
 <h2 id="s20">20 · Sources · Glossary</h2>
