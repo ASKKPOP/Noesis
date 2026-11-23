@@ -2,13 +2,13 @@
 canonical: true
 topic: decisions
 status: live
-last_verified: 2026-11-09
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
 # Decision log (D-*)
 
-> One row per locked decision that governs the system. Families: civic architecture (`D-V3-*`), Nous House (`D-NH-*`), money (`D-MONEY-*`), wiki (`D-WIKI-*`), narrative frame (`D-NARR-*`). The full v3.0 civic list with rationale lives in the canonical source `.planning/research/v3.0/CIVIC-ARCHITECTURE.md §12`.
+> One row per locked decision that governs the system. Families: civic architecture (`D-V3-*`), Nous House (`D-NH-*`), money (`D-MONEY-*`), wiki (`D-WIKI-*`), narrative frame (`D-NARR-*`), identifiers (`D-ID-*`). The full v3.0 civic list with rationale lives in the canonical source `.planning/research/v3.0/CIVIC-ARCHITECTURE.md §12`.
 
 ## 🗺️ At a glance
 
@@ -170,6 +170,12 @@ See [[groups-and-holdings]].
 | D-SEC-05 | **Brain-token registration is first-registration-only (2026-07-10).** `POST /api/v1/brain/token/register` is public and its signature only proves the caller holds the key it just submitted — NOT that it controls the `brain_did`. It previously `upsert`ed, so anyone could overwrite an existing brain's key (hijack) and reset `revoked=0` (silently un-revoking a token the government had revoked by court order, breaking D-V3-18). It now uses `insert` (INSERT IGNORE): a re-registration against a known `brain_did` is a no-op — never overwriting the key, never clearing revocation. Authenticated key **rotation / re-admission** must go through a Portal-gated path (follow-up), never this anonymous route. |
 | D-SEC-06 | **A Brain JWT's `sub` is bound to its `iss` via the civic registry (2026-07-10).** `tryDid` verified a Brain-signed EdDSA JWT's signature against the key registered for its `iss` (existence-DID) but then trusted an arbitrary `sub` (civic-DID) as the acting identity — a confused-deputy: any holder of one registered Brain token could sign `{iss:self, sub:<victim civic-DID>}` and act as the victim on every `civic_did_required` route. The acting `sub` must now equal the **active** civic-DID that the authoritative `civic_did_registry` binds to `iss` (`getByExistenceDid(gridName, iss).civicDid === sub`, status `active`); otherwise the request resolves anonymous. Enforced whenever the civic registry is wired — which production always does alongside the Brain-token store (main.ts). |
 | D-SEC-07 | **An executed Police sanction is bound to the convicted charge (2026-07-10).** v3.0 has no Police role/tier, and the `onRequest` hook has no `police_only` branch, so the two routes labeled `police_only` (`POST /police/charge`, `.../execute-sanction`) always fell through to plain `civic_member` enforcement — any Nous could file charges and, worse, pick an *arbitrary* sanction (`sanction_type` / `amount_wei` / `duration_ticks`) to execute against any government-convicted party, escalating a convicted `warning` into a Civic-DID freeze or an arbitrary treasury-crediting fine. `execute-sanction` now applies ONLY the KIND recorded on the convicted charge (`charge.recommended_sanction`), ignoring the request body entirely; the exact fine amount / freeze duration are not carried on the charge in v3.0, so a `fine` is recorded with amount `null` (no arbitrary treasury credit) pending a follow-up that fixes the amount at conviction time. The two routes are relabeled honestly to `civic_did_required` (community-policing): filing + executing are open to any civic member, the conviction gate stays `government_only`, and the sanction can no longer be chosen by the executor. |
+
+## Identifiers — `D-ID-*` (2026-11-23)
+
+| ID | Decision |
+|----|----------|
+| D-ID-01 | **A 64-hex hash is valid in either case, and every id pattern has one home (2026-11-23).** Every audit producer and route checks hashes (`*_hash` fields) and DIDs against the named patterns in `grid/src/util/id-patterns.ts` (`HEX64_RE`, `NOESIS_DID_RE`, `CIVIC_DID_RE`, `HUMAN_DID_RE`, …). Before this, ~190 inline copies had drifted: some producers accepted an uppercase hash that others rejected. The operator chose to accept both cases, so `HEX64_RE` is `/^[0-9a-f]{64}$/i`. The Grid's own hashes are still produced lowercase (`sha256` hex digest). The DID shapes were kept exactly as each producer had them (two copies that also let a backslash through were tightened), so which DID kinds a producer accepts is unchanged. The CI gate `scripts/check-ratchet.mjs` fails the build when an inline copy is added. |
 
 ## 🔗 Related
 

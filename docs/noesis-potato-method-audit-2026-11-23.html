@@ -172,7 +172,7 @@
 <section>
   <div class="sec-head"><div class="eyebrow">Next</div><h2>Recommended order</h2></div>
   <ol>
-    <li><b>Decide whether HEX64 hashes are lowercase-only</b>, then fold the 193 regexes into <code>id-patterns.ts</code> (one named export per DID kind). This needs a decision because it changes what some emitters accept.</li>
+    <li><span class="pill yes">done</span> <b>Fold the 193 regexes into <code>id-patterns.ts</code>.</b> The operator chose to accept both cases (D-ID-01). 162 grid files now import named patterns, and the ratchet went 201 → 4 (the 4 left are in dashboard and steward, which cannot import grid).</li>
     <li><b>Wire <code>getExistenceDid</code></b> in production so fork manifests stop recording a placeholder.</li>
     <li><b>ESLint flat config</b> with <code>@typescript-eslint</code>: move the ratchet rules into real lint rules with the same messages, and run it in CI.</li>
     <li><b>Replace the allowlist line-count gate</b> with a member-set snapshot.</li>

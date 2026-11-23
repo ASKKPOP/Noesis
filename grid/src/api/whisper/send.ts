@@ -34,8 +34,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { WhisperRouteDeps } from './routes.js';
-
-const DID_RE = /^did:noesis:[a-zA-Z0-9_\-]+$/;
+import { NOESIS_DID_CASE_SENSITIVE_PREFIX_RE as DID_RE } from '../../util/id-patterns.js';
 
 interface SendBody {
     to_did?: unknown;

@@ -132,9 +132,9 @@ describe('appendBiosDeath — BIOS-03/BIOS-04 sole producer', () => {
                 .toThrow(/invalid final_state_hash/);
         });
 
-        it('HEX64_RE matches lowercase 64-hex', () => {
+        it('HEX64_RE matches 64-hex in either case', () => {
             expect(HEX64_RE.test('b'.repeat(64))).toBe(true);
-            expect(HEX64_RE.test('B'.repeat(64))).toBe(false);
+            expect(HEX64_RE.test('B'.repeat(64))).toBe(true);
         });
     });
 

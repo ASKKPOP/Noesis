@@ -11,9 +11,7 @@
  *
  * See: FORK-02, D-43-02, T-43-secrets.
  */
-
-/** 64-hex SHA-256 — same pattern as grid/src/audit/append-operator-nous-forked.ts HEX64_RE. */
-const HEX64_RE = /^[0-9a-f]{64}$/;
+import { HEX64_RE } from '../util/id-patterns.js';
 
 export interface ForkManifest {
     readonly format_version: '1.0';

@@ -23,12 +23,7 @@ import type { BrainTokenStore } from '../../db/stores/brain-token-store.js';
 import { NousRegistrationStore } from '../../portal-workflows/nous-registration-store.js';
 import { setOwner, countActiveByOperator } from '../../operator/data/operator-brain-store.js';
 import { getQuotaLimit } from '../../operator/data/operator-quota-store.js';
-
-// DID regexes — kept inline so callers can read the intent directly.
-// Standard nous: form + the three founding legacy DIDs (BLOCKER-01) so a founding
-// Nous can register a Brain token and dispatch actions.
-const BRAIN_DID_RE = /^did:noesis:(nous:[a-z0-9_\-]+|sophia|hermes|themis)$/i;
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
+import { NOUS_OR_SYSTEM_DID_RE as BRAIN_DID_RE, CIVIC_DID_RE } from '../../util/id-patterns.js';
 
 function currentTick(services: GridServices): number {
     return services.clock?.state?.tick ?? 0;

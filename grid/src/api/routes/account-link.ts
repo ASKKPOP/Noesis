@@ -22,9 +22,7 @@ import { createHash } from 'node:crypto';
 import type { GridServices } from '../server.js';
 import { AccountLinkStore, AccountLinkError } from '../../economy/account-link-store.js';
 import { appendPortalAccountLinked } from '../../audit/append-portal-account-linked.js';
-
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
-const HUMAN_CIVIC_DID_RE = /^did:civic:noesis:human:/i;
+import { CIVIC_DID_RE, CIVIC_HUMAN_DID_PREFIX_RE as HUMAN_CIVIC_DID_RE } from '../../util/id-patterns.js';
 
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
 

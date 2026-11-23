@@ -108,13 +108,13 @@ describe('appendOperatorNousForked — Step 4: regex/range guards', () => {
         ).toThrow(TypeError);
     });
 
-    it('Test 5b: throws TypeError when operator_did_hash fails HEX64_RE (uppercase)', () => {
+    it('Test 5b: accepts operator_did_hash in uppercase (HEX64 accepts both cases)', () => {
         expect(() =>
             appendOperatorNousForked(makeChain(), validOperatorId(), {
                 ...validPayload(),
                 operator_did_hash: 'A'.repeat(64),
             }),
-        ).toThrow(TypeError);
+        ).not.toThrow();
     });
 
     it('Test 5c: throws TypeError when package_hash fails HEX64_RE (not hex)', () => {

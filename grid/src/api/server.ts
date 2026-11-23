@@ -107,6 +107,8 @@ import { registerGridManagerPresenceRoute } from './routes/grid-manager-presence
 import { registerP2pRoutes } from './routes/p2p.js';
 import { registerForkNousRoute } from './operator/fork-nous.js';
 import { registerCivicParcelRoutes } from './routes/civic-parcels.js';
+import { NOESIS_DID_RE as DID_REGEX } from '../util/id-patterns.js';
+export { DID_REGEX };
 
 /**
  * Phase 6 AGENCY-02: normalized memory entry shape crossing the RPC boundary.
@@ -446,13 +448,6 @@ export interface GridServices {
      */
     operatorAllowlist?: Map<string, import('./preHandlers/operatorAuth.js').OperatorGrant>;
 }
-
-/**
- * DID regex used by /api/v1/nous/:did/state.
- * Matches `did:noesis:<slug>` where slug is alphanumeric + underscore + hyphen.
- * Case-insensitive. Exposed as a shared constant for Plan 04-06 to reuse.
- */
-export const DID_REGEX = /^did:noesis:[a-z0-9_\-]+$/i;
 
 export interface WsHubOverrides {
     bufferCapacity?: number;

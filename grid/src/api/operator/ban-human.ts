@@ -35,9 +35,7 @@ import type { GridServices } from '../server.js';
 import type { ApiError } from '../types.js';
 import { appendOperatorHumanBanned } from '../../audit/append-operator-human-banned.js';
 import { createHash } from 'node:crypto';
-
-/** Human DID regex — allows colon separators for did:noesis:human:0x... format. */
-const HUMAN_DID_REGEX = /^did:noesis:[a-z0-9_:\-]+$/i;
+import { NOESIS_DID_WITH_COLONS_RE as HUMAN_DID_REGEX } from '../../util/id-patterns.js';
 
 interface BanHumanBody {
     reason?: unknown;  // plaintext; NEVER enters audit payload (D-25b-11)

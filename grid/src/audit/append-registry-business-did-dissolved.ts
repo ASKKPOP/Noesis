@@ -20,11 +20,7 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
-
-// Phase 37 introduces did:biz:* and did:civic:* — DID_RE only covers did:noesis:*.
-// Local regex constants required (do NOT import DID_RE).
-const BIZ_DID_RE = /^did:biz:noesis:[a-z0-9_:\-]+$/i;
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
+import { BIZ_DID_RE, CIVIC_DID_RE } from '../util/id-patterns.js';
 
 /** Closed 4-key payload for registry.business_did_dissolved. */
 export interface RegistryBusinessDidDissolvedPayload {

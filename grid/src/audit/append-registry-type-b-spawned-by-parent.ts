@@ -9,8 +9,7 @@ import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
 import { type RegistryTypeBSpawnedByParentPayload, REGISTRY_TYPE_B_SPAWNED_BY_PARENT_KEYS } from '../typeb/registry-types.js';
-
-const HEX64_RE = /^[0-9a-f]{64}$/i;
+import { HEX64_RE } from '../util/id-patterns.js';
 
 export function appendRegistryTypeBSpawnedByParent(audit: AuditChain, payload: RegistryTypeBSpawnedByParentPayload): AuditEntry {
     if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {

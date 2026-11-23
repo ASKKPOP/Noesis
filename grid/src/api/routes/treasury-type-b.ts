@@ -9,8 +9,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { TypeBTreasuryStore } from '../../typeb/type-b-treasury-store.js';
-
-const TYPE_B_DID_RE = /^did:noesis:[a-z0-9_:\-]+$/i;
+import { NOESIS_DID_WITH_COLONS_RE as TYPE_B_DID_RE } from '../../util/id-patterns.js';
 
 export function registerTreasuryTypeBRoutes(app: FastifyInstance, services: GridServices): void {
     const grid = services.gridName ?? 'genesis';

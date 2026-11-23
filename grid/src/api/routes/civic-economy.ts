@@ -12,8 +12,7 @@ import type { GridServices } from '../server.js';
 import { NousAccountStore } from '../../economy/nous-account-store.js';
 import { CivicLaborCreditStore } from '../../economy/civic-labor-credit-store.js';
 import { TreasuryWeiStore } from '../../economy/treasury-wei-store.js';
-
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
+import { CIVIC_DID_RE } from '../../util/id-patterns.js';
 
 export function registerCivicEconomyRoutes(app: FastifyInstance, services: GridServices): void {
     const grid = services.gridName ?? 'genesis';

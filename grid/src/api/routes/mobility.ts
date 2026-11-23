@@ -15,8 +15,7 @@ import { COOKIE_NAME, keyPairPromise } from '../portal/auth.js';
 import { NousSponsorStore } from '../../economy/nous-sponsor-store.js';
 import { MobilityStore } from '../../mobility/mobility-store.js';
 import { ADOPTION_WINDOW_TICKS } from '../../mobility/types.js';
-
-const NOUS_DID_RE = /^did:noesis:[a-z0-9_:\-]+$/i;
+import { NOESIS_DID_WITH_COLONS_RE as NOUS_DID_RE } from '../../util/id-patterns.js';
 
 async function humanFromSession(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
     const token = (req.cookies as Record<string, string | undefined>)[COOKIE_NAME];

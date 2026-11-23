@@ -9,10 +9,7 @@ import type { GridServices } from '../../server.js';
 import { operatorScope } from '../../preHandlers/operatorScope.js';
 import { setOwner, countActiveByOperator } from '../../../operator/data/operator-brain-store.js';
 import { getQuotaLimit } from '../../../operator/data/operator-quota-store.js';
-
-// Standard nous: form + the three founding legacy DIDs (BLOCKER-01) so an operator
-// can claim a founding Nous's Brain.
-const BRAIN_DID_RE = /^did:noesis:(nous:[a-z0-9_\-]+|sophia|hermes|themis)$/i;
+import { NOUS_OR_SYSTEM_DID_RE as BRAIN_DID_RE } from '../../../util/id-patterns.js';
 
 export async function registerOperatorMeBrainsRoute(
     app: FastifyInstance,

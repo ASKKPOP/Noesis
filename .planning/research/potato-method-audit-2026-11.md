@@ -71,8 +71,11 @@ one exists.
 
 ## Recommended order (not yet done)
 
-1. **Decide HEX64 case**, then consolidate the 193 regexes into `id-patterns.ts`. Today the
-   case-insensitive copies accept uppercase hashes that the strict ones reject.
+1. ~~Decide HEX64 case, then consolidate the regexes.~~ **Done 2026-11-23.** The operator chose
+   "accept both cases" (D-ID-01). 162 grid files now import from `id-patterns.ts`; the ratchet went
+   201 → 4 (the 4 left are in dashboard/steward, which cannot import grid). DID shapes were kept per
+   producer, and two copies that let a backslash through were tightened. 7 tests that pinned
+   lowercase-only were flipped. Grid 4519 pass.
 2. **Wire `getExistenceDid`** in production and drop the placeholder.
 3. **ESLint flat config** with `@typescript-eslint` (already installed), carrying the ratchet rules
    as real lint rules.

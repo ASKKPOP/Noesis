@@ -13,8 +13,7 @@ import type { GridServices } from '../server.js';
 import { TypeBRegistryStore } from '../../typeb/type-b-registry-store.js';
 import { requiredBond } from '../../typeb/registry-types.js';
 import { NousAccountStore } from '../../economy/nous-account-store.js';
-
-const DID_RE = /^did:(?:civic:)?noesis:[a-z0-9_:\-]+$/i;
+import { NOESIS_OR_CIVIC_DID_RE as DID_RE } from '../../util/id-patterns.js';
 
 export function registerRegistryTypeBRoutes(app: FastifyInstance, services: GridServices): void {
     const grid = services.gridName ?? 'genesis';

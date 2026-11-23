@@ -8,8 +8,7 @@ import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
 import { type PortalGridCreationApprovedPayload, PORTAL_GRID_CREATION_APPROVED_KEYS } from '../portal-workflows/grid-approval-types.js';
-
-const HEX64_RE = /^[0-9a-f]{64}$/i;
+import { HEX64_RE } from '../util/id-patterns.js';
 
 export function appendPortalGridCreationApproved(audit: AuditChain, payload: PortalGridCreationApprovedPayload): AuditEntry {
     if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {

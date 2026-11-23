@@ -22,12 +22,8 @@ import type { AuditChain } from '../audit/chain.js';
 import type { AuditEntry } from '../audit/types.js';
 import { payloadPrivacyCheck } from '../audit/broadcast-allowlist.js';
 import { IRIS_BELIEF_REVISED_KEYS, type IrisBeliefRevisedPayload } from './types.js';
-
-/** DID regex — locked project-wide (Phase 7 D-29). */
-export const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
-
-/** 64-char lowercase hex (full sha256 hexdigest — Brain emits full hash, Grid stores as-is). */
-export const HEX64_RE = /^[0-9a-f]{64}$/;
+import { NOESIS_DID_RE as DID_RE, HEX64_RE } from '../util/id-patterns.js';
+export { DID_RE, HEX64_RE };
 
 export function appendIrisBeliefRevised(
     audit: AuditChain,

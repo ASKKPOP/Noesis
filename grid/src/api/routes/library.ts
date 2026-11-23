@@ -20,12 +20,11 @@ import { appendIrsDisbursementAuthorized } from '../../audit/append-irs-disburse
 import { appendIrsDisbursementExecuted } from '../../audit/append-irs-disbursement-executed.js';
 import { GOV_SESSION_ISSUER_DID } from '../../civic-registry/government-session.js';
 import { createHash } from 'node:crypto';
+import { CIVIC_DID_RE, HEX64_RE } from '../../util/id-patterns.js';
 
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
 const TREASURY_CIVIC_DID = 'did:civic:noesis:treasury';
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const HEX64_RE = /^[0-9a-f]{64}$/i;
 
 export function registerLibraryRoutes(app: FastifyInstance, services: GridServices): void {
     const grid = services.gridName ?? 'genesis';

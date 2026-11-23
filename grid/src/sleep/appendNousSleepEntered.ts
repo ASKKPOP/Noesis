@@ -26,9 +26,8 @@ import type { AuditChain } from '../audit/chain.js';
 import type { AuditEntry } from '../audit/types.js';
 import { payloadPrivacyCheck } from '../audit/broadcast-allowlist.js';
 import type { NousSleepPayload } from './types.js';
-
-/** DID regex — locked project-wide (Phase 7 D-29). Phase 16 is a new entry point. */
-export const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
+import { NOESIS_DID_RE as DID_RE } from '../util/id-patterns.js';
+export { DID_RE };
 
 /** The 3 keys a nous.sleep.entered payload must carry — ALPHABETICAL for sort-equality. */
 const EXPECTED_KEYS = ['ltm_snapshot_hash', 'nous_did', 'tick'] as const;

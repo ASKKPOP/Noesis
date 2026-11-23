@@ -38,17 +38,11 @@ import { DID_REGEX } from '../server.js';
 import type { ApiError } from '../types.js';
 import { appendOperatorEvent } from '../../audit/operator-events.js';
 import { tombstoneCheck, TombstonedDidError } from '../../registry/tombstone-check.js';
+import { HEX64_RE } from '../../util/id-patterns.js';
 
 interface ForceTelosBody {
     new_telos?: unknown;
 }
-
-/**
- * Narrow check: 64-hex SHA-256 — mirrors grid/src/audit/chain.ts hash format
- * and brain/src/noesis_brain/telos/hashing.py return contract. Runtime guard
- * to catch contract drift at the RPC boundary.
- */
-const HEX64_RE = /^[a-f0-9]{64}$/;
 
 export function registerTelosForceRoute(
     app: FastifyInstance,

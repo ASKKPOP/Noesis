@@ -34,9 +34,8 @@ import {
     ANANKE_DRIVE_NAMES,
     type AnankeDriveCrossedPayload,
 } from './types.js';
-
-/** DID regex — locked project-wide (Phase 7 D-29). Phase 10a is the 5th entry point. */
-export const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
+import { NOESIS_DID_RE as DID_RE } from '../util/id-patterns.js';
+export { DID_RE };
 
 const DRIVE_NAME_SET: ReadonlySet<string> = new Set(ANANKE_DRIVE_NAMES);
 const DRIVE_LEVEL_SET: ReadonlySet<string> = new Set(ANANKE_DRIVE_LEVELS);

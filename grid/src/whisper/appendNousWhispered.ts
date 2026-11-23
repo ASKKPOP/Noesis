@@ -33,6 +33,8 @@ import type { AuditChain } from '../audit/chain.js';
 import type { AuditEntry } from '../audit/types.js';
 import { WHISPER_FORBIDDEN_KEYS } from '../audit/broadcast-allowlist.js';
 import { WHISPERED_KEYS, type NousWhisperedPayload } from './types.js';
+import { NOESIS_DID_RE as DID_RE, HEX64_RE } from '../util/id-patterns.js';
+export { DID_RE, HEX64_RE };
 
 /**
  * Whisper-specific privacy check using exact key matching from WHISPER_FORBIDDEN_KEYS.
@@ -58,12 +60,6 @@ function whisperPrivacyCheck(payload: Record<string, unknown>): { ok: boolean; o
     }
     return { ok: true };
 }
-
-/** DID regex — locked project-wide (Phase 7 D-29). Phase 11 is the 7th entry point. */
-export const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
-
-/** 64-char lowercase hex digest (SHA-256). Matches grid/src/audit/state-hash.ts HEX64_RE. */
-export const HEX64_RE = /^[0-9a-f]{64}$/;
 
 /**
  * Sole producer path for nous.whispered audit events.

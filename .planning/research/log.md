@@ -789,3 +789,10 @@ existence-DID in production (`getExistenceDid` never wired). Applied: brain ruff
 (latent `json` NameError in skill sweep fixed; 5 duplicated BrainHandler methods removed, AST-identical);
 `scripts/check-ratchet.mjs` (5 count-only-down rules) + `grid/src/util/id-patterns.ts`.
 Brain 1542 passed; grid civic 347 passed; tsc clean.
+
+## [2026-11-23] apply | D-ID-01 — HEX64 in either case; id patterns in one file
+Operator: "Accept both cases". Codemod moved ~200 inline DID/HEX64/address regexes in 162 grid files to
+named imports from `grid/src/util/id-patterns.ts` (`HEX64_RE` is now `/i`). DID shapes were kept exactly;
+two `[a-z0-9_:\\-]` copies that let a backslash through were tightened. 8 orphaned regex doc-comments
+removed. Ratchet inline-id-regex 201 → 4. 7 tests that pinned lowercase-only were flipped. Grid 4519 pass,
+tsc clean, all gates pass. Decision log: `wiki/1-design/decisions.md` D-ID-01. See [[potato-method-audit-2026-11]].

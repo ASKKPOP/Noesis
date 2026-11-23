@@ -125,15 +125,14 @@ describe('appendBiosBirth — BIOS-02 sole producer', () => {
                 .toThrow(/invalid psyche_hash/);
         });
 
-        it('rejects uppercase psyche_hash', () => {
-            const bad = { ...happy, psyche_hash: 'A'.repeat(64) };
-            expect(() => appendBiosBirth(chain, DID, bad))
-                .toThrow(/invalid psyche_hash/);
+        it('accepts uppercase psyche_hash (HEX64 accepts both cases)', () => {
+            const upper = { ...happy, psyche_hash: 'A'.repeat(64) };
+            expect(() => appendBiosBirth(chain, DID, upper)).not.toThrow();
         });
 
-        it('HEX64_RE matches lowercase 64-hex', () => {
+        it('HEX64_RE matches 64-hex in either case', () => {
             expect(HEX64_RE.test('a'.repeat(64))).toBe(true);
-            expect(HEX64_RE.test('A'.repeat(64))).toBe(false);
+            expect(HEX64_RE.test('A'.repeat(64))).toBe(true);
         });
     });
 

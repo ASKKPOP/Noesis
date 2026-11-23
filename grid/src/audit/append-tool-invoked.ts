@@ -15,9 +15,9 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
+import { HEX64_RE, NOESIS_DID_RE as DID_RE } from '../util/id-patterns.js';
+export { HEX64_RE, DID_RE };
 
-export const HEX64_RE = /^[0-9a-f]{64}$/;
-export const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
 /** Tool names are lowercase identifiers (web_search, web_fetch, run_code). */
 export const TOOL_NAME_RE = /^[a-z][a-z0-9_]{1,40}$/;
 

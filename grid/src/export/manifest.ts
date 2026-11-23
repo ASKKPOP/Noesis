@@ -13,6 +13,7 @@
  *
  * See: REPLAY-01, 13-RESEARCH.md §Pattern 7, 13-VALIDATION.md.
  */
+import { HEX64_RE } from '../util/id-patterns.js';
 
 export interface ExportManifest {
     readonly canonical_json_version: 1;
@@ -30,8 +31,6 @@ export interface CreateManifestInput {
     readonly entryCount: number;
     readonly chainTailHash: string;     // HEX64_RE
 }
-
-const HEX64_RE = /^[0-9a-f]{64}$/;
 
 /**
  * Create an ExportManifest with tarball_hash placeholder ('').

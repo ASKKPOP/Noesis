@@ -14,8 +14,8 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
+import { HEX64_RE } from '../util/id-patterns.js';
 
-const HEX64_RE = /^[0-9a-f]{64}$/i;
 const PARCEL_ID_RE = /^[a-z0-9_-]+:[a-z0-9_]+:\d{4}$/;
 // 'given_to_polis' (D-MONEY-10): the owner handed the parcel over itself, to meet its civic duty.
 const REASONS = ['upkeep_default', 'given_to_polis'] as const;

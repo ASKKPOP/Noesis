@@ -16,8 +16,7 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
-
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
+import { CIVIC_DID_RE } from '../util/id-patterns.js';
 
 /** Closed-tuple payload — 5 keys, alphabetical. */
 export interface IrsDisbursementExecutedPayload {

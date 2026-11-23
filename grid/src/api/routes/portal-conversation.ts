@@ -15,8 +15,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import type { GridServices } from '../server.js';
 import { COOKIE_NAME, keyPairPromise } from '../portal/auth.js';
 import { ConversationStore } from '../../economy/conversation-store.js';
-
-const NOUS_DID_RE = /^did:noesis:[a-z0-9_:\-]+$/i;
+import { NOESIS_DID_WITH_COLONS_RE as NOUS_DID_RE } from '../../util/id-patterns.js';
 
 /** Resolve the human DID from the Portal session cookie, or send 401 and return null. */
 async function humanFromSession(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {

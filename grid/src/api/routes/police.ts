@@ -14,8 +14,8 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { PoliceStore } from '../../police/police-store.js';
 import { SANCTION_TYPES, type SanctionType } from '../../police/types.js';
+import { CIVIC_DID_RE } from '../../util/id-patterns.js';
 
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
 const isSanction = (s: unknown): s is SanctionType => typeof s === 'string' && SANCTION_TYPES.includes(s as SanctionType);

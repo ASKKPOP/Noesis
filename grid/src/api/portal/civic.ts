@@ -30,8 +30,7 @@ import { appendPolisRegistrationPending } from '../../audit/append-polis-registr
 import { appendPortalRegistrationApproved } from '../../audit/append-portal-registration-approved.js';
 import { appendPortalRegistrationRejected } from '../../audit/append-portal-registration-rejected.js';
 import { appendRegistryCivicDidIssuedHuman } from '../../audit/append-registry-civic-did-issued-human.js';
-
-const HUMAN_DID_RE = /^did:noesis:human:[a-z0-9_:\-]+$/i;
+import { HUMAN_DID_RE } from '../../util/id-patterns.js';
 
 interface ApplicationRow {
     application_id: string;

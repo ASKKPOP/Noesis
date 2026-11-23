@@ -21,15 +21,8 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
-
-/** 64-hex SHA-256 — matches grid/src/audit/state-hash.ts HEX64_RE. */
-export const HEX64_RE = /^[0-9a-f]{64}$/;
-
-/**
- * DID regex for target_did — locked at 4 entry points project-wide
- * (3 from Phase 6 + 1 here).
- */
-export const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
+import { HEX64_RE, NOESIS_DID_RE as DID_RE } from '../util/id-patterns.js';
+export { HEX64_RE, DID_RE };
 
 /**
  * Operator-identity regex — op:<uuid-v4> per Phase 6 D-04.

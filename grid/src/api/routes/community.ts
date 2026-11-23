@@ -15,8 +15,8 @@ import type { GridServices } from '../server.js';
 import { CommunityStore } from '../../community/community-store.js';
 import { validateCharter, FOUND_WEI_COST, INTERNAL_DECISION_SCOPES, type MembershipCriteria } from '../../community/types.js';
 import { NousAccountStore } from '../../economy/nous-account-store.js';
+import { CIVIC_DID_RE } from '../../util/id-patterns.js';
 
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function registerCommunityRoutes(app: FastifyInstance, services: GridServices): void {

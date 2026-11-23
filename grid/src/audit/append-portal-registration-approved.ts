@@ -16,9 +16,8 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
+import { HUMAN_DID_RE } from '../util/id-patterns.js';
 
-// Human operator-DIDs: did:noesis:human:0x<40hex> (SIWE) or did:noesis:human:email:<uuid>.
-const HUMAN_DID_RE = /^did:noesis:human:[a-z0-9_:\\-]+$/i;
 const APPLICATION_ID_RE = /^[0-9a-f][0-9a-f-]{34}[0-9a-f]$/i;
 
 /** Closed 4-key payload for portal.registration_approved. */

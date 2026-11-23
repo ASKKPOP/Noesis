@@ -8,10 +8,10 @@
 
 import { createHash } from 'node:crypto';
 import type { BallotChoice } from './types.js';
+import { NOESIS_DID_RE as DID_RE } from '../util/id-patterns.js';
 
 const NONCE_HEX_LEN = 32;        // 16 bytes hex
 const CHOICE_VALUES = ['yes', 'no', 'abstain'] as const;
-const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
 
 /**
  * Compute sha256(choice|nonce|voter_did) and return lowercase hex (64 chars).

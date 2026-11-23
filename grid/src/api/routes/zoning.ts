@@ -13,14 +13,13 @@ import type { GridServices } from '../server.js';
 import { ZoneRegistry, ZoneError, type ZoneErrorCode } from '../../zoning/zone-registry.js';
 import { ResidenceStore } from '../../zoning/residence-store.js';
 import type { ZoneKind } from '../../zoning/zone-types.js';
+import { NOESIS_OR_CIVIC_DID_RE as CIVIC_DID_RE } from '../../util/id-patterns.js';
 
 /** HTTP status for each zone-law refusal. */
 const ZONE_ERROR_STATUS: Readonly<Record<ZoneErrorCode, number>> = {
     unknown_zone: 404, zone_exists: 409, zone_occupied: 409, last_zone: 409,
     invalid_zone_id: 400, invalid_label: 400, invalid_kind: 400, invalid_activities: 400, invalid_tax_modifier: 400,
 };
-
-const CIVIC_DID_RE = /^did:(?:civic:)?noesis:[a-z0-9_:\-]+$/i;
 
 export function registerZoningRoutes(app: FastifyInstance, services: GridServices): void {
     const grid = services.gridName ?? 'genesis';

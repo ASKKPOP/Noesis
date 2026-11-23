@@ -22,8 +22,8 @@ import type { GridServices } from '../server.js';
 import { EndowmentStore } from '../../economy/endowment-store.js';
 import { operatorScope } from '../preHandlers/operatorScope.js';
 import { resolveOperator } from '../preHandlers/operatorAuth.js';
+import { CIVIC_DID_RE } from '../../util/id-patterns.js';
 
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 const DECIMAL_RE = /^[0-9]+$/;
 
 interface EndowBody {

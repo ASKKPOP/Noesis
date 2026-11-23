@@ -27,8 +27,7 @@ import {
 } from './types.js';
 import { GOVERNANCE_CONFIG } from './config.js';
 import type { GovernanceStore } from './store.js';
-
-const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
+import { NOESIS_DID_RE as DID_RE } from '../util/id-patterns.js';
 
 export interface AppendProposalOpenedInput {
     proposer_did: string;

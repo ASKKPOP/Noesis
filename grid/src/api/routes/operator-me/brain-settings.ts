@@ -30,9 +30,7 @@ import { decodeProtectedHeader, decodeJwt, importJWK, jwtVerify } from 'jose';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../server.js';
 import { getSettings } from '../../../operator/data/operator-settings-store.js';
-
-// Standard nous: form + the three founding legacy DIDs (BLOCKER-01).
-const NOUS_DID_RE = /^did:noesis:(nous:[a-z0-9_\-]+|sophia|hermes|themis)$/i;
+import { NOUS_OR_SYSTEM_DID_RE as NOUS_DID_RE } from '../../../util/id-patterns.js';
 
 export async function registerOperatorMeBrainSettingsRoutes(
     app: FastifyInstance,

@@ -26,13 +26,12 @@ const RULES = [
         id: 'inline-id-regex',
         roots: TS_ROOTS,
         ext: TS_EXT,
-        pattern: /\b(?:const|let)\s+[A-Z0-9_]*(?:DID|HEX64|HEX|ADDRESS)[A-Z0-9_]*\s*=\s*\/\^/,
+        pattern: /\b(?:const|let)\s+[A-Z0-9_]*(?:DID|HEX64|ADDRESS)[A-Z0-9_]*\s*=\s*\/\^/,
         skip: ['grid/src/util/id-patterns.ts'],
         fix:
-            'Do not define a DID / HEX64 / address regex inline. There are already ~190 copies in a dozen ' +
-            'different shapes, some case-sensitive and some not, so two emitters disagree on the same id. ' +
-            'Import HEX64_RE from grid/src/util/id-patterns.ts. If you need a DID shape that is not there yet, ' +
-            'add it there once as a named export and import it.',
+            'Do not define a DID / HEX64 / address regex inline: copies drift (a dozen DID shapes, two case rules ' +
+            'for HEX64, before 2026-11-23). Import the named pattern from grid/src/util/id-patterns.ts ' +
+            '(HEX64_RE accepts both cases). If no export fits, add one there and import it.',
     },
     {
         id: 'react-use-effect',

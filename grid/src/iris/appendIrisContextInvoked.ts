@@ -24,9 +24,7 @@ import type { AuditChain } from '../audit/chain.js';
 import type { AuditEntry } from '../audit/types.js';
 import { payloadPrivacyCheck } from '../audit/broadcast-allowlist.js';
 import { IRIS_CONTEXT_INVOKED_KEYS, type IrisContextInvokedPayload } from './types.js';
-
-/** DID regex — locked project-wide (Phase 7 D-29). */
-const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
+import { NOESIS_DID_RE as DID_RE } from '../util/id-patterns.js';
 
 export function appendIrisContextInvoked(
     audit: AuditChain,
