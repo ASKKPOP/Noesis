@@ -359,6 +359,7 @@ svg text{font-family:var(--sans)}
 <h2 id="errors"><span class="n">06</span>Errors the analysis surfaced, and their status / 분석이 드러낸 오류와 현재 상태</h2>
 <div class="tbl"><table>
 <tr><th>Finding<span class="ko">발견</span></th><th>Status<span class="ko">상태</span></th></tr>
+<tr><td><strong>Caught within the hour:</strong> PR #60 (another change, merged 17:44) grew the frozen broadcast allowlist from 1,087 to 1,088 lines by splitting a comment. <code>check-relationship-graph-deps</code>, which used to run only locally and which #54 had put in CI 80 minutes earlier, turned <code>main</code> red. Fixed in #63 by putting the comment back on one line; no baseline re-pin was needed.<span class="ko">PR #60이 주석을 두 줄로 나눠 고정된 허용 목록을 1,087줄에서 1,088줄로 늘렸습니다. 예전엔 로컬에서만 돌던 게이트를 #54가 80분 전 CI에 넣었고, 그 게이트가 <code>main</code>을 실패시켰습니다. #63에서 주석을 한 줄로 되돌려 고쳤습니다.</span></td><td><span class="st good">✓ fixed (#63)</span></td></tr>
 <tr><td><code>CLAUDE.md</code> said the wiki gate is "CI-enforced"; no workflow ran it<span class="ko">CLAUDE.md는 위키 게이트가 "CI 강제"라 했지만 실행하는 워크플로가 없었음</span></td><td><span class="st good">✓ now true (#54)</span></td></tr>
 <tr><td>Two replay source comments called <code>check-replay-readonly</code> a "CI gate"; it was not<span class="ko">리플레이 주석 두 곳이 CI 게이트라 했지만 아니었음</span></td><td><span class="st good">✓ now true (#54)</span></td></tr>
 <tr><td>The Brain parity contract (Python ↔ Rust) was checked by neither suite in CI<span class="ko">Brain 패리티 계약을 CI가 어느 쪽에서도 검사하지 않았음</span></td><td><span class="st good">✓ both in CI (#57)</span></td></tr>
@@ -376,7 +377,7 @@ svg text{font-family:var(--sans)}
 <div class="bi">
   <div>
     <ol>
-      <li><strong>A check nobody runs is prose.</strong> 13 of our gates and nearly all tests were deterministic code that behaved like a rules file: correct, and not enforced. Wiring them in was the cheapest, largest step.</li>
+      <li><strong>A check nobody runs is prose.</strong> 13 of our gates and nearly all tests were deterministic code that behaved like a rules file: correct, and not enforced. Wiring them in was the cheapest, largest step, and it paid off the same evening: a newly wired gate stopped a change to the frozen audit allowlist 80 minutes later.</li>
       <li><strong>Turning checks on finds rot first.</strong> 28 tests were stale and 4 more depended on timing or the machine, and nobody knew. The cost was paid once, today.</li>
       <li><strong>A green check can mean nothing.</strong> One gate checks 0 routes; one tamper test sometimes changed nothing. Ask what a check would catch, then break the code to prove it.</li>
       <li><strong>Fix the inner loop before automating it.</strong> Auto-merge without review stays off: the talk's claim rests on verification depth we only started building today.</li>
@@ -385,7 +386,7 @@ svg text{font-family:var(--sans)}
   </div>
   <div class="ko">
     <ol>
-      <li><span class="lang">KO</span><strong>아무도 실행하지 않는 검사는 산문입니다.</strong> 게이트 13개와 거의 모든 테스트가 결정적 코드인데도 규칙 파일처럼 작동했습니다. 옳지만 강제되지 않았습니다. 연결하는 것이 가장 싸고 큰 걸음이었습니다.</li>
+      <li><span class="lang">KO</span><strong>아무도 실행하지 않는 검사는 산문입니다.</strong> 게이트 13개와 거의 모든 테스트가 결정적 코드인데도 규칙 파일처럼 작동했습니다. 옳지만 강제되지 않았습니다. 연결하는 것이 가장 싸고 큰 걸음이었고, 그날 저녁 바로 효과를 냈습니다. 80분 뒤 새로 연결한 게이트가 고정된 감사 허용 목록의 변경을 잡아냈습니다.</li>
       <li><strong>검사를 켜면 썩은 곳부터 보입니다.</strong> 낡은 테스트 28개와 타이밍·기기에 좌우되는 테스트 4개가 있었고 아무도 몰랐습니다. 그 비용을 오늘 한 번에 치렀습니다.</li>
       <li><strong>초록불이 아무 의미 없을 수 있습니다.</strong> 경로 0개를 검사하는 게이트, 가끔 아무것도 변조하지 않는 변조 테스트. 검사가 무엇을 잡는지 묻고, 코드를 망가뜨려 증명해야 합니다.</li>
       <li><strong>자동화 전에 안쪽 루프부터.</strong> 리뷰 없는 자동 병합은 계속 끕니다. 발표의 주장은 우리가 오늘 막 쌓기 시작한 검증 깊이에 기대고 있습니다.</li>
@@ -438,9 +439,10 @@ svg text{font-family:var(--sans)}
 <tr><td><a href="https://github.com/ASKKPOP/Noesis/pull/57">#57</a></td><td>New <code>tests.yml</code> (6 jobs); fix a machine-path test and a timestamp-flaky test</td><td class="num">7c785631</td><td class="num">+202 / −5</td></tr>
 <tr><td><a href="https://github.com/ASKKPOP/Noesis/pull/58">#58</a></td><td>Fix 28 stale dashboard tests; remove the unit-test quarantine</td><td class="num">9d3cca65</td><td class="num">+32 / −161</td></tr>
 <tr><td><a href="https://github.com/ASKKPOP/Noesis/pull/59">#59</a></td><td>Fix the watchdog SNS wait and the proof-tamper test</td><td class="num">7aa4d85a</td><td class="num">+4 / −4</td></tr>
+<tr><td><a href="https://github.com/ASKKPOP/Noesis/pull/63">#63</a></td><td>Keep the frozen allowlist at its baseline line count (after #60)</td><td class="num">4763186b</td><td class="num">+1 / −2</td></tr>
 </table></div>
 <ul>
-  <li>All three workflows green on <code>main</code> at <code>7aa4d85a</code>; tests workflow run 45095387985. / <code>main</code>에서 워크플로 3개 모두 통과.</li>
+  <li>All three workflows green on <code>main</code> at <code>7aa4d85a</code> (tests run 45095387985), and again at <code>4763186b</code> after #63. <code>main</code>'s gate workflow was red from 17:44 to 19:22 between #60 and #63. / <code>main</code>에서 워크플로 3개 모두 통과(#63 이후 다시 확인). #60과 #63 사이 17:44–19:22에 게이트 워크플로가 실패 상태였습니다.</li>
   <li>Each PR's tests workflow passed twice (a full re-run) before merge. / 각 PR은 병합 전 두 번 통과.</li>
   <li>Gate list and quarantine status: <code>.planning/implementation/ci-gates.md</code> (private planning tree). / 게이트 목록과 격리 상태는 비공개 계획 문서에 있음.</li>
   <li>Video: <a href="https://www.youtube.com/watch?v=ueA116hO_ho">AgentOS walkthrough</a> · original talk: <a href="https://youtu.be/O_zcc6Xl12g">Lauren Tan, AI Engineer</a> · plugin: <a href="https://github.com/cursor/plugins/tree/main/pstack">cursor/plugins/pstack</a></li>
