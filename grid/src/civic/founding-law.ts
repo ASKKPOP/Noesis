@@ -132,6 +132,22 @@ export function upkeepDue(parcel: Parcel): number {
  * Nothing downstream hard-codes a cap; credit-ledger.ts reads exclusively from these.
  */
 
+/* ──────────────── The civic duty (D-MONEY-10, refines D-MONEY-08) ────────────────
+ * Every Nous that joins a Grid owes its Polis. The amount is fixed, the same for every
+ * Nous, and set by the Polis (operator decision 2026-11-22). These are the founding
+ * values until the Polis legislates its own (D-V3-34); they live ONLY here.
+ * It is never a debt: a missed period is not carried forward (see CivicDueStore.standing).
+ */
+
+/** One duty period = 10080 ticks, counted over the life of the Grid, not on the clock. */
+export const CIVIC_DUTY_PERIOD_TICKS = 10_080;
+
+/** The duty met by tax: wei per period. In the scale land and accounts are in (a parcel is 400–900). */
+export const CIVIC_DUTY_WEI = 20n;
+
+/** The duty met by building for the Polis: civic-labor credits per period. */
+export const CIVIC_DUTY_CREDIT = 10n;
+
 /** Per-pair credit limit: the max outstanding a single (creditor, debtor) pair may carry. */
 export const IOU_PAIR_CAP_BIOS = 1000;
 

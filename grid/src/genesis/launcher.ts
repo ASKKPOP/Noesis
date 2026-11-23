@@ -33,7 +33,7 @@ import { SdpInboxStore } from '../p2p/sdp-inbox-store.js';
 import type { P2PService } from '../p2p/types.js';
 import { checkSettlementTimeouts } from '../marketplace/settlement-timeout.js';
 import { onUpkeepTick, type UpkeepScannerDeps } from '../civic/upkeep-scanner.js';
-import { runDueAssessment, runDueDelinquencySweep, DUE_PERIOD_TICKS } from '../economy/civic-due-driver.js';
+import { runDutyCycle } from '../economy/civic-due-driver.js';
 
 /**
  * Phase 31 OBS-01 (D-31-A1): optional dependencies that can be supplied at
@@ -156,6 +156,18 @@ export class GenesisLauncher {
     private _p2pService: P2PService | undefined;
     /** Phase 44 D-44-05b — MySQL pool stored at attachRelationshipStorage() for settlement-timeout loop. */
     private _pool: Pool | undefined;
+    /** Ticks the Grid ran before this start (D-MONEY-10 — lifetime periods for the civic duty). */
+    private civicDutyLifetimeStart = 0;
+
+    /**
+     * D-MONEY-10: tell the launcher how many ticks the Grid ran in every earlier start.
+     * Called from main.ts AFTER the stored chain is restored and before the clock starts
+     * (bootstrap runs before the restore, when the chain is still empty) — the same count
+     * upkeep is given.
+     */
+    setCivicDutyLifetimeStart(ticksBeforeStart: number): void {
+        this.civicDutyLifetimeStart = ticksBeforeStart;
+    }
     /** Phase 44 D-44-05b (OBS-R-32-02) — paired clearInterval handle for settlement-timeout sweep loop. */
     private _settlementTimeoutInterval: NodeJS.Timeout | null = null;
     /**
@@ -550,14 +562,13 @@ export class GenesisLauncher {
             // per active member (emits due.assessed); every 60 ticks it sweeps overdue
             // pending dues delinquent. Fire-and-forget, gated on the pool, never blocks
             // the clock (mirrors governance.onTickClosed / auditReconcile above).
-            if (this._pool && event.tick > 0) {
-                if (event.tick % DUE_PERIOD_TICKS === 0) {
-                    const members = this.registry.active().map((r) => r.did);
-                    void runDueAssessment(this._pool, this.audit, members, event.tick, { gridName: this.gridName });
-                }
-                if (event.tick % 60 === 0) {
-                    void runDueDelinquencySweep(this._pool, this.audit, event.tick, this.gridName);
-                }
+            // D-MONEY-10: every 60 ticks one round of the civic duty — assess each Nous's
+            // civic identity for the current LIFETIME period if it has no due yet, then mark
+            // overdue ones missed (the clock restarts from 0; see civic-due-driver.ts).
+            if (this._pool && event.tick > 0 && event.tick % 60 === 0) {
+                void runDutyCycle(this._pool, this.audit, event.tick, {
+                    gridName: this.gridName, ticksBeforeStart: this.civicDutyLifetimeStart,
+                });
             }
         });
 

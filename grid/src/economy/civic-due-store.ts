@@ -157,4 +157,32 @@ export class CivicDueStore {
             });
         }
     }
+
+    /**
+     * D-MONEY-10 — a member's standing: 'met', or 'denied'. It is never a debt.
+     *
+     * Only the NEWEST period that is settled either way counts: paid → met, missed
+     * (delinquent) → denied. An open period decides nothing yet, and a member with no
+     * settled period is in good standing. Older missed periods are history, not
+     * something owed: meeting the period that is open now puts a newer 'paid' row on
+     * top, and that alone restores every right.
+     *
+     * A member is denied only while there is an open period it can meet. If none has
+     * been assessed yet, it is not denied: nobody is shut out with nothing to pay.
+     */
+    async standing(gridName: string, civicDid: string): Promise<'met' | 'denied'> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT status FROM civic_dues
+             WHERE grid_name = ? AND civic_did = ? AND status IN ('paid', 'delinquent')
+             ORDER BY due_tick DESC LIMIT 1`,
+            [gridName, civicDid],
+        );
+        if (rows[0]?.status !== 'delinquent') return 'met';
+        const [open] = await this.pool.query<RowDataPacket[]>(
+            `SELECT 1 AS open_due FROM civic_dues
+             WHERE grid_name = ? AND civic_did = ? AND status = 'assessed' LIMIT 1`,
+            [gridName, civicDid],
+        );
+        return open.length > 0 ? 'denied' : 'met';
+    }
 }

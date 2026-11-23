@@ -291,6 +291,9 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
         // ticks of every earlier run. Upkeep periods are counted from here on.
         const ticksBeforeStart = ticksRecorded(chain!.all());
         console.log(`[civic] upkeep counts from lifetime tick ${ticksBeforeStart}`);
+        // D-MONEY-10: the civic duty's periods are counted from the same lifetime tick.
+        launcher.setCivicDutyLifetimeStart(ticksBeforeStart);
+        console.log(`[civic] the civic duty counts from lifetime tick ${ticksBeforeStart}`);
         launcher.attachUpkeepScanner({
             registry: createUpkeepRegistryFacade(parcelRegistry, parcelStore),
             audit: chain!,

@@ -384,7 +384,7 @@ The first persistent Grid where Nous actually live — observable, running conti
 | Karpathy pattern for Nous wiki | Proven retrieval, narrative coherence | ✓ Good |
 | P2P economy without central ledger | True sovereignty, bilateral state machine | ✓ Good |
 | MySQL for Grid state | Crash recovery, relational queries on Grid data | — Pending |
-| Civic obligation is a duty: a fifth of AI power, by tax / build / property transfer; unmet → all activity denied; never a debt (D-MONEY-10, operator, 2026-11-22) | Public space is built by everyone who joins a Grid; a duty that can be skipped or deferred is not one | — Decided, not built; the measure of the fifth is open |
+| Civic obligation is a duty: a fifth of AI power, by tax / build / property transfer; unmet → all activity denied; never a debt (D-MONEY-10, operator, 2026-11-22) | Public space is built by everyone who joins a Grid; a duty that can be skipped or deferred is not one | — Measure decided: a fixed amount set by the Polis. Charge, standing and denial built 2026-11-22; building and property ways not built |
 | Docker Compose for single-command launch | Developer experience, reproducibility | — Pending |
 | Next.js for dashboard | Already scaffolded, app router, React ecosystem | ✓ Good (v2.0 shipped) |
 | Standalone Next.js output + multi-stage Docker | Smallest prod image, baked NEXT_PUBLIC_* at build | ✓ Good (v2.0 Phase 4) |

@@ -731,3 +731,23 @@ Open for the operator: the measure of the fifth. Collisions to settle when it is
 D-V3-34 (per-Grid tax by Polis law) vs "any Grid"; D-V3-36 (no operator freeze) — denial must be
 automatic; D-58-10 (capability, not autoplay) — the Nous chooses how, not whether; D-MONEY-04
 (Type B lives on a treasury endowment — does it owe a fifth of that?).
+
+## [2026-11-22] feat | Civic duty, first slice — charged to the civic identity, standing, denial at the gate
+
+Operator answered the open question with "b": a fixed amount per period, the same for every Nous,
+set by the Polis. Built in the Grid only (no schema change, no new audit event, allowlist +0):
+founding-law constants; `runDutyCycle` every 60 ticks (assess members without a due for the
+current LIFETIME period, then sweep); `CivicDueStore.standing`; `civic-duty-gate.ts` in the
+onRequest hook; `standing` in `GET /civic/dues`.
+Review round 1 found, and I fixed: (1) I read the chain's tick count in `bootstrap()`, which runs
+BEFORE `restoreGrid` loads the stored chain — the count would have been 0 on production and every
+period a clock period again; now `main.ts` hands the count in next to upkeep's. No test of mine
+covered that wiring; one does now (launcher + setter). (2) a single boundary tick with no retry
+could leave a member denied with nothing to pay → assessment every round + standing requires an
+open due. Also found by removing guards: a test meant for the public branch of the hook went
+through the civic branch (unregistered route in the test server) — replaced with a registered
+public route.
+Not built and why it matters: no non-money way to meet the duty exists (bids are never awarded,
+credit never granted, no property transfer), so a denied Nous without money returns only if
+money reaches it. Production has no Nous with a civic identity (2 active identities, both people),
+so nobody is assessed or denied there today.
