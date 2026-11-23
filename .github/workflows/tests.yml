@@ -1,0 +1,127 @@
+name: tests
+
+# The full test suites. rig-invariants.yml runs the grep gates and the rig
+# suite; real-mysql-migrations.yml runs the schema chain on MySQL 8.0.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  grid:
+    name: protocol + grid (tsc, vitest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install workspace deps
+        run: npm ci
+
+      - name: Build protocol (tsc) — grid imports its dist
+        run: npm run build -w protocol
+
+      - name: Protocol tests
+        run: npm test -w protocol
+
+      - name: Type-check and build grid (tsc)
+        run: npm run build -w grid
+
+      - name: Grid tests
+        run: npm test -w grid
+
+  web:
+    name: dashboard + steward (vitest, tsc)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install workspace deps
+        run: npm ci
+
+      - name: Dashboard unit tests
+        working-directory: dashboard
+        run: npx vitest run
+
+      - name: Steward type-check
+        run: npm run typecheck -w steward
+
+      - name: Steward tests
+        run: npm test -w steward
+
+  dashboard-e2e:
+    name: dashboard e2e (playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install workspace deps
+        run: npm ci
+
+      - name: Install Chromium for Playwright
+        working-directory: dashboard
+        run: npx playwright install --with-deps chromium
+
+      - name: Dashboard e2e
+        working-directory: dashboard
+        run: npx playwright test
+
+  brain:
+    name: brain (pytest, parity fixtures)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: pipx install uv
+
+      - name: Install brain deps from uv.lock
+        working-directory: brain
+        run: uv sync --extra dev --frozen
+
+      - name: Brain tests
+        working-directory: brain
+        run: uv run --frozen pytest -q
+
+  brain-rs:
+    name: brain-rs (cargo test, parity fixtures)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust toolchain
+        run: rustc --version && cargo --version
+
+      - name: Brain-rs tests
+        working-directory: brain-rs
+        run: cargo test --locked
