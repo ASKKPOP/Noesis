@@ -319,6 +319,14 @@ Next action: operator's choice — remaining v3.0 work includes the Wave-1 Type 
   - **Open follow-ups (tracked):** authenticated Brain-key rotation path (D-SEC-05); fixing the exact Police fine amount/duration at conviction time so `fine` regains monetary teeth (D-SEC-07). Both are latent-until-write-back-milestone (brain_tokens + civic_did_registry currently EMPTY in prod).
   - **DEPLOYED to prod 2026-07-10** (commit `a9dfa1f5`, `./deploy.sh grid` with `NOESIS_DEPLOY_KEY=~/.ssh/sierrabiolab-aws.pem` — the deploy.sh default key path is wrong). Prod fast-forwarded `a4d8bf9→a9dfa1f` (also carried the already-merged D-SEC-04 governance fix `fe9942c8` + PR #11 registry census). +0 migrations (code-only rebuild). Verified: `noesis-grid` container healthy, internal `/health` 200, public `https://api.noesiis.com/health` → 200 `{"status":"ok"}`, `https://noesiis.com` 200. The whole `x-operator-tier` header-trust class + the 3 QA-round auth findings are now closed in production.
 
+## World view in Bevy — option C BUILT 2026-11-22 (D-V3-45)
+
+- Operator chose option C of `docs/reports/noesis-godot-rust-migration-analysis-2026-11-21.html` (Bevy, pure Rust) over the report's recommendation (A, keep three.js). Scope agreed: the orbital (outside) level first, three.js kept as fallback; the district level stays three.js.
+- Code: `viz-rs/` (layout port + Bevy scene + wasm-bindgen entry), `dashboard/src/components/worldmap/orbital-layout.ts` (shared layout), `orbital-bevy.ts` (loader + fallback), WASM stage 0 in `docker/Dockerfile.dashboard`, `/viz/` gzip in nginx, CI job `viz-rs`.
+- Contract: `viz-rs/fixtures/layout-parity.json` is recorded from the TypeScript (`dashboard/test/orbital-layout-parity.test.ts`, `UPDATE_VIZ_PARITY=1`) and replayed by `cargo test`; a layout change re-records it and changes `viz-rs/src/layout.rs` in the same PR.
+- Known costs: ~12.8 MB WASM (~4.6 MB gzip) vs ~150 KB three.js; Bevy 0.20 is pre-1.0. Bevy needs Rust >= 1.97.1 — built in Docker (rust:1.100), not with the runner's toolchain.
+- Not built: district level in Bevy; content-hashed `/viz/` file names (the bundle is revalidated, not cached immutably).
+
 ## Surfaces re-plan — Portal P1+P2 BUILT 2026-11-17 (deployed 2026-11-19 with the Grid, from research/atlas-simulator)
 
 Plan: `docs/noesis-surfaces-replan-2026-11-17.html`. Decisions D-V3-40 (zones free per Grid, not built),

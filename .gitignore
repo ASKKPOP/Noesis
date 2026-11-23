@@ -64,3 +64,7 @@ contracts/cache/
 contracts/lib/
 contracts/broadcast/
 .worktrees/
+
+# Rust build output (brain-rs, viz-rs) and the Bevy WASM bundle built into the dashboard image
+**/target/
+dashboard/public/viz/
