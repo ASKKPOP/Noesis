@@ -751,3 +751,10 @@ Not built and why it matters: no non-money way to meet the duty exists (bids are
 credit never granted, no property transfer), so a denied Nous without money returns only if
 money reaches it. Production has no Nous with a civic identity (2 active identities, both people),
 so nobody is assessed or denied there today.
+Deployed (sixth Grid deploy; same steps; rollback image `noesiis-grid:pre-duty-2026-11-22`; server
+checkout 954572b). Log at start: "[civic] the civic duty counts from lifetime tick 478115" (DB had
+478,114 tick rows just before). One round run by hand in the running container against the real
+database: 0 members, `civic_dues` unchanged (3 assessed / 54 delinquent, same max updated_at), 0
+events. The previous image has no `runDutyCycle` and a 1e12 due. Checked and NOT a fault: the old
+rows make `standing('did:noesis:sophia')` read 'denied', but `ANY_DID_RE` in `tryDid.ts` accepts
+only `did:<kind>:noesis:…`, so a registry id can never carry the `civic_member` tier (test added).

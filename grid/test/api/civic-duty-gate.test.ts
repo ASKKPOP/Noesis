@@ -134,6 +134,18 @@ describe('who is not asked', () => {
         expect(res.statusCode).toBe(401);
         expect(p.asked()).toBe(0);
     });
+    it('a registry id cannot carry the civic tier, so the old dues that name one judge nobody', async () => {
+        // The bearer path accepts only did:<kind>:noesis:… ids; did:noesis:sophia is refused before the gate.
+        const p = poolWithStanding('delinquent');
+        const { privateKey } = await keyPairPromise;
+        const token = await new SignJWT({ sub: 'did:noesis:sophia' }).setProtectedHeader({ alg: 'ES256' }).setIssuedAt().setExpirationTime('1h').sign(privateKey);
+        const res = await app(p.pool).inject({
+            method: 'POST', url: '/api/v1/civic/parcels/genesis:residential:0001/purchase', payload: {},
+            headers: { authorization: `Bearer ${token}` },
+        });
+        expect(res.statusCode).toBe(401);
+        expect(p.asked()).toBe(0);
+    });
     it('reading never looks the standing up at the gate', async () => {
         const p = poolWithStanding('delinquent');
         await app(p.pool).inject({ method: 'GET', url: '/api/v1/civic/account', headers: { authorization: `Bearer ${await bearer()}` } });
