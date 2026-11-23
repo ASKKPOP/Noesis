@@ -46,9 +46,8 @@ describe('HealthWatchdog SNS alerting (Q3)', () => {
         expect(wd.snapshot().status).toBe('ok');
         chain.length = 400;                 // divergence 390 → critical
         expect(wd.snapshot().status).toBe('critical');
-        await flush();
-
-        expect(h.send).toHaveBeenCalledTimes(1);
+        // The publish waits on a dynamic import; one macrotask is not always enough.
+        await vi.waitFor(() => expect(h.send).toHaveBeenCalledTimes(1));
         const cmd = h.send.mock.calls[0][0] as { input: { TopicArn: string; Message: string; Subject: string } };
         expect(cmd.input.TopicArn).toBe('arn:aws:sns:us-east-1:1:noesis-alerts');
         const msg = JSON.parse(cmd.input.Message) as { status: string; reason: string };
