@@ -123,7 +123,7 @@ describe('FirehoseRow', () => {
         expect(row.textContent).not.toContain('did:nous:');
     });
 
-    it('FR-5: operator.nous_deleted row has text-red-400 line-through on actor column', () => {
+    it('FR-5: operator.nous_deleted row has text-red-500 line-through on actor column', () => {
         const entry = makeAuditEntry({
             id: 50,
             eventType: 'operator.nous_deleted',
@@ -139,11 +139,11 @@ describe('FirehoseRow', () => {
         render(<FirehoseRow entry={entry} />, { wrapper: Wrapper });
         // Actor column should have red + line-through
         const actorCol = screen.getByTestId('firehose-actor');
-        expect(actorCol.className).toContain('text-red-400');
+        expect(actorCol.className).toContain('text-red-500');
         expect(actorCol.className).toContain('line-through');
     });
 
-    it('FR-6: operator.nous_deleted badge has bg-rose-900/20 text-rose-300', () => {
+    it('FR-6: operator.nous_deleted badge has bg-rose-100 text-rose-700', () => {
         const entry = makeAuditEntry({
             id: 51,
             eventType: 'operator.nous_deleted',
@@ -152,11 +152,11 @@ describe('FirehoseRow', () => {
         });
         render(<FirehoseRow entry={entry} />, { wrapper: Wrapper });
         const badge = screen.getByTestId('event-type-badge');
-        expect(badge.className).toContain('bg-rose-900/20');
-        expect(badge.className).toContain('text-rose-300');
+        expect(badge.className).toContain('bg-rose-100');
+        expect(badge.className).toContain('text-rose-700');
     });
 
-    it('FR-7: operator.nous_deleted row has border-l-2 border-rose-900 left accent', () => {
+    it('FR-7: operator.nous_deleted row has border-l-2 border-rose-400 left accent', () => {
         const entry = makeAuditEntry({
             id: 52,
             eventType: 'operator.nous_deleted',
@@ -166,7 +166,7 @@ describe('FirehoseRow', () => {
         render(<FirehoseRow entry={entry} />, { wrapper: Wrapper });
         const row = screen.getByTestId('firehose-row');
         expect(row.className).toContain('border-l-2');
-        expect(row.className).toContain('border-rose-900');
+        expect(row.className).toContain('border-rose-400');
     });
 
     it('FR-8: non-deleted event types do NOT receive destructive classes (regression guard)', () => {
@@ -178,9 +178,10 @@ describe('FirehoseRow', () => {
         });
         render(<FirehoseRow entry={entry} />, { wrapper: Wrapper });
         const row = screen.getByTestId('firehose-row');
-        expect(row.className).not.toContain('border-rose-900');
+        expect(row.className).not.toContain('border-rose-400');
         const badge = screen.getByTestId('event-type-badge');
-        expect(badge.className).not.toContain('bg-rose-900/20');
+        expect(badge.className).not.toContain('bg-rose-100');
+        expect(screen.getByTestId('firehose-actor').className).not.toContain('line-through');
     });
 
     it('FR-4: movement category gets data-category="movement" on the badge', () => {

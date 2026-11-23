@@ -78,20 +78,9 @@ jobs:
       - name: Install workspace deps
         run: npm ci
 
-      # QUARANTINE — these 7 files (27 failing tests) were already red on main
-      # when this workflow was added (2026-11-22). They are excluded so the
-      # other 104 files gate every PR. Fix a file, then delete its line here.
       - name: Dashboard unit tests
         working-directory: dashboard
-        run: |
-          npx vitest run \
-            --exclude src/app/portal/portal-dashboard.test.ts \
-            --exclude src/components/portal/PortalShell.test.tsx \
-            --exclude src/components/portal/__tests__/PortalShell.test.tsx \
-            --exclude src/components/portal/__tests__/PortalSidebarHeader.test.tsx \
-            --exclude src/components/portal/PostComposer.test.tsx \
-            --exclude src/app/grid/components/firehose-row.test.tsx \
-            --exclude src/app/grid/components/heartbeat.test.tsx
+        run: npx vitest run
 
       - name: Steward type-check
         run: npm run typecheck -w steward
@@ -119,14 +108,13 @@ jobs:
         working-directory: dashboard
         run: npx playwright install --with-deps chromium
 
-      # QUARANTINE — these 2 tests were already red on main when this workflow
-      # was added (2026-11-22); they fail on retry too. The other 4 gate every
-      # PR. Fix a test, then delete its title from --grep-invert.
+      # QUARANTINE — one test is skipped because the PRODUCT is wrong, not the
+      # test: grid/replay/page.tsx passes operatorTier="H1" as a constant, so
+      # /grid/replay never leaves the tier gate at any tier. Fix the page, then
+      # delete --grep-invert.
       - name: Dashboard e2e
         working-directory: dashboard
-        run: >
-          npx playwright test --grep-invert
-          "SC#5: Delete Nous button is visible, disabled, with Phase 8 tooltip|tier auto-downgrade on /grid/replay route exit"
+        run: npx playwright test --grep-invert "tier auto-downgrade on /grid/replay route exit"
 
   brain:
     name: brain (pytest, parity fixtures)
