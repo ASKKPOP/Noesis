@@ -187,6 +187,30 @@ The "final idea" lives in these files:
 
 ---
 
+## Triple Verification Rule (user-mandated, 2026-11-23)
+
+**Every task is verified three ways: TLA+, Lean, and property-based testing with generated inputs.** Full
+rules: `.planning/implementation/verification.md` (V-1 … V-11). Read it before planning any task.
+
+1. **Classify first, in the plan.** A = behaviour over time, B = pure logic, C = no logic (docs, copy, styling,
+   config). A and B need all three legs. C states "Class C — no logic changed". No silent skip.
+2. **Properties first.** Write each property in plain English with an ID (`P-<AREA>-<NN>`); the same ID marks
+   the TLA+ invariant, the Lean theorem, and the property test. Registry: `verification/PROPERTIES.md`.
+3. **TLA+** (`verification/tla/`, TLC): safety invariants, liveness where promised, bounds reported.
+4. **Lean 4** (`verification/lean/`): `lake build` clean, zero `sorry` / `admit` / `axiom`.
+5. **Property-based tests** on the real code: fast-check (TS), Hypothesis (Python), proptest (Rust), Foundry
+   fuzz/invariant (Solidity). Generated inputs only, ≥1,000 cases per property (≥10,000 if correctness-critical),
+   seed printed, stateful sequence test for class A, every counterexample kept as a regression test.
+6. **Each leg must be shown able to fail** — break the model/code once on purpose, confirm it is caught, revert.
+7. **Run counts (rule 0.4):** TLC and Lean 2 clean runs; property tests 2 seeds, **10 seeds** for
+   correctness-critical work (money, audit chain, Civic-DID issuance, voting, sanctions, tax, treasury, zone law).
+8. **Never weaken a property to pass.** A leg may be "N/A" only for the three reasons in V-9. "Too hard" or
+   "tool not installed" is reported as **NOT VERIFIED**, and the task is not done.
+9. **Say what was checked, not "proven correct".** TLA+ and Lean verify models; only the property tests run the
+   code. Every close-out carries the V-11 table with bounds, state counts, theorem names, cases × seeds.
+
+---
+
 ## GSD Workflow Notes (Noēsis-specific)
 
 - Phase numbering continues across milestones (v2.0 ended at 4, v2.1 starts at 5). Do NOT reset without `--reset-phase-numbers`.

@@ -32,6 +32,7 @@ flowchart TD
 | [audit-allowlist.md](audit-allowlist.md) | The frozen audit event-prefix allowlist |
 | [migrations.md](migrations.md) | DB migrations + reserved-word pitfalls |
 | [ci-gates.md](ci-gates.md) | The `scripts/check-*.mjs` constitutional gates |
+| [verification.md](verification.md) | Verification rules V-1…V-11 — every task verified by TLA+, Lean and property-based tests (user-mandated 2026-11-23) |
 | [deploy.md](deploy.md) | Deploy host, `deploy.sh`, runbook |
 | [contracts.md](contracts.md) | The on-chain money contracts (Solidity/Foundry) — treasury, escrow, account, land |
 | [wiki-hosting.md](wiki-hosting.md) | ✅ How this wiki is served from Noēsis at `/wiki/` |

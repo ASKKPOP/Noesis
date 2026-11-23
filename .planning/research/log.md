@@ -848,3 +848,10 @@ step, which never runs, so the social cycle can vote and join a Group and nothin
 Nous without a court; the personal wiki has no run-time writer; `architecture.md` said 41 migrations (81).
 `.env.example` and `docs/noesis-deploy-runbook.html` marked superseded where they conflict with `deploy.sh`.
 No research page changed.
+
+## [2026-11-23] rule | Triple verification rule (TLA+ · Lean · property-based tests)
+
+User-mandated: every task verified three ways. Rules V-1…V-11 written to `.planning/implementation/verification.md`,
+short form in `CLAUDE.md`, pointer in `STATE.md`. Repo state found: no TLA+ spec, no Lean project, neither toolchain
+installed, one fast-check file (`protocol/test/unit/crdt-properties.test.ts`). Open: toolchain bootstrap, `verification/`
+tree, CI gate. No research page changed.

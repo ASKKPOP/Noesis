@@ -1006,6 +1006,13 @@ Driving inputs for v3.0 (locked at milestone open):
 
 ## Accumulated Context
 
+### ⛔ RULE — Triple verification on every task (user-mandated 2026-11-23)
+
+Every task is verified by **TLA+ (TLC), Lean 4, and property-based tests with generated inputs**. Rules V-1…V-11:
+`.planning/implementation/verification.md`; short form in `CLAUDE.md`. Status on 2026-11-23: no TLA+ spec, no Lean
+project, neither toolchain installed, one fast-check file (`protocol/test/unit/crdt-properties.test.ts`). Until the
+toolchains are bootstrapped, a task's close-out must list each leg as NOT VERIFIED.
+
 ### ⛔ INVARIANT — One Grid focus; new Grids are Nous+User charter, not a dev launch (operator-locked 2026-06-24)
 
 **We focus on Genesis — the first Grid — only.** New Grids (Moon, Mars) are **next time**, and they are
