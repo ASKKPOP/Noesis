@@ -420,6 +420,9 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/procurement/notices':                          'public',
     'GET /api/v1/procurement/notices/:noticeId':                'public',
     'POST /api/v1/procurement/notices/:noticeId/bids':          'civic_did_required',
+    // D-MONEY-10 — award and acceptance of public work are Polis-only acts.
+    'POST /api/v1/procurement/notices/:noticeId/award':         'government_only',
+    'POST /api/v1/procurement/contracts/:contractId/settle':    'government_only',
 
     // Phase 41 Sleep Cycle (SLEEP-01..05) — presence + inbox + queue-aware send.
     // All 6 routes registered explicitly per OBS-36-01.
@@ -537,6 +540,8 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     // The IOU ledger: a mind reads its own debts and credits, and a debtor pays a debt.
     'GET /api/v1/civic/ious':                         'civic_did_required',
     'POST /api/v1/civic/ious/:id/pay':                'civic_did_required',
+    // D-MONEY-10 — an owner hands its parcel to the Polis (the civic duty met by property).
+    'POST /api/v1/civic/parcels/:id/give-to-polis':   'civic_did_required',
 } as Record<string, RouteDIDPolicy>);
 
 /**

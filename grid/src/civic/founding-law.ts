@@ -148,6 +148,22 @@ export const CIVIC_DUTY_WEI = 20n;
 /** The duty met by building for the Polis: civic-labor credits per period. */
 export const CIVIC_DUTY_CREDIT = 10n;
 
+/**
+ * Building for the Polis: one piece of public work done UNPAID (a bid of 0 wei) and
+ * accepted by the Polis earns this much civic-labor credit — one period of the duty.
+ * Paid public work is a job, not a contribution, and earns none.
+ */
+export const CIVIC_WORK_CREDIT = CIVIC_DUTY_CREDIT;
+
+/**
+ * Transferring property: a parcel handed to the Polis earns, in civic-labor credit, what
+ * its price would have paid in tax (a 400-wei parcel = 20 periods of the duty).
+ */
+export function parcelDutyCredit(priceWei: number): bigint {
+    if (!Number.isSafeInteger(priceWei) || priceWei <= 0) return 0n;
+    return (BigInt(priceWei) * CIVIC_DUTY_CREDIT) / CIVIC_DUTY_WEI;
+}
+
 /** Per-pair credit limit: the max outstanding a single (creditor, debtor) pair may carry. */
 export const IOU_PAIR_CAP_BIOS = 1000;
 

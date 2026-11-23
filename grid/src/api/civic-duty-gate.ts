@@ -16,6 +16,7 @@ import { CivicDueStore } from '../economy/civic-due-store.js';
 export const CIVIC_DUTY_OPEN_ROUTES: ReadonlySet<string> = new Set([
     'POST /api/v1/civic/dues/:dueId/pay',                 // pay the tax
     'POST /api/v1/procurement/notices/:noticeId/bids',    // offer to build for the Polis
+    'POST /api/v1/civic/parcels/:id/give-to-polis',       // hand property to the Polis
     'POST /api/v1/brain/token/register',                  // stay signed in
 ]);
 

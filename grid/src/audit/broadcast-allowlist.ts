@@ -395,7 +395,8 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     //   condition ∈ {maintained, worn, derelict}.
     // zoning.parcel_reclaimed (94): sole-producer grid/src/audit/append-zoning-parcel-reclaimed.ts
     //   closed 4-key {former_owner_civic_did_hash, parcel_id, reason, tick}; actorDid = parcel_id.
-    //   reason ∈ {upkeep_default} (the land returns to treasury).
+    //   reason ∈ {upkeep_default, given_to_polis} (the land returns to the Polis; the second is
+    //   an owner handing it over to meet its civic duty, D-MONEY-10).
     // treasury.upkeep_collected (95): sole-producer grid/src/audit/append-treasury-upkeep-collected.ts
     //   closed 4-key {amount_wei, owner_civic_did_hash, parcel_id, tick}; actorDid = parcel_id.
     'zoning.interior_extended',  // (92)

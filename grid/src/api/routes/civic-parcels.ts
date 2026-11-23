@@ -44,6 +44,8 @@ import { appendZoningStructureLeft } from '../../audit/append-zoning-structure-l
 import { appendZoningInteriorExtended } from '../../audit/append-zoning-interior-extended.js';
 import { appendZoningRoleGranted } from '../../audit/append-zoning-role-granted.js';
 import { appendZoningRoleRevoked } from '../../audit/append-zoning-role-revoked.js';
+import { appendZoningParcelReclaimed } from '../../audit/append-zoning-parcel-reclaimed.js';
+import { parcelDutyCredit } from '../../civic/founding-law.js';
 import { appendZoningCoworkSession } from '../../audit/append-zoning-cowork-session.js';
 import { appendSkillBlueprintExecuted } from '../../audit/append-skill-blueprint-executed.js';
 import { isHumanDid, type RoleEdge } from '../../civic/roles.js';
@@ -630,6 +632,70 @@ export function registerCivicParcelRoutes(app: FastifyInstance, services: GridSe
             // Place names stay Grid-side (name_hash discipline) — NO chain event (D-60-07).
             await guarded.store.persistBuild(parcelRegistry.get(addr)!);
             return reply.code(200).send({ named: true, parcel_id: addr, place_address: result.placeAddress });
+        },
+    );
+
+    // --- POST /api/v1/civic/parcels/:id/give-to-polis (owner; D-MONEY-10) ---
+    // The civic duty met by property: the owner hands its parcel to the Polis and earns
+    // civic-labor credit worth what the parcel's price would have paid in tax. The parcel
+    // returns to the Polis's land exactly as a reclaimed one does (no owner, structure
+    // cleared, roles ended); what the owner owes other Nous is untouched. The Nous then
+    // pays its due with the credit — its own act, like every other way of meeting the duty.
+    app.post<{ Params: { id: string } }>(
+        '/api/v1/civic/parcels/:id/give-to-polis',
+        async (req, reply) => {
+            const guarded = requireCivicWriter(req, reply, services);
+            if (!guarded) return reply;
+            const { parcelRegistry, buyerDid, store } = guarded;
+            const addr = req.params.id;
+            const parcel = parcelRegistry.get(addr);
+            if (!parcel) return reply.code(404).send({ error: 'parcel_not_found' });
+            if (parcel.ownerDid !== buyerDid) return reply.code(403).send({ error: 'not_owner' });
+            const credit = parcelDutyCredit(parcel.priceWei);
+            if (credit <= 0n) return reply.code(409).send({ error: 'parcel_has_no_duty_value' });
+            {
+                const tick = currentTick(services);
+                // Database first, in one transaction (parcel, roles, credit). If it fails
+                // nothing has changed anywhere, and the owner still owns the parcel. Two gifts
+                // of one parcel at the same moment: the database's owner condition lets one land.
+                try {
+                    await store.giveToPolis(parcel, buyerDid, credit, tick);
+                } catch (err) {
+                    if ((err as Error).message === 'not_owner') return reply.code(409).send({ error: 'not_owner' });
+                    // A commit whose answer was lost may have landed. Ask the database before
+                    // deciding: this transaction had already taken the row from this owner, so if
+                    // the parcel has no owner now, the gift landed and memory must follow —
+                    // otherwise memory would keep an owner the database has released, until the
+                    // next restart. Any earlier failure wrote nothing, and is simply reported.
+                    let landed = false;
+                    if ((err as Error).message.startsWith('commit_unknown')) {
+                        try { landed = (await store.ownerInDb(addr)) === null; } catch { /* still unknown */ }
+                    }
+                    if (!landed) {
+                        console.warn(`[civic-duty] gift_not_saved parcel_id=${addr}: ${(err as Error).message}`);
+                        return reply.code(503).send({ error: 'gift_not_saved' });
+                    }
+                }
+                const rolesBefore = parcelRegistry.rolesFor(addr).filter((e) => e.revoked_tick === undefined);
+                parcelRegistry.reclaimToTreasury(addr, tick);
+                // On the chain: each role the gift ended, then the parcel's return. A chain
+                // fault here must not undo what the database and memory already agree on.
+                try {
+                    for (const edge of rolesBefore) {
+                        appendZoningRoleRevoked(services.audit, {
+                            holder_civic_did_hash: sha256Hex(edge.holder_civic_did),
+                            parcel_id: addr, reason: 'severance_complete', tick,
+                        });
+                    }
+                    appendZoningParcelReclaimed(services.audit, {
+                        former_owner_civic_did_hash: sha256Hex(buyerDid),
+                        parcel_id: addr, reason: 'given_to_polis', tick,
+                    });
+                } catch (err) {
+                    console.warn(`[civic-duty] gift_event_failed parcel_id=${addr}: ${(err as Error).message}`);
+                }
+                return reply.code(200).send({ given: true, parcel_id: addr, credit_earned: credit.toString() });
+            }
         },
     );
 

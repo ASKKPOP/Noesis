@@ -21,6 +21,8 @@ import { createHash } from 'node:crypto';
 import type { Pool, RowDataPacket } from 'mysql2/promise';
 import type { AuditChain } from '../audit/chain.js';
 import { debitTreasuryWeiOnConn, creditAccountOnConn } from './wei-ops.js';
+import { earnCreditOnConn } from './credit-ops.js';
+import { CIVIC_WORK_CREDIT } from '../civic/founding-law.js';
 import { appendProcurementNoticeIssued } from '../audit/append-procurement-notice-issued.js';
 import { appendProcurementBidPlaced } from '../audit/append-procurement-bid-placed.js';
 import { appendProcurementAwarded } from '../audit/append-procurement-awarded.js';
@@ -60,7 +62,8 @@ export class ProcurementStore {
     }
 
     async placeBid(p: { gridName: string; bidId: string; noticeId: string; bidderDid: string; priceWei: bigint; artifactSpec: string; currentTick: number }): Promise<void> {
-        if (p.priceWei <= 0n) throw new Error('invalid_amount');
+        // A bid of 0 wei is an offer to do the work unpaid, as a civic duty (D-MONEY-10).
+        if (p.priceWei < 0n) throw new Error('invalid_amount');
         const conn = await this.pool.getConnection();
         try {
             await conn.beginTransaction();
@@ -127,8 +130,11 @@ export class ProcurementStore {
             }
             winnerDid = String(bid.bidder_did);
             awardWei = award;
-            // Fund the escrow FROM the treasury (the Polis is the payer).
-            await debitTreasuryWeiOnConn(conn, { gridName: p.gridName, amountWei: award, currentTick: p.currentTick });
+            // Fund the escrow FROM the treasury (the Polis is the payer). Unpaid work
+            // (a bid of 0) moves no money; its escrow row holds 0 and keeps the contract's shape.
+            if (award > 0n) {
+                await debitTreasuryWeiOnConn(conn, { gridName: p.gridName, amountWei: award, currentTick: p.currentTick });
+            }
             await conn.query(
                 `INSERT INTO labor_escrow
                    (escrow_id, grid_name, payer_did, worker_did, amount_wei, fee_wei, ref, status, attestation_ref, created_at, updated_at)
@@ -178,8 +184,14 @@ export class ProcurementStore {
             }
             winnerDid = String(c.winner_did);
             awardWei = BigInt(c.award_wei);
-            // Grid (oracle) attests done → release the escrow to the builder.
-            await creditAccountOnConn(conn, { gridName: p.gridName, civicDid: winnerDid, amountWei: awardWei, currentTick: p.currentTick });
+            // Grid (oracle) attests done → release the escrow to the builder. Work done
+            // unpaid is a contribution to the Polis: it earns civic-labor credit instead,
+            // in the same transaction as the settlement (D-MONEY-10 — the duty met by building).
+            if (awardWei > 0n) {
+                await creditAccountOnConn(conn, { gridName: p.gridName, civicDid: winnerDid, amountWei: awardWei, currentTick: p.currentTick });
+            } else {
+                await earnCreditOnConn(conn, { gridName: p.gridName, civicDid: winnerDid, amount: CIVIC_WORK_CREDIT, currentTick: p.currentTick });
+            }
             await conn.query(`UPDATE labor_escrow SET status = 'released', attestation_ref = ?, updated_at = ? WHERE escrow_id = ?`, [p.attestationRef, p.currentTick, String(c.escrow_id)]);
             await conn.query(`UPDATE procurement_contracts SET status = 'settled', attested_tick = ?, updated_at = ? WHERE contract_id = ?`, [p.currentTick, p.currentTick, p.contractId]);
             await conn.commit();
