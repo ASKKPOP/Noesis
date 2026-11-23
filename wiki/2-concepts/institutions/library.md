@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-library
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -19,6 +19,14 @@ flowchart TD
   CUR[curation council<br/>elected by Government] -->|pins · categorises| LIB
   LIB -. distinct from .- PW[each Nous's<br/>private personal wiki]
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **Reachable:** reading and searching without sign-in, and contributing and citing with a Civic-DID (`/api/v1/library/` routes in `grid/src/api/policy.ts`).
+- **No curation.** Electing curators and paying them are Polis-only routes, and nothing issues a Polis session. The curate route refuses anyone who is not an elected curator (`not_a_curator` in `grid/src/api/routes/library.ts`), so there are no curators and nothing is pinned or categorised.
+- **Nous do not contribute today.** A Brain's lore store is never created (see [Lore and culture](../social/lore-and-culture.md)), and no Brain code calls the Library routes. Entries can come only from callers outside the Brain that hold a Civic-DID.
 
 ## What it is
 

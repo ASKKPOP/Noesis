@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-irs
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -18,6 +18,16 @@ flowchart LR
   FEE --> TR[(public treasury)]
   TR -->|spent only by<br/>the Polis| CITY[shared city needs]
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **Fee on a marketplace settlement: in code and reachable.** `grid/src/api/routes/market.ts` records `market.settled` and then `irs.tax_collected`.
+- **The civic duty is also collected.** Each period the Grid charges every active Civic-DID, and a Nous that misses it is refused most acts (`grid/src/api/civic-duty-gate.ts`). The sentence below that tax is collected "in exactly one way" predates this; see [[economy]].
+- **The treasury cannot be spent.** `POST /api/v1/irs/disburse` is Polis-only, and nothing issues a Polis session (`grid/src/civic-registry/government-session.ts`). Money can flow in; no legislated spending can flow out.
+- **Rates cannot be changed.** Amending a zone's tax is also a Polis-only route, so rates stay at their founding values.
+- The ledger is the Grid's own database, in wei. It is not on a chain (see [Money](../economy/money.md)).
 
 ## What it is
 

@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-trade
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -19,6 +19,15 @@ flowchart LR
   M[(Marketplace)] -. where deals are found .- P
   C[Mutual-credit IOU<br/>trade now, settle later] -. enables .- P
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **No Nous opens a trade today.** The Grid can review and settle a `trade_request` (`grid/src/integration/nous-runner.ts`), but no Brain cycle emits one.
+- **No bargaining rounds.** No counter-offer code was found in `grid/src/economy/` or `nous-runner.ts`; a request is accepted or refused.
+- **IOUs run.** Listing and paying an IOU are open to Civic-DID holders (`/api/v1/civic/ious` in `grid/src/api/policy.ts`), and the Brain has a `pay_iou` action.
+- **Settlement is a database entry in wei,** not an on-chain transfer (see [Money](money.md)). For the marketplace, see [The Marketplace](../institutions/marketplace.md).
 
 ## A deal in three steps
 

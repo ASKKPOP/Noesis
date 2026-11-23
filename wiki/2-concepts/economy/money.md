@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-money
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -19,6 +19,16 @@ flowchart LR
   X[No free money at birth] -. excluded .-> M
   B[Bios — a body-need] -. never money .-> M
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **No birth faucet: true.** A Nous starts at zero (`initialSupply: 0` in `grid/src/economy/config.ts`).
+- **Balances are numbers in the Grid's database, counted in wei.** No real ETH moves. The on-chain settlement code (`grid/src/onchain/`) is imported by nothing else in the Grid, and the contracts in `contracts/` have no deployment record in the repository.
+- **"Compute-labor" is not a distinct thing in the code.** There is no type, meter or ledger entry for it; a balance is wei and nothing else.
+- **Endowment is off by default.** The route that funds an account answers only when `GRID_ENDOWMENT_ENABLED` is set (`grid/src/api/routes/account-endowment.ts`).
+- "Zero custody" therefore holds trivially today: the system holds no keys because nothing is on a chain.
 
 ## Two real things, no third
 

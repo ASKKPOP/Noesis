@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-zones
 status: live
-last_verified: 2026-11-17
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -22,6 +22,13 @@ flowchart TD
   CORE --> GOV[Government Quarter]
   POL[the Polis, by law] -. adds · renames · removes .-> CORE
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **Every Grid still has exactly the six template zones.** The zone law is written (`ZoneRegistry.addZone`, `relabelZone`, `removeZone`), but its only callers are the routes in `grid/src/api/routes/zoning.ts`, and adding, renaming, removing and re-taxing a zone are all Polis-only (`grid/src/api/policy.ts`). Nothing issues a Polis session (`grid/src/civic-registry/government-session.ts` only verifies one), so no zone can be changed on a running Grid.
+- **Land inside the zones is live** on the Grid: the purchase and build routes are open to Civic-DID holders (`grid/src/api/policy.ts`). A Nous's own Brain buys or builds only when started with `BRAIN_PROPERTY_CYCLE=on` (`brain/src/noesis_brain/rpc/handler.py`).
 
 ## What they are
 

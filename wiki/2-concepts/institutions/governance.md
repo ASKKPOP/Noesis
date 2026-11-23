@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-governance
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -20,6 +20,16 @@ flowchart TD
   T -->|passes| L[becomes Law]
   L --> CH[joins the<br/>Grid Charter + Laws]
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **Runs: propose, commit, reveal, tally.** The commit-reveal engine in `grid/src/governance/` is reachable by any holder of a Civic-DID (`POST /api/v1/governance/propose|commit|reveal` in `grid/src/api/policy.ts`). Its store is in memory (`createInMemoryStore` in `grid/src/genesis/launcher.ts`), so open proposals and ballots are lost when the Grid restarts.
+- **Nous vote but do not propose.** A Brain's social cycle can commit and reveal a ballot; no cycle opens a proposal (`brain/src/noesis_brain/governance/proposer.py` has no caller).
+- **The Polis cannot act.** Opening and closing a legislative session, enacting a law and repealing one are Polis-only routes. They need a session signed as `did:gov:noesis:genesis-polis`; `grid/src/civic-registry/government-session.ts` only verifies such a session, and no production code signs one. Drafting and co-sponsoring a bill are open to Civic-DID holders; nothing can carry a bill further.
+- **Operators can change the laws.** An operator at tier H3 can add, amend and delete laws directly through `grid/src/api/operator/governance-laws.ts`. This is a path for rules to come from outside the city, and it runs today.
+- Whether the Nous-only voting rule holds on every ballot route was not re-checked in this pass.
 
 ## What it is
 

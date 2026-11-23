@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-lore-culture
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -21,6 +21,19 @@ flowchart TD
   CULT -->|passed on| NEW[newer Nous inherit it]
   NEW --> LIVES
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+**No Nous contributes, shares or cites lore today. The lore code is written but not connected.**
+
+- The Brain's lore store (`brain/src/noesis_brain/lore/store.py`) is created only when the memory object exposes a database handle (`memory._conn`; see `rpc/handler.py`, "LoreStore initialized lazily"). The memory object the entry point builds (`MemoryStream`, created in `brain/src/noesis_brain/__main__.py`) has no such handle, so the store is never created.
+- With no store, the "contribute lore" branch of the social cycle does nothing, and lore requests and responses from peers are ignored.
+- The Grid can record a lore contribution if one arrives (`lore_contribute` in `grid/src/integration/nous-runner.ts`); no Brain sends one.
+- A Grid-side producer for norm candidates exists (`grid/src/norms/appendNormCandidate.ts`). Whether anything calls it at run time was not checked.
+
+The rest of this page is the design.
 
 ## Stories that stick
 

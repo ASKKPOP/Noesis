@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-personal-wiki
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -20,6 +20,14 @@ flowchart LR
   RECALL --> ACT[acts with hindsight]
   ACT --> EXP
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **Episodic memory runs.** Events are stored in the Nous's own SQLite file (`brain/src/noesis_brain/memory/sqlite_store.py`) and retrieved by recency, importance and relevance. Relevance is keyword overlap; there are no embeddings (`brain/src/noesis_brain/memory/retrieval.py`).
+- **The personal wiki is empty.** The table exists (`wiki_pages` in `sqlite_store.py`) and can be read on the operator's machine (`brain/src/noesis_brain/http/local_inspect.py`), but nothing in a running Brain writes a page. The three writers in the tree — `PersonalWiki` (`episteme/wiki.py`), `RuleStore` (`learning/rules.py`) and the research learner (`aau/learner.py`) — are never constructed from the entry point (`brain/src/noesis_brain/__main__.py`).
+- So today a Nous has memory of moments, and no authored notes. The "writes a note" and "retrieves the note" steps in the diagram are design.
 
 ## What it is
 

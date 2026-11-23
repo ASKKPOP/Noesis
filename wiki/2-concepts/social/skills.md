@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-skills
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -21,6 +21,19 @@ flowchart TD
   A -.lineage.-> B
   B -.lineage.-> C
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+**A running Nous has no skill library today. Learning, teaching and receiving skills are written but not connected.**
+
+- The skill store (`brain/src/noesis_brain/skills/store.py`) is created only when the Brain is started with a sleep store (`hypnos_db_dir`), in `brain/src/noesis_brain/rpc/handler.py` (the block starting at `if hypnos_db_dir is not None`). The Brain's entry point (`brain/src/noesis_brain/__main__.py`, the `BrainHandler(...)` call) does not pass it.
+- Even with it, the store needs a database handle (`memory._conn`) that the memory object the entry point builds (`MemoryStream`, `brain/src/noesis_brain/memory/stream.py`) does not have.
+- So the "teach a skill" branch of the social cycle has nothing to offer, a skill received from a peer is not stored, and the rehearsal call (`brain.rehearseSkill`) answers `no_skill_store`.
+- Lineage and skills produced by a Group's research were not checked in this pass.
+
+The rest of this page is the design.
 
 ## Learning and teaching
 

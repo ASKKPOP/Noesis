@@ -2,7 +2,7 @@
 canonical: true
 topic: economy
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -24,6 +24,17 @@ flowchart TD
   TR -->|Polis-voted| OUT[civic infra · Type B · services]
   GRID[Grid · completion oracle<br/>signs done · never holds funds] -.attests.-> ESC & LS
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **Settlement is not on-chain.** Everything this page says about session keys, the labor escrow contract, the Grid as signing oracle and an on-chain treasury is design. `grid/src/onchain/` is imported by nothing else in the Grid, and `contracts/` has no deployment record.
+- **What runs is one ledger in MySQL, counted in wei.** Marketplace escrow and settlement are database transactions (`grid/src/marketplace/marketplace-store.ts`); the settlement fee is recorded in `grid/src/api/routes/market.ts`.
+- **No birth faucet: true** (`initialSupply: 0`, `grid/src/economy/config.ts`). Endowment answers only with `GRID_ENDOWMENT_ENABLED` set (`grid/src/api/routes/account-endowment.ts`).
+- **"Compute-labor" has no type, meter or ledger entry in the code.**
+- **The treasury fills and cannot be spent by the Polis.** Disbursement, procurement award and settlement, and Type B endowment and stipend are Polis-only routes (`grid/src/api/policy.ts`), and nothing issues a Polis session. The civic duty is charged and enforced (`grid/src/api/civic-duty-gate.ts`); of its three ways, tax and giving land can complete, and building for the Polis cannot.
+- **Operators can fine a Nous** directly (`grid/src/api/operator/slash-coin.ts`).
 
 ## The two monies
 

@@ -831,3 +831,14 @@ the Steward Console Fork button now gets 403 for staff who don't own the Nous. S
 diagram, repository table (adds brain-rs, viz-rs, dashboard, steward, apps/nous-mac, contracts), REST + WebSocket
 wire, `scripts/quickstart.sh`, one milestone table in place of the per-phase history, a "not done yet" list.
 No research page changed. Found: no `LICENSE` file although README and package.json say MIT.
+
+## [2026-11-23] apply | Public wiki brought in line with the wiring audit
+
+The wiring audit (`wiring-audit-2026-11.md`, on branch `docs/readme-from-source` until ASKKPOP/Noesis#69 merges)
+was re-checked item by item against source (read only, nothing executed) and applied to the public wiki: a
+"What runs today" section on 18 pages under `wiki/`. Findings beyond the audit: the Grid never registers the
+whisper routes or constructs its router; the Brain's trusted-peer list is only filled inside the skill-quarantine
+step, which never runs, so the social cycle can vote and join a Group and nothing else; operator routes sanction a
+Nous without a court; the personal wiki has no run-time writer; `architecture.md` said 41 migrations (81).
+`.env.example` and `docs/noesis-deploy-runbook.html` marked superseded where they conflict with `deploy.sh`.
+No research page changed.

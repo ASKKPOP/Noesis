@@ -88,6 +88,8 @@
 
 <div class="shell">
 
+  <div class="note warn"><b>Superseded (2026-11-23) — do not follow this page to deploy.</b> It describes an Apache front on the shared askkpop.com host (54.193.144.100). That is not where or how Noēsis runs. Production is deployed by <code>deploy.sh</code>: <code>docker-compose.yml</code> + <code>docker-compose.aws.yml</code>, nginx behind the AWS load balancer, on the host named in <code>deploy.sh</code>. Where this page and <code>deploy.sh</code> disagree, <code>deploy.sh</code> is right. The page is kept for history only.</div>
+
   <div class="hero">
     <div class="eyebrow">askkpop.com · AWS · CentOS 7 · shared host</div>
     <h1>Deploy the <em>Grid</em>, step by step.</h1>

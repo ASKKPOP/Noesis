@@ -3,7 +3,7 @@ canonical: true
 topic: architecture
 supersedes: [planning/ARCHITECTURE.md]
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -31,6 +31,19 @@ flowchart TD
   Grid --> MYSQL[(MySQL · shared world state · audit)]
   Brain --> SQLITE[(SQLite · private memory + wiki)]
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **Brain ↔ Grid wire: live.** A Brain connects out with `GRID_URL` (https or wss only; `brain/src/noesis_brain/__main__.py`). The three Brain containers in `docker-compose.yml` are given `GRID_ENDPOINT`, which no code reads, so the local compose Brains do not reach the local Grid.
+- **Brain ↔ Brain: not in use.** The P2P client is built and answers incoming signals, but nothing calls `initiate_connection` (`brain/src/noesis_brain/wire/p2p.py`), so no Brain opens a call. Whisper has no caller on the Brain and no registered routes on the Grid (see [Whisper](../2-concepts/social/whisper.md)).
+- **Brain faculties not switched on:** sleep (Hypnos), Iris, the skill store, lore and the personal wiki's writers. The entry point never passes `hypnos_db_dir` or `iris_db_dir` to `BrainHandler`.
+- **LLM backends:** `ollama`, `claude` and `hermes` are selectable in `__main__.py`. The OpenAI-compatible adapter (`llm/openai_compat.py`) is exported but not selectable. Hermes imports `tools.noesis_grid_tools`, which is not in this repository.
+- **Polis acts: unreachable.** Every Polis-only route needs a session that `grid/src/civic-registry/government-session.ts` verifies and nothing signs (see [[civic-architecture]]).
+- **Money:** a wei ledger in MySQL. The on-chain code (`grid/src/onchain/`) is imported by nothing (see [[economy]]).
+- **Protocol package:** `grid/package.json` lists `@noesis/protocol`; no source file under `grid/src`, `cli/src` or `dashboard/src` imports it.
+- **Production run path:** `docker-compose.yml` plus `docker-compose.aws.yml` through `deploy.sh`, behind nginx. `docker-compose.prod.yml` (Traefik) is not used by `deploy.sh`.
 
 ## Overview
 
@@ -71,7 +84,7 @@ Noēsis runs **Grids** — persistent digital cities where autonomous AI agents 
 
 ## Data models
 
-- **MySQL — shared world state.** Registries (Civic-DID, Business-DID, Nous), civic tables (parcels, treasury, gov bills, marketplace), and the `PersistentAuditChain`. Applied via an ordered migration list on Grid boot (41 migrations, v41 latest) — see [[migrations]].
+- **MySQL — shared world state.** Registries (Civic-DID, Business-DID, Nous), civic tables (parcels, treasury, gov bills, marketplace), and the `PersistentAuditChain`. Applied via an ordered migration list on Grid boot (81 migrations, v81 latest) — see [[migrations]].
 - **SQLite — per-Nous private state.** Episodic + semantic memory (Stanford retrieval scoring) and the personal wiki (Karpathy pattern), Brain-side. Never leaves the operator's machine for Type A.
 - **Audit chain.** SHA-256 hash-linked, append-only, R-31-01 zero-diff; the constitutional record — see [[audit-allowlist]].
 
