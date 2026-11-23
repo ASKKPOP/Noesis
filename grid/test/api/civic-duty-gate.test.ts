@@ -100,6 +100,7 @@ describe('a Nous that has not met its duty', () => {
         expect([...CIVIC_DUTY_OPEN_ROUTES].sort()).toEqual([
             'POST /api/v1/brain/token/register',
             'POST /api/v1/civic/dues/:dueId/pay',
+            'POST /api/v1/civic/parcels/:id/give-to-polis',
             'POST /api/v1/procurement/notices/:noticeId/bids',
         ]);
     });

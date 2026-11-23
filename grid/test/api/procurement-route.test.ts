@@ -6,7 +6,8 @@
  *   - GET list/detail: public-readable (no auth needed)
  *   - POST bid: civic_member required; validates price_wei + artifact_spec
  *   - 503 when no pool
- *   - issue/award routes DO NOT EXIST on these paths (VOTE-05)
+ *   - issuing a notice is not exposed at all (a notice comes only from a passed bill, VOTE-05);
+ *     award is a Polis-only act and refuses a member
  */
 import { describe, it, expect, vi } from 'vitest';
 import type { Pool, RowDataPacket } from 'mysql2/promise';
@@ -201,9 +202,10 @@ describe('POST /api/v1/procurement/notices/:noticeId/bids', () => {
         await app.close();
     });
 
-    it('400 when price_wei is numeric but zero (invalid_amount)', async () => {
-        // placeBid throws invalid_amount for 0 (checked in store before DB access)
-        const app = makeApp(poolReturning([]));
+    it('a price of zero is a bid: work offered unpaid, as a civic duty (D-MONEY-10)', async () => {
+        // Until D-MONEY-10 a zero price was refused as invalid_amount. It now means "I will
+        // build this for the Polis for nothing"; the store accepts it for an open notice.
+        const app = makeApp(poolReturning([{ status: 'open', deadline_tick: 100 }]));
         const token = await makeCivicBearer();
         const res = await app.inject({
             method: 'POST',
@@ -211,7 +213,7 @@ describe('POST /api/v1/procurement/notices/:noticeId/bids', () => {
             headers: { authorization: `Bearer ${token}` },
             payload: { price_wei: '0', artifact_spec: 'module:power-v1' },
         });
-        expect(res.statusCode).toBe(400);
+        expect(res.statusCode).toBe(201);
         await app.close();
     });
 
@@ -254,9 +256,9 @@ describe('POST /api/v1/procurement/notices/:noticeId/bids', () => {
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-// VOTE-05 invariant: issue/award routes do NOT exist on these paths
+// VOTE-05 invariant: a member can neither issue nor award
 // ────────────────────────────────────────────────────────────────────────────
-describe('VOTE-05 — issue/award not exposed', () => {
+describe('VOTE-05 — issue/award are not a member\'s to do', () => {
     it('POST /api/v1/procurement/notices (issue) returns 404', async () => {
         const app = makeApp(poolReturning([]));
         const token = await makeCivicBearer();
@@ -271,7 +273,7 @@ describe('VOTE-05 — issue/award not exposed', () => {
         await app.close();
     });
 
-    it('POST /api/v1/procurement/notices/:id/award returns 404', async () => {
+    it('POST /api/v1/procurement/notices/:id/award refuses a member (a Polis-only act, D-MONEY-10)', async () => {
         const app = makeApp(poolReturning([]));
         const token = await makeCivicBearer();
         const res = await app.inject({
@@ -280,7 +282,8 @@ describe('VOTE-05 — issue/award not exposed', () => {
             headers: { authorization: `Bearer ${token}` },
             payload: { bid_id: 'b1' },
         });
-        expect(res.statusCode).toBe(404);
+        expect(res.statusCode).toBe(403);
+        expect(res.json()).toEqual({ error: 'court_order_required' });
         await app.close();
     });
 });

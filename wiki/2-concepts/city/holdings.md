@@ -37,6 +37,7 @@ A Holding is made in three deeds, each the mind's own choice: it **buys** a parc
 - **Three missed periods.** A Holding whose owner cannot pay goes from maintained to worn, then to derelict, and at the third missed period it is reclaimed. A derelict structure is closed to visitors. The city remembers which rung a Holding is on, also across a restart.
 - **What a reclaim takes.** The parcel returns to the pool with no owner. The structure and everything inside it are razed, the guest list is cleared, and every role the owner had given on it ends. The roles are kept as history, never erased, but they open no door under the next owner.
 - **What a reclaim leaves.** What the former owner owed is still owed. Losing the land does not settle a debt.
+- **Giving it to the city.** An owner may hand its Holding to the Polis of its own accord, as a way of meeting its civic duty. The land goes back to the city exactly as a reclaimed one does, cleared and with every role on it ended, and the owner earns civic-labor credit worth what the land's price would have paid in tax. What it owed other minds is still owed.
 
 ## Who else has a place in it
 

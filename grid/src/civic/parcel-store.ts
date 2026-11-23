@@ -19,6 +19,7 @@ import { gravityPrice, GENESIS_CORE_SEED_PLAN, PURCHASABLE_RINGS } from './found
 import { upsertIou, type IouEntry } from './credit-ledger.js';
 import { upsertAgreement, type CoworkAgreement } from './cowork.js';
 import { creditAccountOnConn, debitAccountOnConn } from '../economy/wei-ops.js';
+import { earnCreditOnConn } from '../economy/credit-ops.js';
 
 /** A civic_parcels DB row (snake_case columns as returned by mysql2). */
 export interface ParcelRow extends RowDataPacket {
@@ -342,6 +343,71 @@ export class ParcelStore {
                 [parcel.id],
             );
             await conn.commit();
+        } catch (e) {
+            try { await conn.rollback(); } catch { /* the first error is the one to report */ }
+            throw e;
+        } finally {
+            conn.release();
+        }
+    }
+
+    /**
+     * Who the database names as a parcel's owner: a civic identity, null when it has none,
+     * undefined when there is no such parcel. Asked when a write's answer was lost.
+     */
+    async ownerInDb(parcelId: string): Promise<string | null | undefined> {
+        const [rows] = await this.pool.query<RowDataPacket[]>(
+            `SELECT owner_civic_did FROM civic_parcels WHERE parcel_id = ?`, [parcelId],
+        );
+        if (rows.length === 0) return undefined;
+        const owner = rows[0]!['owner_civic_did'];
+        return owner === null || owner === undefined ? null : String(owner);
+    }
+
+    /**
+     * D-MONEY-10 — an owner hands its parcel to the Polis and earns civic-labor credit for
+     * it. One transaction: the roles on the parcel end, the parcel returns to the Polis's
+     * land (only while the database still names this owner — two gifts of one parcel at the
+     * same moment credit once), and the credit is granted. Throws 'not_owner' when the row
+     * no longer names the owner (nothing is written then), and 'commit_unknown: …' when the
+     * commit's answer was lost (see ownerInDb).
+     */
+    async giveToPolis(parcel: Parcel, ownerCivicDid: string, credit: bigint, tick: number): Promise<void> {
+        const conn = await this.pool.getConnection();
+        try {
+            await conn.beginTransaction();
+            const [res] = await conn.query<ResultSetHeader>(
+                `UPDATE civic_parcels
+                    SET owner_civic_did = NULL,
+                        acquired_at_tick = NULL,
+                        last_upkeep_tick = NULL,
+                        structure_name = NULL,
+                        structure_type = NULL,
+                        built_at_tick = NULL,
+                        structure_interior = NULL,
+                        bound_shop_id = NULL,
+                        entry_policy = 'open',
+                        entry_allowlist = NULL,
+                        \`condition\` = 'maintained',
+                        missed_periods = 0
+                  WHERE parcel_id = ? AND owner_civic_did = ?`,
+                [parcel.id, ownerCivicDid],
+            );
+            if (res.affectedRows !== 1) throw new Error('not_owner');
+            await conn.query<ResultSetHeader>(
+                `UPDATE civic_parcel_roles
+                    SET revoked_tick = ?
+                  WHERE parcel_id = ? AND revoked_tick IS NULL`,
+                [tick, parcel.id],
+            );
+            await earnCreditOnConn(conn, { gridName: this.gridName, civicDid: ownerCivicDid, amount: credit, currentTick: tick });
+            try {
+                await conn.commit();
+            } catch (e) {
+                // The commit's answer was lost: the gift may or may not have landed. Said
+                // apart from every other failure, so the caller knows to ask the database.
+                throw new Error(`commit_unknown: ${e instanceof Error ? e.message : String(e)}`);
+            }
         } catch (e) {
             try { await conn.rollback(); } catch { /* the first error is the one to report */ }
             throw e;

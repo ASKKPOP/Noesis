@@ -17,7 +17,8 @@ import { payloadPrivacyCheck } from './broadcast-allowlist.js';
 
 const HEX64_RE = /^[0-9a-f]{64}$/i;
 const PARCEL_ID_RE = /^[a-z0-9_-]+:[a-z0-9_]+:\d{4}$/;
-const REASONS = ['upkeep_default'] as const;
+// 'given_to_polis' (D-MONEY-10): the owner handed the parcel over itself, to meet its civic duty.
+const REASONS = ['upkeep_default', 'given_to_polis'] as const;
 
 /** Closed 4-key payload. Keys ALPHABETICAL. */
 export interface ZoningParcelReclaimedPayload {

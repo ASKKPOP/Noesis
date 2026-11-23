@@ -4,13 +4,20 @@
  *   GET  /api/v1/procurement/notices/:noticeId    — one notice + its bids
  *   POST /api/v1/procurement/notices/:noticeId/bids — place a bid (civic_member)
  *
- * Issuance and award are NOT exposed here — those are Polis-only (VOTE-05 / D-V3-21).
- * Members read + bid; no wei moves in this slice.
+ * Issuance is NOT exposed over HTTP at all: a notice comes only from a passed bill
+ * (VOTE-05 / D-V3-21). Award and settlement are Polis-only acts (government_only in
+ * ROUTE_DID_POLICY, plus a legislation reference like every treasury act): no member,
+ * visitor or operator can reach them.
+ *   POST /api/v1/procurement/notices/:noticeId/award        — the Polis awards a bid
+ *   POST /api/v1/procurement/contracts/:contractId/settle   — the Polis accepts the work
+ * A bid of 0 wei is work offered unpaid; when it is accepted it earns civic-labor credit
+ * instead of money (D-MONEY-10 — the civic duty met by building).
  */
 import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { ProcurementStore } from '../../economy/procurement-store.js';
+import { verifyDisbursementAuth } from '../../civic-registry/government-session.js';
 
 const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
 
@@ -112,6 +119,65 @@ export function registerProcurementRoutes(app: FastifyInstance, services: GridSe
             }
 
             return reply.code(201).send({ ok: true, bid_id: bidId });
+        },
+    );
+
+    // POST /api/v1/procurement/notices/:noticeId/award — Polis only.
+    app.post<{ Params: { noticeId: string }; Body: { bid_id?: unknown } }>(
+        '/api/v1/procurement/notices/:noticeId/award',
+        async (req, reply) => {
+            const pool = services.pool;
+            if (!pool) return reply.code(503).send({ error: 'db_unavailable' });
+            // The same authorization as every act that can move treasury money (D-V3-21):
+            // a Polis session that names the legislation it acts under.
+            const auth = await verifyDisbursementAuth(req.headers.authorization);
+            if (!auth.ok) return reply.code(403).send({ error: auth.reason });
+            const bidId = req.body?.bid_id;
+            if (typeof bidId !== 'string' || bidId.length === 0) return reply.code(400).send({ error: 'invalid_bid_id' });
+            const contractId = randomUUID();
+            const store = new ProcurementStore(pool, services.audit);
+            try {
+                await store.award({
+                    gridName: services.gridName ?? 'genesis', noticeId: req.params.noticeId, bidId,
+                    contractId, escrowId: randomUUID(), currentTick: services.currentTick ? services.currentTick() : 0,
+                });
+            } catch (err) {
+                const msg = (err as Error).message;
+                if (msg === 'notice_not_open' || msg === 'bid_not_eligible' || msg === 'bid_exceeds_budget') {
+                    return reply.code(409).send({ error: msg });
+                }
+                if (msg === 'insufficient_treasury_wei') return reply.code(402).send({ error: msg });
+                throw err;
+            }
+            return reply.code(201).send({ ok: true, contract_id: contractId });
+        },
+    );
+
+    // POST /api/v1/procurement/contracts/:contractId/settle — Polis only: the work is accepted.
+    app.post<{ Params: { contractId: string }; Body: { attestation_ref?: unknown } }>(
+        '/api/v1/procurement/contracts/:contractId/settle',
+        async (req, reply) => {
+            const pool = services.pool;
+            if (!pool) return reply.code(503).send({ error: 'db_unavailable' });
+            // The same authorization as every act that can move treasury money (D-V3-21):
+            // a Polis session that names the legislation it acts under.
+            const auth = await verifyDisbursementAuth(req.headers.authorization);
+            if (!auth.ok) return reply.code(403).send({ error: auth.reason });
+            const attestationRef = req.body?.attestation_ref;
+            if (typeof attestationRef !== 'string' || attestationRef.trim().length === 0) {
+                return reply.code(400).send({ error: 'invalid_attestation_ref' });
+            }
+            const store = new ProcurementStore(pool, services.audit);
+            try {
+                await store.settleContract({
+                    gridName: services.gridName ?? 'genesis', contractId: req.params.contractId,
+                    attestationRef, currentTick: services.currentTick ? services.currentTick() : 0,
+                });
+            } catch (err) {
+                if ((err as Error).message === 'contract_not_active') return reply.code(409).send({ error: 'contract_not_active' });
+                throw err;
+            }
+            return reply.send({ ok: true, settled: true });
         },
     );
 }
