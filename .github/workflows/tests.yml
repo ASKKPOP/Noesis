@@ -1,0 +1,165 @@
+name: tests
+
+# The full test suites. rig-invariants.yml runs the grep gates and the rig
+# suite; real-mysql-migrations.yml runs the schema chain on MySQL 8.0.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  protocol:
+    name: protocol (tsc, vitest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 22: libp2p's dependencies call Promise.withResolvers, which Node 20 lacks.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install workspace deps
+        run: npm ci
+
+      - name: Build protocol (tsc)
+        run: npm run build -w protocol
+
+      - name: Protocol tests
+        run: npm test -w protocol
+
+  grid:
+    name: grid (tsc, vitest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 20: the production image is node:20-alpine (docker/Dockerfile.grid).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install workspace deps
+        run: npm ci
+
+      - name: Build protocol (tsc) — grid imports its dist
+        run: npm run build -w protocol
+
+      - name: Type-check and build grid (tsc)
+        run: npm run build -w grid
+
+      - name: Grid tests
+        run: npm test -w grid
+
+  web:
+    name: dashboard + steward (vitest, tsc)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 22: the production images are node:22-alpine (Dockerfile.dashboard, Dockerfile.steward).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install workspace deps
+        run: npm ci
+
+      # QUARANTINE — these 7 files (27 failing tests) were already red on main
+      # when this workflow was added (2026-11-22). They are excluded so the
+      # other 104 files gate every PR. Fix a file, then delete its line here.
+      - name: Dashboard unit tests
+        working-directory: dashboard
+        run: |
+          npx vitest run \
+            --exclude src/app/portal/portal-dashboard.test.ts \
+            --exclude src/components/portal/PortalShell.test.tsx \
+            --exclude src/components/portal/__tests__/PortalShell.test.tsx \
+            --exclude src/components/portal/__tests__/PortalSidebarHeader.test.tsx \
+            --exclude src/components/portal/PostComposer.test.tsx \
+            --exclude src/app/grid/components/firehose-row.test.tsx \
+            --exclude src/app/grid/components/heartbeat.test.tsx
+
+      - name: Steward type-check
+        run: npm run typecheck -w steward
+
+      - name: Steward tests
+        run: npm test -w steward
+
+  dashboard-e2e:
+    name: dashboard e2e (playwright)
+    # Playwright 1.50 has no Chromium build for ubuntu-latest (26.04).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install workspace deps
+        run: npm ci
+
+      - name: Install Chromium for Playwright
+        working-directory: dashboard
+        run: npx playwright install --with-deps chromium
+
+      # QUARANTINE — these 2 tests were already red on main when this workflow
+      # was added (2026-11-22); they fail on retry too. The other 4 gate every
+      # PR. Fix a test, then delete its title from --grep-invert.
+      - name: Dashboard e2e
+        working-directory: dashboard
+        run: >
+          npx playwright test --grep-invert
+          "SC#5: Delete Nous button is visible, disabled, with Phase 8 tooltip|tier auto-downgrade on /grid/replay route exit"
+
+  brain:
+    name: brain (pytest, parity fixtures)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: pipx install uv
+
+      - name: Install brain deps from uv.lock
+        working-directory: brain
+        run: uv sync --extra dev --frozen
+
+      - name: Brain tests
+        working-directory: brain
+        run: uv run --frozen pytest -q
+
+  brain-rs:
+    name: brain-rs (cargo test, parity fixtures)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust toolchain
+        run: rustc --version && cargo --version
+
+      - name: Brain-rs tests
+        working-directory: brain-rs
+        run: cargo test --locked

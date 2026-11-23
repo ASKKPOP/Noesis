@@ -5,9 +5,10 @@
 import { describe, it, expect } from 'vitest';
 import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const PROJECT_ROOT = '/Users/desirey/Programming/src/Noesis';
+const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const GRID_CWD = join(PROJECT_ROOT, 'grid');
 const SCRIPT_PATH = join(PROJECT_ROOT, 'scripts', 'check-operator-scope-typing.mjs');
 
@@ -15,7 +16,7 @@ const SCRIPT_PATH = join(PROJECT_ROOT, 'scripts', 'check-operator-scope-typing.m
  * runScript: run the CI gate script.
  * targetDir must be a path RELATIVE to PROJECT_ROOT, or an ABSOLUTE path outside PROJECT_ROOT.
  * The script does: join(ROOT, process.env.CHECK_OPERATOR_SCOPE_TARGET_DIR)
- * where ROOT = /Users/desirey/Programming/src/Noesis.
+ * where ROOT is the repository root.
  * For temp dirs outside PROJECT_ROOT, pass the absolute path directly as the env var;
  * the script will then join(ROOT, absolutePath) which on most systems resolves to absolutePath
  * when the second argument is absolute (Node.js path.join behavior: if any part is absolute,

@@ -56,7 +56,8 @@ describe('GET /api/v1/scene/events', () => {
         expect(body.events.map((e) => e['kind'])).toEqual(['bought_land', 'built']);
         expect(body.events[0]).toMatchObject({ parcel_id: 'genesis:business:0003', zone_id: 'business' });
         expect(body.events[1]).toMatchObject({ detail: 'shop' });
-        const text = JSON.stringify(body);
+        // `at` is a wall-clock ms timestamp; its digits contain "900" about once in a hundred runs.
+        const text = JSON.stringify(body.events.map((e) => ({ ...e, at: undefined })));
         expect(text).not.toContain(HASH);
         expect(text).not.toContain('900');
         expect(body.events.every((e) => e['actor'] === undefined)).toBe(true);
