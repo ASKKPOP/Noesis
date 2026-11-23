@@ -24,7 +24,9 @@ export function registerCivicDueRoutes(app: FastifyInstance, services: GridServi
              FROM civic_dues WHERE grid_name = ? AND civic_did = ? ORDER BY due_tick DESC LIMIT 200`,
             [services.gridName ?? 'genesis', civicDid],
         );
-        return reply.send({ dues: rows, count: rows.length });
+        // D-MONEY-10: the Nous is told where it stands, so it knows when it is denied.
+        const standing = await new CivicDueStore(pool).standing(services.gridName ?? 'genesis', civicDid);
+        return reply.send({ dues: rows, count: rows.length, standing });
     });
 
     app.post<{ Params: { dueId: string }; Body: { method?: string } }>(

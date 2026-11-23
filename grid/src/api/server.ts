@@ -88,6 +88,7 @@ import { registerCivicPresenceRoutes } from './routes/civic-presence.js';
 import { registerCivicInboxRoutes } from './routes/civic-inbox.js';
 import { registerCivicMessageRoute } from './routes/civic-message.js';
 import { registerCivicDueRoutes } from './routes/civic-dues.js';
+import { civicDutyDenies } from './civic-duty-gate.js';
 import { registerCivicEconomyRoutes } from './routes/civic-economy.js';
 import { registerAccountEndowmentRoute } from './routes/account-endowment.js';
 import { registerAccountLinkRoute } from './routes/account-link.js';
@@ -541,6 +542,10 @@ export function buildServerWithHub(
                 && !(await isGridMember(ctx, { gridName: services.gridName, civicDidStore: services.civicDidStore, operatorAllowlist }))) {
                 return reply.code(403).send({ error: 'private_grid_members_only' });
             }
+            // D-MONEY-10: an open route called under a civic identity is still an act of that Nous.
+            if (await civicDutyDenies(services.pool, services.gridName, req.method, routePath, ctx)) {
+                return reply.code(403).send({ error: 'civic_duty_unmet' });
+            }
             return;
         }
         if (policy === 'portal_session_required') {
@@ -590,6 +595,10 @@ export function buildServerWithHub(
         const ctx = await requireDid(req, reply, requireDidServices);
         if (!ctx) return;
         req.didContext = ctx;
+        // D-MONEY-10: a Nous that has not met its civic duty is denied every activity.
+        if (await civicDutyDenies(services.pool, services.gridName, req.method, routePath, ctx)) {
+            return reply.code(403).send({ error: 'civic_duty_unmet' });
+        }
     });
 
     // Phase 39 D-39-08: per-DID rate limit hook.

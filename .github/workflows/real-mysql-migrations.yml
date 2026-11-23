@@ -63,3 +63,13 @@ jobs:
           MYSQL_PASSWORD: root
           MYSQL_DATABASE: noesis_grid
         run: npx tsx scripts/check-civic-settlement-real-mysql.ts
+
+      - name: Civic duty on real MySQL 8.0 (who owes it, one due per period, standing is never a debt)
+        working-directory: grid
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: '3306'
+          MYSQL_USER: root
+          MYSQL_PASSWORD: root
+          MYSQL_DATABASE: noesis_grid
+        run: npx tsx scripts/check-civic-duty-real-mysql.ts
