@@ -52,6 +52,7 @@ Chronological actions in [[log]]. Run `node scripts/lint-research-wiki.mjs` to c
 - [[grid-extension-research-2026-11|Grid Extension — Research (2026-11-19)]] — code survey per stage (enter → notice), channel status, four findings to settle first, outside patterns (founding/joining, contract-before-build, typed catalog, MCP/A2A). Discussion plan: `docs/noesis-grid-extension-plan-2026-11-19.html`.
 - [[grid-visualization-research-2026-11|Grid Visualization — Research (2026-11-20)]] — engines compared (GPU streaming vs browser, costs), what the Grid's map shows vs knows, engagement evidence, V0–V6 order. Page: `docs/noesis-grid-visualization-research-2026-11-20.html`.
 - [[potato-method-audit-2026-11|Potato Method audit (2026-11-23)]] — the agent-trust pyramid (codebase → static analysis → verification → prose → review) measured on Noēsis, a correction log mapping prose rules to checks, what was applied (brain ruff in CI, `check-ratchet`), and the recommended order. Report: `docs/noesis-potato-method-audit-2026-11-23.html`.
+- [[wiring-audit-2026-11|What is wired — source audit (2026-11-23)]] — what runs vs what is in the tree and never called: Brain faculties and cycles, the Polis-session gap, money, run paths, visualization. Basis of the README rewrite; the wiki is not yet corrected.
 
 ## Cross-cutting foundations
 - [[nous-house-research|Nous House — Research (2026-06-11)]] — D-NH spatial axioms.
