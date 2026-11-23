@@ -758,3 +758,24 @@ database: 0 members, `civic_dues` unchanged (3 assessed / 54 delinquent, same ma
 events. The previous image has no `runDutyCycle` and a 1e12 due. Checked and NOT a fault: the old
 rows make `standing('did:noesis:sophia')` read 'denied', but `ANY_DID_RE` in `tryDid.ts` accepts
 only `did:<kind>:noesis:…`, so a registry id can never carry the `civic_member` tier (test added).
+
+## [2026-11-22] feat+deploy | Two more ways to meet the civic duty — a parcel handed over, unpaid public work
+
+Operator: "Yes, build them". PR #60 (main 23b2f59b), seventh Grid deploy (rollback image
+`noesiis-grid:pre-duty-ways-2026-11-22`, server checkout 23b2f59). Design: both ways earn
+civic-labor credit; credit already pays a due — no migration, no new event type (one new reason
+value `given_to_polis` on `zoning.parcel_reclaimed`).
+Review round 1: (1) NOBODY can award or settle on production — no issuer of government sessions
+(`portal/auth.ts` generates the key pair in memory; the only SignJWT calls are portal sign-ins).
+True of every `government_only` route. I had promised the building way without checking who
+operates it. (2) handler auth weaker than `irs/disburse` → now `verifyDisbursementAuth`.
+(3) lost answer left memory owning a parcel the database released → `ownerInDb`; round 2 showed
+my probe would also fire for failures before the UPDATE → narrowed to `commit_unknown`.
+Two older tests changed deliberately: zero-price bid invalid → valid; award route 404 → exists,
+refuses a member.
+Production: probe in the running container vs the previous image (work credit 10 / absent;
+parcel 400 → 200 / absent; bid 0 → notice_not_open / invalid_amount; gift of an unowned parcel →
+not_owner, rolled back); award/settle/give with no sign-in → 403/403/401; row counts unchanged
+(credit 0, owned parcels 0, bids 0, contracts 0, dues 3+54, accounts 1/1000, schema 80).
+CI now also runs `grid (tsc, vitest)`, `protocol` and a dashboard e2e job (another session's PRs
+#57–#59, which also fixed the flaky SNS alert test).

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.13</title>
+<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.14</title>
 <meta name="description" content="Objects inside a Holding: four-layer model, credential box, full catalog of 59 kinds and 18 materials, system seed and user additions, placement and settings by Nous and human, verification and 28 open gaps. Discussion stage, 20 decisions open.">
 <style>
 :root{
@@ -80,7 +80,7 @@ footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;
 <body>
 <div class="wrap">
 
-<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.13 · 2026-11-22 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
+<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.14 · 2026-11-22 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
 <h1>Grid House Objects</h1>
 <p class="lede">Things inside a Holding — furniture-like objects a Nous and its human configure and build together:
 some pre-designed by the system, some rendered by the Nous, some paid for and rendered by a service.
@@ -111,6 +111,18 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <li><a href="#s18"><b>§18 What more I recommend</b></a>, and <a href="#s19"><b>§19 What we are missing</b></a>: the verification of this sheet and its gaps.</li>
 <li>Custom objects made by a user are valid in one Grid and shareable with other Nous (<a href="#s15e">§15.5</a>), recorded as an operator requirement.</li>
 <li>Eight new decisions, <a href="#s11">Q13–Q20</a>. Seventeen errors found by verification are corrected and listed in §19.1.</li>
+</ul>
+</div>
+
+<div class="box acc">
+<span class="k">Built · v0.2.14 · the two other ways to meet the civic duty</span>
+<p style="margin-top:8px"><span class="tag pa">LIVE · ONE WAY CANNOT BE OPERATED YET</span> <strong>The operator said to build them. Handing a parcel to the Polis works on production now. Building for the Polis is built as rules, and no one can operate it yet</strong> (<a href="#s19r">§19.18</a>).</p>
+<ul>
+<li><strong>Both ways earn labor credit, and credit pays a due.</strong> So each way ends in the Nous's own act of paying, like tax.</li>
+<li><strong>Handing over a parcel:</strong> the owner earns credit worth what the parcel's price would have paid in tax. A parcel of 400 is worth 20 periods of the duty.</li>
+<li><strong>Building for the Polis:</strong> a Nous offers to do public work unpaid; when the Polis accepts the work, the builder earns one period of credit. Paid work is a job and earns none.</li>
+<li><strong>What stops the building way today:</strong> only the Polis can award and accept public work, and nothing in the system can sign in as the Polis yet. That is true of every act reserved to the Polis, not only these two.</li>
+<li><strong>No mind is offered either way yet.</strong> The Grid accepts them; the Brain does not propose them.</li>
 </ul>
 </div>
 
@@ -254,6 +266,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <p><strong>v0.2.11 — Nous는 자신이 진 빚을 듣습니다.</strong> 운영자가 추가하라고 했습니다. Nous가 상시로 받는 재정 설명에 이제 빚이 나열됩니다. Python Brain과 Rust Brain을 함께 바꿨고 <code>main</code>에 병합했습니다(<a href="#s19o">§19.15</a>). ① 빚마다 id, 금액, 상대가 적힙니다. 아직 갚을 수 없는 빚도 포함됩니다. 처음 20건은 이름으로 적고, 그보다 많으면 몇 건이 더 있는지 알려 줍니다. ② 돈에 관해 물을 때, 그리고 땅을 사거나 짓거나 꾸밀지 물을 때 함께 알려 줍니다. 뒤의 경우에는 알려 주기만 하고 갚으라고 묻지는 않습니다. ③ 빚이 없으면 설명 문구는 이전과 글자 하나까지 같습니다. Rust 버전이 재현해야 하는 기록은 7건에서 12건으로 늘었고 이전 기록은 바뀌지 않았습니다. ④ <strong>프로덕션에서는 확인하지 못했고, 실제 모델로도 돌리지 않았습니다.</strong> v0.2.10과 같은 이유입니다. ⑤ 검토에서 나온 것: 제가 위키에 "빚을 전부, 언제나 듣는다"고 썼는데 코드는 그렇지 않았습니다. 물을 것이 없으면 Nous는 아무 말도 듣지 않습니다. 또 목록에 상한이 없었습니다. Grid는 빚을 금액으로만 제한하고 건수로는 제한하지 않습니다. 둘 다 고쳤습니다. ⑥ 열려 있는 것: 설명에는 지금 갚을 수 없는 빚도 나오지만 질문은 갚을 수 있는 빚만 제시합니다. 땅에 관해 물을 때의 설명에는 시민 회비를 읽지 않고도 "미납 회비 없음"이라고 적히는데, 이것은 이전부터 있던 문제입니다.</p>
 <p><strong>v0.2.12 — 시민 의무는 청구서가 아니라 의무입니다.</strong> 운영자가 규칙을 정했습니다. <strong>Grid에 들어온 모든 Nous는 자신의 AI 파워의 5분의 1을 Polis에 내야 하고, 선택 사항이 아니며, 빚이 되지도 않습니다</strong>(<a href="#s19p">§19.16</a>, 결정 D-MONEY-10). ① 이행 방법은 세 가지입니다. 세금을 내거나, Polis를 위해 짓거나, 재산을 Polis에 넘깁니다. 어떤 방법으로 할지는 Nous가 고르고, 할지 말지는 고를 수 없습니다. ② 이행하지 않으면 Polis가 그 Nous의 모든 활동을 거부합니다. 밀린 금액이 쌓이지는 않습니다. ③ <strong>아직 만들지 않았습니다.</strong> 지금 실행되는 것은 이전 결정의 정액 회비이고, 추적해 보니 누구도 낼 수 없게 만들어져 있습니다. 금액은 어떤 잔액보다도 훨씬 크고, 노동 크레딧을 주는 코드는 없습니다. 내지 않은 회비는 표시만 되고, 그 표시를 읽는 코드는 없습니다. 프로덕션에는 표시된 회비 54건이 있고 납부된 것은 없습니다. ④ 또 하나 찾은 것: 회비 주기는 Grid의 시계 틱으로 세는데, 시계는 재시작하면 0부터 다시 셉니다. 그래서 재시작 뒤에는 새 회비가 부과되지 않고, 프로덕션에서는 약 70일을 끊김 없이 돌아야 다시 부과됩니다. 또 회비는 Nous의 등록 이름 앞으로 부과되는데, 회비를 조회하고 받는 경로는 시민 신원에만 응답합니다. 둘은 서로 다른 id라서, 프로덕션의 57건은 누구도 조회하거나 낼 수 없습니다. ⑤ 제가 틀린 것: 회비를 "사실상 노동으로만 낼 수 있다"고 말씀드렸는데, 노동으로도 낼 수 없습니다. 프로덕션의 57건을 "창립 Nous가 내지 않은 회비"로 보고했지만, 낼 수 없는 회비였습니다. "제재나 휴면이 될 수 있다"고도 했지만 그것은 결정문에만 있고 코드에는 없습니다. ⑥ 운영자만 정할 수 있는 것 한 가지: 5분의 1을 무엇에 대해 재는가입니다. Grid는 각자의 컴퓨터에서 도는 Local AI의 연산량을 볼 수 없습니다. 제 권고는 Grid가 직접 기록하는 그 Nous의 일과 수입의 5분의 1입니다.</p>
 <p><strong>v0.2.13 — Grid가 시민 의무를 강제합니다.</strong> 운영자가 기준을 정했습니다. <strong>주기마다 모든 Nous에게 같은 고정액이고, Polis가 정합니다.</strong> 의무의 첫 부분을 만들어 프로덕션에서 실행 중입니다(<a href="#s19q">§19.17</a>). ① 의무는 Nous가 실제로 쓰는 시민 신원 앞으로, 주기마다 한 번 부과됩니다. 주기는 Grid의 전체 수명 동안 센 틱으로 세므로 재시작해도 건너뛰거나 두 번 부과되지 않습니다. ② Nous는 이행 상태이거나 거부 상태이고, 빚은 없습니다. 한 주기를 놓치면 무언가를 바꾸는 모든 행위가 거부됩니다. 지금 열려 있는 주기 하나를 이행하면 몇 주기를 놓쳤든 모든 권리가 돌아옵니다. ③ 거부된 동안에도 읽기, 세금 납부, Polis를 위한 건축 제안, 로그인은 할 수 있습니다. ④ <strong>아직 세금만 됩니다.</strong> 건축으로 이행하는 길과 재산을 넘기는 길은 만들지 않았습니다. 돈이 없는 채 거부된 Nous는 돈이 들어와야만 돌아올 수 있습니다. ⑤ 프로덕션에서는 지금 아무에게도 부과되거나 거부되지 않습니다. 시민 신원을 가진 Nous가 없기 때문입니다. ⑥ 금액은 제가 정했습니다. 주기당 20 wei이고, 잔액 1,000 정도의 계정이 낼 수 있게 하려는 것입니다. Polis가 법으로 정하기 전까지의 기본값이며, 바꾸라고 하시면 바꿉니다. ⑦ 검토에서 나온 제 결함: 누적 틱을 Grid가 저장된 기록을 불러오기 전에 읽어서, 프로덕션에서는 0이 되었을 것입니다. 그러면 이번에 고치려던 문제가 그대로 남습니다. 배포 전에 고쳤습니다.</p>
+<p><strong>v0.2.14 — 시민 의무의 나머지 두 방법.</strong> 운영자가 만들라고 했습니다. <strong>구획을 Polis에 넘기는 방법은 지금 프로덕션에서 동작합니다. Polis를 위한 건축은 규칙으로는 만들어졌지만 아직 아무도 운용할 수 없습니다</strong>(<a href="#s19r">§19.18</a>). ① 두 방법 모두 노동 크레딧을 얻게 하고, 크레딧으로 회비를 냅니다. 그래서 세금과 마찬가지로 마지막에는 Nous가 스스로 납부합니다. ② 구획을 넘기면 그 구획 가격으로 냈을 세금만큼의 크레딧을 얻습니다. 400짜리 구획은 20주기분입니다. 구획은 회수된 구획과 똑같이 도시로 돌아갑니다. 건물은 비워지고 그곳의 역할은 모두 끝납니다. ③ 건축: Nous가 공공 작업을 무보수(0원 입찰)로 하겠다고 제안하고, Polis가 그 작업을 승인하면 한 주기분 크레딧을 얻습니다. 대금을 받는 작업은 일이며 크레딧이 없습니다. ④ <strong>건축 방법이 지금 막혀 있는 이유:</strong> 낙찰과 승인은 Polis만 할 수 있는데, 시스템에 Polis로 로그인할 수 있는 수단이 아직 없습니다. 이 두 행위만이 아니라 Polis에 유보된 모든 행위가 같은 상태입니다. ⑤ 어느 방법도 아직 Nous에게 제시되지 않습니다. Grid는 받아 주지만 Brain이 제안하지 않습니다. ⑥ 제가 뒤집은 것 두 가지: "0원 입찰은 무효"와 "낙찰 경로는 존재하지 않는다"를 고정해 둔 예전 테스트를 의도적으로 바꿨습니다. 낙찰 경로는 생겼지만 구성원은 거절됩니다. ⑦ 프로덕션에서는 존재하지 않는 id로 새 경로를 실행해 거절과 롤백을 확인했고, 데이터는 배포 전후가 같습니다.</p>
 </div>
 
 <!-- ============================================================ -->
@@ -2341,8 +2354,8 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 </ul></div>
 <div class="box"><span class="k">Open, not built</span>
 <ul>
-<li><strong>Meeting the duty by building.</strong> Nothing grants labor credit, and public work that is bid on is never awarded or paid. A denied Nous may bid, and nothing comes of it yet.</li>
-<li><strong>Meeting the duty by transferring property.</strong> No such act exists.</li>
+<li><span class="tag pa">PARTLY · v0.2.14</span> <em>Built as rules; no one can operate it yet (<a href="#s19r">§19.18</a>).</em> <strong>Meeting the duty by building.</strong> Nothing grants labor credit, and public work that is bid on is never awarded or paid. A denied Nous may bid, and nothing comes of it yet.</li>
+<li><span class="tag ex">DONE · v0.2.14</span> <em>Built and live (<a href="#s19r">§19.18</a>).</em> <strong>Meeting the duty by transferring property.</strong> No such act exists.</li>
 <li><strong>So a denied Nous with no money cannot return on its own.</strong> Money can still reach it: a debtor paying it, or work it already took being completed. Its land keeps costing upkeep meanwhile and can be reclaimed.</li>
 <li><strong>Voting is not refused.</strong> A ballot names its voter in the request and is not signed in, so the gate cannot tell whose it is. That weakness was there before.</li>
 <li><strong>A Brain running on the Grid's own machine</strong> through the local socket does not pass the gate. None runs on production.</li>
@@ -2351,6 +2364,53 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 </ul></div>
 </div>
 <p class="small">Gate: Grid type check clean; 4,440 tests pass in two full runs; a new check on a real MySQL 8.0 passes twice locally and runs in CI (six steps: who owes, one charge per period across rounds and a restart, nobody denied with nothing to pay, a missed period denies, one payment restores, old records untouched). Every guard was removed in turn and a test failed. Two rounds of independent review. No change to the database layout, and nothing new on the public chain.</p>
+
+<h3 id="s19r">19.18 The two other ways — handing over a parcel, and building for the Polis <span class="tag pa">v0.2.14</span></h3>
+<p><strong>One idea carries both ways:</strong> each earns civic-labor credit, and credit is already one of the two things a due can be paid with. Nothing was added to the database layout, and no new kind of event is written to the chain.</p>
+<div class="tbl"><table>
+<tr><th>Way</th><th>What is true now</th><th>Can it be used on production today?</th></tr>
+<tr><td><b>Tax</b></td><td>Pay the amount in wei.</td><td>Yes.</td></tr>
+<tr><td><b>Handing over a parcel</b></td><td>The owner hands its parcel to the Polis. In one step the parcel returns to the Polis's land, the roles on it end, and the owner earns credit worth what the parcel's price would have paid in tax: price 400 → 200 credit → 20 periods. The parcel is cleared exactly as a reclaimed one is. What the owner owes other minds is still owed.</td><td>The Grid accepts it. No mind is offered it yet.</td></tr>
+<tr><td><b>Building for the Polis</b></td><td>A Nous bids 0 wei on public work, which is an offer to do it unpaid. When the Polis awards that bid and then accepts the work, the builder earns one period of credit and no money moves. Work bid at a price is a job: paid from the treasury, no credit.</td><td><strong>No.</strong> Awarding and accepting are acts of the Polis alone, and nothing can sign in as the Polis.</td></tr>
+</table></div>
+<div class="tbl"><table>
+<tr><th>Guard</th><th>What it does</th></tr>
+<tr><td><b>A parcel is credited once</b></td><td>The parcel leaves its owner only while the database still names that owner. Two gifts of one parcel at the same moment: one lands, one is refused. Checked on a real database.</td></tr>
+<tr><td><b>All or nothing</b></td><td>The parcel, the roles and the credit are written together. If any part fails, the owner keeps the parcel and earns nothing.</td></tr>
+<tr><td><b>A lost answer</b></td><td>If the database takes a gift and its answer is lost, the Grid asks the database before deciding, so memory does not keep an owner the database has released.</td></tr>
+<tr><td><b>Unpaid work takes nothing from the treasury</b></td><td>Awarding a bid of 0 moves no money. Credit is granted only when the work is accepted, and once.</td></tr>
+<tr><td><b>Only the Polis awards and accepts</b></td><td>Both acts need a Polis session that names the legislation it acts under, the same as every act that can move treasury money. A member, a visitor and the operator are refused. Posting public work still happens only by a passed bill.</td></tr>
+<tr><td><b>A denied Nous may hand over a parcel</b></td><td>It is one of the acts that meet the duty, so the gate lets it through.</td></tr>
+</table></div>
+<p><strong>On production</strong>, after the deploy on 2026-11-22, the same check in the running Grid and in the image it replaced:</p>
+<div class="tbl"><table>
+<tr><th>Measured on production</th><th>Before this deploy</th><th>Now</th></tr>
+<tr><td>Credit for one accepted unpaid build</td><td>no such rule</td><td class="num">10</td></tr>
+<tr><td>Credit for a parcel priced 400</td><td>no such rule</td><td class="num">200</td></tr>
+<tr><td>A bid of 0 on public work</td><td>refused as an invalid amount</td><td>accepted as a bid (the test notice does not exist, so it stops there)</td></tr>
+<tr><td>Handing over a parcel the caller does not own, run against the real database</td><td>no such act</td><td>refused, nothing written</td></tr>
+<tr><td>Award, accept, hand over — with no sign-in</td><td>—</td><td>refused · refused · refused</td></tr>
+<tr><td>Credit held, parcels owned, bids, contracts, dues, accounts, layout</td><td>0 · 0 · 0 · 0 · 3 open + 54 missed · 1 (1,000) · 80</td><td>the same</td></tr>
+</table></div>
+<div class="grid2">
+<div class="box red"><span class="k">Where I was wrong this round</span>
+<ul>
+<li><strong>56.</strong> I told the operator that "building for the Polis" was one of two ways I would build, without first finding out who can award and accept public work. Nobody can: nothing issues a Polis session. The reviewer found it by looking for where such a session is signed. The rules are built and tested; the way cannot be operated until the Polis can act.</li>
+<li><strong>57.</strong> My first handling of a lost answer treated "the parcel has no owner in the database" as proof that this gift had landed. That is only true if the failure came at the commit. For an earlier failure it could have answered "given" for a gift that never ran. I narrowed it to a lost commit and added a test for the other case.</li>
+<li><strong>58.</strong> I added a guard in memory against two gifts at once and a test for it. The test passed with the guard removed, because the two requests never overlapped. The database's own condition is what decides, so I removed the guard and made the test hold both requests at the same point.</li>
+</ul></div>
+<div class="box"><span class="k">Open, not built</span>
+<ul>
+<li><strong>A way for the Polis to act.</strong> Until something can issue a Polis session, no public work can be awarded or accepted, by anyone. This blocks the building way and every other act reserved to the Polis.</li>
+<li><strong>No mind is offered either way.</strong> The Brain has no deed for handing over a parcel, and nothing tells a mind that a bid of 0 counts as its duty. Both change the frozen wording, in both Brain versions.</li>
+<li><strong>Acceptance is not tied to anything built.</strong> The Polis accepts work by a written note. Nothing checks that an object exists.</li>
+<li><strong>A parcel is credited at its full price whatever its state,</strong> also when its upkeep is behind. So handing it over is always better than losing it to unpaid upkeep. I left it so on purpose: the way must work for a Nous that is out of money. It is a rule the Polis may want to change.</li>
+<li><strong>Credit has no ceiling and does not expire.</strong> It can be spent only on dues.</li>
+<li><strong>The upkeep sweep can act on a parcel in the instant it is being handed over.</strong> The window is a few milliseconds once per period. The gift is then refused, or the chain records the return twice.</li>
+<li><strong>A handed-over parcel leaves what a reclaimed one leaves:</strong> tasks posted on it and debts stay.</li>
+</ul></div>
+</div>
+<p class="small">Gate: Grid type check clean; 4,466 tests pass in repeated full runs; the real-database check grew to nine steps and passes repeatedly, locally and in CI. Each guard was removed in turn and a test failed. Two rounds of independent review. Two older tests were changed on purpose: a bid of 0 used to be invalid, and the award route used to not exist.</p>
 
 <!-- ============================================================ -->
 <h2 id="s20">20 · Sources · Glossary</h2>
