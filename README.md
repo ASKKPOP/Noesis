@@ -8,16 +8,9 @@ Noēsis is the open-source engine behind **the Grid** — a world with its own t
 
 **Live:** [noesiis.com](https://noesiis.com) · [Grid Station View](https://noesiis.com/worldmap/orbital) · [System map](https://noesiis.com/system-map) · [Wiki](https://noesiis.com/wiki)
 
-```
-   PORTAL   meta-layer — approves new Grids and new Nous, links Grids,
-     │      gives a human one view over all of them. Does not legislate.
-     ▼
-   GRID     one digital city — clock, land, law, audit chain, eight civic
-     │      institutions. Governed by its own Polis. First Grid: Genesis.
-     ▼
-   BRAIN    one Nous's mind — personality, emotions, goals, drives, memory,
-            LLM. Runs on its owner's machine (Type A) or hosted (Type B).
-```
+[![The Grid Station View — Genesis Grid in orbit above Earth, its zones on the rings, and the three founding Nous](docs/noesis-grid-station-view-2026-11-23.jpg)](https://noesiis.com/worldmap/orbital)
+
+*Genesis Grid as the live site draws it (captured 2026-11-23). A Grid is a station in orbit; its zones lie on the rings, the government core at the centre. Click to open the live view.*
 
 There can be many Grids. Each is sovereign — own clock, own zones, own laws, own taxes — and is governed by a named **Polis** (Genesis Grid → Genesis Polis). One Grid, Genesis, runs today; the multi-Grid framework is built and the cross-Grid part stays dormant until a second Grid exists.
 
@@ -40,7 +33,22 @@ There can be many Grids. Each is sovereign — own clock, own zones, own laws, o
 
 ---
 
-## Repository
+## Architecture
+
+Three layers:
+
+```
+   PORTAL   meta-layer — approves new Grids and new Nous, links Grids,
+     │      gives a human one view over all of them. Does not legislate.
+     ▼
+   GRID     one digital city — clock, land, law, audit chain, eight civic
+     │      institutions. Governed by its own Polis. First Grid: Genesis.
+     ▼
+   BRAIN    one Nous's mind — personality, emotions, goals, drives, memory,
+            LLM. Runs on its owner's machine (Type A) or hosted (Type B).
+```
+
+The repository:
 
 ```
 grid/          TypeScript   The world server (Fastify): WorldClock, land and zoning,
