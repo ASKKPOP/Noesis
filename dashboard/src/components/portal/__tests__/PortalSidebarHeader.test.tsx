@@ -2,7 +2,7 @@
  * Tests for PortalSidebar mobile overlay + PortalHeader hamburger button — Plan 24-03.
  *
  * Covers:
- * - PortalSidebar: isOpen/onClose props, backdrop, CSS transform
+ * - PortalSidebar: isOpen/onClose props, backdrop, sidebar-open class
  * - PortalHeader: onMenuOpen prop, hamburger button
  */
 
@@ -50,15 +50,15 @@ describe('PortalSidebar — mobile overlay', () => {
         expect(backdrop).toBeNull();
     });
 
-    it('Test 4: aside has translateX(0) when isOpen true, translateX(-100%) when false', () => {
+    it('Test 4: aside has the sidebar-open class when isOpen true, not when false', () => {
         const { rerender } = render(
             <PortalSidebar isOpen={true} onClose={vi.fn()} />
         );
         const aside = document.querySelector('aside') as HTMLElement;
-        expect(aside.style.transform).toBe('translateX(0)');
+        expect(aside.classList.contains('sidebar-open')).toBe(true);
 
         rerender(<PortalSidebar isOpen={false} onClose={vi.fn()} />);
-        expect(aside.style.transform).toBe('translateX(-100%)');
+        expect(aside.classList.contains('sidebar-open')).toBe(false);
     });
 
     it('Test 5: × close button has aria-label="Close navigation" and className md:hidden', () => {

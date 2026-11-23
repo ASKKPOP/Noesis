@@ -37,6 +37,7 @@ let currentPathname = '/portal';
 
 vi.mock('next/navigation', () => ({
     usePathname: () => currentPathname,
+    useRouter: () => ({ replace: vi.fn() }),
 }));
 
 // ── Tests ────────────────────────────────────────────────────────────────────

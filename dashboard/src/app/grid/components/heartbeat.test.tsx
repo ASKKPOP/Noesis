@@ -77,6 +77,7 @@ describe('Heartbeat', () => {
         const status = screen.getByTestId('heartbeat-status');
         expect(status.getAttribute('data-status')).toBe('stale');
         const elapsed = screen.getByTestId('heartbeat-elapsed');
-        expect(elapsed.className).toContain('text-red-400');
+        expect(elapsed.className).toContain('animate-pulse');
+        expect(elapsed.style.color).toBe('rgb(220, 38, 38)');
     });
 });

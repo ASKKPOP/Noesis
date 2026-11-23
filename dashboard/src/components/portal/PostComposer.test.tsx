@@ -6,7 +6,6 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/react';
-import { PostComposer } from './PostComposer';
 
 function jsonResp(body: unknown, status = 200): Response {
     return {
@@ -25,6 +24,8 @@ describe('PostComposer', () => {
 
     it('posts to {GRID_ORIGIN}/api/v1/portal/community/posts, not the dashboard\'s own origin', async () => {
         vi.stubEnv('NEXT_PUBLIC_GRID_ORIGIN', 'http://grid.test');
+        vi.resetModules();
+        const { PostComposer } = await import('./PostComposer');
         const fetchMock = vi.fn(async () => jsonResp({ id: 1 }, 200));
         vi.stubGlobal('fetch', fetchMock);
         const onPosted = vi.fn();

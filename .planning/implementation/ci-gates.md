@@ -45,25 +45,14 @@ flowchart TD
 |-----|------|------|
 | `protocol` | 22 | `tsc` build + tests. Node 22 because libp2p's dependencies call `Promise.withResolvers`, which Node 20 lacks |
 | `grid` | 20 | protocol build, grid `tsc` build, full `vitest run`. Node 20 is the production image (`docker/Dockerfile.grid`) |
-| `web` | 22 | dashboard unit tests (minus the quarantine below), steward type-check + tests |
+| `web` | 22 | dashboard unit tests, steward type-check + tests |
 | `dashboard-e2e` | 22 | Playwright on Chromium, pinned to `ubuntu-24.04` (Playwright 1.50 has no Chromium for 26.04) |
 | `brain` | — | `uv sync --frozen` + `pytest` (includes the parity fixtures, `test/test_parity_fixtures.py`) |
 | `brain-rs` | — | `cargo test --locked` (includes `tests/parity.rs`) |
 
-**Quarantine (dashboard).** Seven test files, 27 failing tests, were already red on `main` when the workflow was added. They are excluded by name in the `web` job so the other 104 files gate every PR. Fix a file, then delete its `--exclude` line:
+**Quarantine.** One Playwright test is skipped with `--grep-invert` in the `dashboard-e2e` job: `replay.spec.ts` — "tier auto-downgrade on /grid/replay route exit". The test is right and the product is wrong: `dashboard/src/app/grid/replay/page.tsx` passes `operatorTier="H1"` as a constant, so `/grid/replay` never leaves the tier gate at any tier (since Phase 13, 2026-04-27). Fix the page, then delete the `--grep-invert`.
 
-- `src/app/portal/portal-dashboard.test.ts` (12)
-- `src/components/portal/__tests__/PortalShell.test.tsx` (5)
-- `src/components/portal/PortalShell.test.tsx` (4)
-- `src/app/grid/components/firehose-row.test.tsx` (3)
-- `src/components/portal/__tests__/PortalSidebarHeader.test.tsx` (1)
-- `src/components/portal/PostComposer.test.tsx` (1)
-- `src/app/grid/components/heartbeat.test.tsx` (1)
-
-**Quarantine (dashboard e2e).** Two of the six Playwright tests were already red on `main` and fail on retry too. They are skipped by title with `--grep-invert` in the `dashboard-e2e` job:
-
-- `agency.spec.ts` — "SC#5: Delete Nous button is visible, disabled, with Phase 8 tooltip"
-- `replay.spec.ts` — "tier auto-downgrade on /grid/replay route exit"
+The 27 dashboard unit tests and the SC#5 Playwright test that were quarantined when the workflow was added were fixed on 2026-11-22 (all were tests left behind by deliberate UI changes; `portal-dashboard.test.ts` was deleted because the stat-card dashboard it read was replaced by the Phase 36 landing page).
 
 Not in CI: ESLint (no config file exists yet) and the nightly rig bench (scheduled separately in `nightly-rig-bench.yml`).
 

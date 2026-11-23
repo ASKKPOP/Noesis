@@ -17,6 +17,7 @@ let currentPathname = '/portal';
 
 vi.mock('next/navigation', () => ({
     usePathname: () => currentPathname,
+    useRouter: () => ({ replace: vi.fn() }),
 }));
 
 // Capture props passed to PortalSidebar so we can inspect isOpen

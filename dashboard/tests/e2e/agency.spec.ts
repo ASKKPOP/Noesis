@@ -142,8 +142,8 @@ test.describe('Phase 6 — Elevation race (SC#4 live)', () => {
     });
 });
 
-test.describe('Phase 6 — H5 disabled affordance (SC#5)', () => {
-    test('SC#5: Delete Nous button is visible, disabled, with Phase 8 tooltip', async ({ page }: { page: Page }) => {
+test.describe('Phase 8 — H5 delete affordance (SC#5)', () => {
+    test('SC#5: Delete Nous button is visible and enabled for an active Nous', async ({ page }: { page: Page }) => {
         await page.goto('/grid');
 
         // Select a Nous to open the Inspector drawer. The mock fixture
@@ -159,9 +159,7 @@ test.describe('Phase 6 — H5 disabled affordance (SC#5)', () => {
 
         const btn = page.locator('[data-testid="inspector-h5-delete"]');
         await expect(btn).toBeVisible({ timeout: 3_000 });
-        await expect(btn).toBeDisabled();
-        await expect(btn).toHaveAttribute('title', 'Requires Phase 8');
-        await expect(btn).toHaveAttribute('aria-disabled', 'true');
+        await expect(btn).toBeEnabled();
         await expect(btn).toContainText(/delete nous/i);
     });
 });
