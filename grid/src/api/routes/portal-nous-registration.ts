@@ -35,13 +35,11 @@ import { NousSponsorStore } from '../../economy/nous-sponsor-store.js';
 import { NousRegistrationStore, type NousRegListRow, type NousRegStatus } from '../../portal-workflows/nous-registration-store.js';
 import { NOUS_REJECT_REASONS, type NousRejectReason } from '../../portal-workflows/nous-registration-types.js';
 import { reviewNousRegistration } from '../../civic-registry/nous-charter-review.js';
+import { NOUS_OR_SYSTEM_DID_WITH_COLONS_RE as NOUS_DID_RE, HUMAN_DID_RE } from '../../util/id-patterns.js';
 
-/** Same existence-DID shape the issuance route accepts (registry.ts EXISTENCE_DID_RE). */
-const NOUS_DID_RE = /^did:noesis:(nous:[a-z0-9_:\-]+|sophia|hermes|themis)$/i;
 const FOUNDING_NOUS_RE = /^did:noesis:(sophia|hermes|themis)$/i;
 /** A 32-byte Ed25519 public key, base64url without padding (JWK `x`). */
 const ED25519_X_RE = /^[A-Za-z0-9_-]{43}$/;
-const HUMAN_DID_RE = /^did:noesis:human:[a-z0-9_:\-]+$/i;
 const VALID_STATUS: readonly NousRegStatus[] = ['requested', 'polis_pending', 'approved', 'rejected'];
 
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');

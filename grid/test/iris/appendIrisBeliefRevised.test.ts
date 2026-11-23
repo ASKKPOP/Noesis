@@ -103,11 +103,11 @@ describe('appendIrisBeliefRevised — Phase 17 sole producer', () => {
         expect([...IRIS_BELIEF_REVISED_KEYS]).toEqual(sorted);
     });
 
-    it('HEX64_RE matches 64-char lowercase hex', () => {
+    it('HEX64_RE matches 64-char hex in either case', () => {
         expect(HEX64_RE.test('a'.repeat(64))).toBe(true);
         expect(HEX64_RE.test('0'.repeat(64))).toBe(true);
         expect(HEX64_RE.test('a'.repeat(63))).toBe(false);
-        expect(HEX64_RE.test('A'.repeat(64))).toBe(false);  // uppercase fails
+        expect(HEX64_RE.test('A'.repeat(64))).toBe(true);
         expect(HEX64_RE.test('g'.repeat(64))).toBe(false);  // non-hex fails
     });
 });

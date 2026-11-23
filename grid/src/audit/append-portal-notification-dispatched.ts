@@ -26,17 +26,7 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
-
-/**
- * Portal-layer DID regex: accepts both did:noesis:* (v2.x DIDs) and did:civic:*
- * (v3.0 Civic-DIDs per D-V3-33). Phase 37 will add a canonical CIVIC_DID_RE export;
- * for v3.0 Phase 36, operator_did in Portal notification context uses this local
- * broader regex that covers both DID namespaces.
- *
- * NOTE: DID_RE from append-human-joined.ts only covers did:noesis:* and is NOT
- * imported here because operator_did in Portal context uses Civic-DIDs.
- */
-const PORTAL_DID_RE = /^did:(?:noesis|civic):[a-z0-9_:\-]+$/i;
+import { NOESIS_OR_CIVIC_KIND_DID_RE as PORTAL_DID_RE } from '../util/id-patterns.js';
 
 /** Closed 3-key payload for portal.notification_dispatched. */
 export interface PortalNotificationDispatchedPayload {

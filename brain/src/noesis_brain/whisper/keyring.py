@@ -24,7 +24,6 @@ SECURITY:
 """
 import hashlib
 from nacl.bindings import crypto_box, crypto_box_open, crypto_box_seed_keypair  # type: ignore[import]
-from nacl.exceptions import CryptoError  # type: ignore[import]
 from nacl.signing import SigningKey  # type: ignore[import]
 
 __all__ = ["Keyring", "derive_existence_signing_key"]

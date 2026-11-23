@@ -14,9 +14,8 @@ import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { ConversationStore } from '../../economy/conversation-store.js';
-
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
-export const HUMAN_DID_RE = /^did:civic:noesis:human:/i;
+import { CIVIC_DID_RE, CIVIC_HUMAN_DID_PREFIX_RE as HUMAN_DID_RE } from '../../util/id-patterns.js';
+export { HUMAN_DID_RE };
 
 interface ResolvedParty {
     humanDid: string;

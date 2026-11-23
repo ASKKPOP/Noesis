@@ -1,6 +1,8 @@
 """Phase 43 — fork archive importer (D-43-05, T-43-slip defense).
 
 Extracts a .tar.gz fork package, verifies manifest.export_hash, returns the manifest dict.
+The Grid's archive is the Grid half (credential, audit slice, manifest); the owner adds
+their Brain's memory/ folder to it on their own machine before importing.
 Rejects path-traversal attempts (member names that resolve outside data_dir).
 """
 from __future__ import annotations
@@ -54,10 +56,14 @@ def verify_and_unpack(import_archive: Path, data_dir: Path) -> dict:
     # ── Recompute export_hash ──
     # MUST match Grid-side algorithm in fork-archive-builder.ts:
     #   sha256 over sorted (path, content) tuples, EXCLUDING manifest.json itself.
+    # The hash covers the Grid half only. memory/ is the owner's own Brain data,
+    # added on the owner's machine, so the Grid never hashed it.
     h = hashlib.sha256()
     files_to_hash = sorted(
         p for p in data_dir.rglob("*")
-        if p.is_file() and p.relative_to(data_dir).as_posix() != "manifest.json"
+        if p.is_file()
+        and p.relative_to(data_dir).as_posix() != "manifest.json"
+        and not p.relative_to(data_dir).as_posix().startswith("memory/")
     )
     for f in files_to_hash:
         rel = f.relative_to(data_dir).as_posix()  # forward-slash on all platforms

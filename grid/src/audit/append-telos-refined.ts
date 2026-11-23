@@ -19,15 +19,11 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
-
-/** 64-hex SHA-256 digest — matches grid/src/api/operator/_validation.ts HEX64_RE. */
-export const HEX64_RE = /^[0-9a-f]{64}$/;
+import { HEX64_RE, NOESIS_DID_RE as DID_RE } from '../util/id-patterns.js';
+export { HEX64_RE, DID_RE };
 
 /** 16-hex dialogue_id — truncated SHA-256 (first 16 chars). */
 export const DIALOGUE_ID_RE = /^[0-9a-f]{16}$/;
-
-/** DID regex — locked at 3 entry points project-wide; Phase 7 is the 4th. */
-export const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
 
 /** Closed 4-key payload tuple for telos.refined (D-20). */
 export interface TelosRefinedPayload {

@@ -779,3 +779,55 @@ not_owner, rolled back); award/settle/give with no sign-in → 403/403/401; row 
 (credit 0, owned parcels 0, bids 0, contracts 0, dues 3+54, accounts 1/1000, schema 80).
 CI now also runs `grid (tsc, vitest)`, `protocol` and a dashboard e2e job (another session's PRs
 #57–#59, which also fixed the flaky SNS alert test).
+
+## [2026-11-23] ingest+apply | Potato Method audit — trust the environment, not the diff
+Source: `potato-agent-guide.md` (Lauren Tan, "All Code Is Slop (Except Mine)"). Measured every pyramid
+layer on 416faea5 → [[potato-method-audit-2026-11]]. Findings: 193 inline DID/HEX64/address regexes
+(12+ DID shapes; HEX64 /i in 77, strict in 28); no ESLint config; brain ruff 37 / mypy 212, neither in
+CI; 3 Playwright specs for 71 routes; 27% of grid/src is comments; `fork-nous.ts` placeholder
+existence-DID in production (`getExistenceDid` never wired). Applied: brain ruff clean + CI step
+(latent `json` NameError in skill sweep fixed; 5 duplicated BrainHandler methods removed, AST-identical);
+`scripts/check-ratchet.mjs` (5 count-only-down rules) + `grid/src/util/id-patterns.ts`.
+Brain 1542 passed; grid civic 347 passed; tsc clean.
+
+## [2026-11-23] apply | D-ID-01 — HEX64 in either case; id patterns in one file
+Operator: "Accept both cases". Codemod moved ~200 inline DID/HEX64/address regexes in 162 grid files to
+named imports from `grid/src/util/id-patterns.ts` (`HEX64_RE` is now `/i`). DID shapes were kept exactly;
+two `[a-z0-9_:\\-]` copies that let a backslash through were tightened. 8 orphaned regex doc-comments
+removed. Ratchet inline-id-regex 201 → 4. 7 tests that pinned lowercase-only were flipped. Grid 4519 pass,
+tsc clean, all gates pass. Decision log: `wiki/1-design/decisions.md` D-ID-01. See [[potato-method-audit-2026-11]].
+
+## [2026-11-23] fix | Fork archive identity from the civic registry; correction
+Operator: "Yes, wire it". `fork-nous.ts` existence-DID + civic credential now come from `civicDidStore.get`
+(404 unknown_nous / 503 civic_registry_unavailable); dead `getExistenceDid` hook removed; 3 tests; grid 4522.
+CORRECTION to [[potato-method-audit-2026-11]]: no production manifest carried the placeholder. The
+route's `checkOperatorOwnsNous` is unwired in production too, so every fork is refused 403. Right-to-fork is
+therefore not usable in production today; wiki `civic-architecture.md` now says so.
+
+## [2026-11-23] finding | Right-to-fork cannot be "switched on" — three blockers
+Operator asked to enable forks in production. Traced, no code changed:
+(1) the route is `operator_only` (GRID_OPERATOR_DIDS staff, tier ≥4), but a Nous's owner is a Portal human
+who claimed the Brain (`brain_tokens.operator_did`, existence-DID keyed), so owners can never pass the gate;
+(2) the archive reads Brain memory from the Grid host's `BRAIN_DATA_DIR`, but a Type A Brain's memory lives
+on the owner's machine (D-V3-16) — prod Grid has no such dir → 409;
+(3) PRIVACY BUG (latent): `buildForkArchive` packs EVERY `*.db` in `BRAIN_DATA_DIR`, not the requested Nous's,
+so on any host where several Brains share a data dir one fork would export all of them.
+Recommended shape: owner-gated Grid half (credential + audit slice + manifest), memory added by the owner's
+local app. See [[potato-method-audit-2026-11]].
+
+## [2026-11-23] build | D-FORK-01 — owner-gated Grid half of a fork
+Operator: "Owner-gated Grid half". Route policy `operator_only` → `portal_session_required`; handler checks the
+signed-in human against `brain_tokens.operator_did` for the existence-DID the civic registry binds to the
+Civic-DID (`ownsBrain`, new in operator-brain-store). Builder no longer reads `BRAIN_DATA_DIR` (latent
+every-*.db leak gone) and drops the stub `civic/memberships.json` + `civic/treasury.json` (`bios_balance:0`);
+manifest 2.0 without `memory_files`. `operator.nous_forked` payload unchanged (allowlist untouched); actor is the
+owner's human DID. Brain standalone importer hashes the Grid half only, so the owner can add `memory/`.
+Dead `checkOperatorOwnsNous` seam removed. Grid 4522, Brain 1543, all gates. Not built: an owner-facing fork button;
+the Steward Console Fork button now gets 403 for staff who don't own the Nous. SQL checked on mock Pool only.
+
+## [2026-11-23] docs | README brought up to the current system
+
+`README.md` was last edited 2026-07-02 (396 commits behind). Rewritten from the wiki, ROADMAP and code: three-layer
+diagram, repository table (adds brain-rs, viz-rs, dashboard, steward, apps/nous-mac, contracts), REST + WebSocket
+wire, `scripts/quickstart.sh`, one milestone table in place of the per-phase history, a "not done yet" list.
+No research page changed. Found: no `LICENSE` file although README and package.json say MIT.

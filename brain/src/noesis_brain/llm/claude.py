@@ -4,9 +4,13 @@ from __future__ import annotations
 
 import os
 import time
+from typing import TYPE_CHECKING
 
 from noesis_brain.llm.base import LLMAdapter, LLMError
 from noesis_brain.llm.types import GenerateOptions, LLMResponse, ToolCall, ToolSpec
+
+if TYPE_CHECKING:
+    import anthropic
 
 _FIXTURE_MODE_VAR = "NOESIS_FIXTURE_MODE"
 

@@ -28,9 +28,8 @@ import math
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from noesis_brain.iris.config import IRIS_BELIEFS_CAP
 from noesis_brain.iris.store import IrisStore
-from noesis_brain.iris.types import Belief, DIMENSION_VALUES
+from noesis_brain.iris.types import Belief
 
 # ---------------------------------------------------------------------------
 # Constants

@@ -66,3 +66,18 @@ export async function setOwner(
     );
     return result.affectedRows === 1;
 }
+
+export async function ownsBrain(
+    pool: Pool,
+    gridName: string,
+    operatorDid: string,
+    brainDid: string,
+): Promise<boolean> {
+    const [rows] = await pool.query<RowDataPacket[]>(
+        `SELECT 1 FROM brain_tokens
+         WHERE grid_name = ? AND brain_did = ? AND operator_did = ?
+         LIMIT 1`,
+        [gridName, brainDid, operatorDid],
+    );
+    return rows.length > 0;
+}

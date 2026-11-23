@@ -22,8 +22,9 @@
  * Privacy: no body_text, no voter choices appear in this module.
  * Wall-clock ban: no Date.now, no Math.random.
  */
+import { NOESIS_DID_RE as DID_REGEX } from '../../util/id-patterns.js';
+export { DID_REGEX };
 
-export const DID_REGEX = /^did:noesis:[a-z0-9_\-]+$/i;
 export const COMMIT_HASH_RE = /^[0-9a-f]{64}$/i;
 export const NONCE_RE = /^[0-9a-f]{32}$/;
 

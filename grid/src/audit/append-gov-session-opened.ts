@@ -11,8 +11,8 @@ import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
 import { type GovSessionOpenedPayload, GOV_SESSION_OPENED_KEYS } from '../gov/types.js';
+import { HEX64_RE } from '../util/id-patterns.js';
 
-const HEX64_RE = /^[0-9a-f]{64}$/i;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function appendGovSessionOpened(

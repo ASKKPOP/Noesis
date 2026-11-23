@@ -8,8 +8,7 @@ import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
 import { type NousRegistrationRequestedPayload, NOUS_REGISTRATION_REQUESTED_KEYS } from '../portal-workflows/nous-registration-types.js';
-
-const HEX64_RE = /^[0-9a-f]{64}$/i;
+import { HEX64_RE } from '../util/id-patterns.js';
 
 export function appendNousRegistrationRequested(audit: AuditChain, payload: NousRegistrationRequestedPayload): AuditEntry {
     if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {

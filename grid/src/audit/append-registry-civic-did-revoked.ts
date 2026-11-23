@@ -24,11 +24,7 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
-
-// Phase 37 introduces did:civic:* — DID_RE only covers did:noesis:*.
-// Local regex constants required (do NOT import DID_RE).
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
-const HEX64_RE = /^[0-9a-f]{64}$/i;
+import { CIVIC_DID_RE, HEX64_RE } from '../util/id-patterns.js';
 
 /** Closed 4-key payload for registry.civic_did_revoked. */
 export interface RegistryCivicDidRevokedPayload {

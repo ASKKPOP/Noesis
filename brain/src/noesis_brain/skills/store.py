@@ -15,7 +15,6 @@ import hashlib
 import math
 import sqlite3
 from datetime import datetime, timezone
-from pathlib import Path
 
 from noesis_brain.skills.types import Skill
 
@@ -104,8 +103,6 @@ class SkillStore:
         if not query.strip():
             return []
 
-        query_words = set(query.lower().split())
-
         # Stage 1 — trigger keyword match (exact)
         trigger_hits: list[Skill] = []
         all_skills = self._all_skills()
@@ -146,8 +143,6 @@ class SkillStore:
         for i, skill in enumerate(fts_hits):
             if skill.name not in seen:
                 seen.add(skill.name)
-                # bm25 rank from SQLite is negative (lower = better); invert
-                bm25 = -(i + 1)  # positional approximation if rank not accessible
                 score = self._score(skill, bm25_pos=i)
                 candidates.append((score, skill))
 

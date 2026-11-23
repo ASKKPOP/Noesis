@@ -131,11 +131,11 @@ describe('appendNousWhispered — gate 7: ciphertext_hash HEX64', () => {
         expect(audit.append).not.toHaveBeenCalled();
     });
 
-    it('rejects uppercase hex', () => {
+    it('accepts uppercase hex (HEX64 accepts both cases)', () => {
         const audit = makeAudit();
         const p = { ...validPayload(), ciphertext_hash: 'A'.repeat(64) };
-        expect(() => appendNousWhispered(audit, DID_A, p)).toThrow(/invalid ciphertext_hash/);
-        expect(audit.append).not.toHaveBeenCalled();
+        expect(() => appendNousWhispered(audit, DID_A, p)).not.toThrow();
+        expect(audit.append).toHaveBeenCalledTimes(1);
     });
 
     it('rejects non-hex characters', () => {

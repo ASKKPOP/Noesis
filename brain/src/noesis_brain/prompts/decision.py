@@ -109,7 +109,7 @@ def build_decision_prompt(
         lines.append(f"NEXT TASK: {task_desc}")
     if lessons:
         lines += ["", "Lessons from past failures:"]
-        lines += [f"- {l}" for l in lessons]
+        lines += [f"- {lesson}" for lesson in lessons]
     reachable = (places or {}).get("reachable") or []
     if reachable:
         lines += ["", f"YOU ARE AT: {places['here_name']}", "Places you can walk to from here:"]

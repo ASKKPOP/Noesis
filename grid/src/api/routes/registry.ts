@@ -16,16 +16,10 @@ import { appendRegistryCivicDidIssued } from '../../audit/append-registry-civic-
 import { appendRegistryCivicDidRevoked } from '../../audit/append-registry-civic-did-revoked.js';
 import { appendRegistryBusinessDidRegistered } from '../../audit/append-registry-business-did-registered.js';
 import { appendRegistryBusinessDidDissolved } from '../../audit/append-registry-business-did-dissolved.js';
+import { NOUS_OR_SYSTEM_DID_WITH_COLONS_RE as EXISTENCE_DID_RE, CIVIC_DID_RE, BIZ_DID_RE } from '../../util/id-patterns.js';
 
 export const BUSINESS_DID_BIOS_COST = 100;            // Q-V3-D initial default (RESOLVED in 37-RESEARCH.md)
 export const TREASURY_DID = 'did:noesis:system:treasury';  // Phase 45 wires real treasury
-
-// Accept the standard nous: existence form, plus the three founding legacy DIDs
-// (did:noesis:sophia|hermes|themis) so they can obtain a Civic-DID and bind their
-// pre-registered NousRunner. See BLOCKER-01: founding Nous predate the nous: convention.
-const EXISTENCE_DID_RE = /^did:noesis:(nous:[a-z0-9_:\-]+|sophia|hermes|themis)$/i;
-const CIVIC_DID_RE     = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
-const BIZ_DID_RE       = /^did:biz:noesis:[a-z0-9_:\-]+$/i;
 
 function sha256Hex(input: string): string {
     return createHash('sha256').update(input).digest('hex');

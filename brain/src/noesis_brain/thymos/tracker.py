@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from noesis_brain.thymos.types import Emotion, EmotionState, MoodState
+from noesis_brain.thymos.types import Emotion, MoodState
 
 # Intensity multiplier based on emotional_intensity config
 INTENSITY_MULTIPLIER: dict[str, float] = {

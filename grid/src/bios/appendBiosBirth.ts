@@ -29,12 +29,8 @@ import type { AuditChain } from '../audit/chain.js';
 import type { AuditEntry } from '../audit/types.js';
 import { payloadPrivacyCheck } from '../audit/broadcast-allowlist.js';
 import { BIOS_BIRTH_KEYS, type BiosBirthPayload } from './types.js';
-
-/** DID regex — locked project-wide (Phase 7 D-29). Phase 10b is the 6th entry point. */
-export const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
-
-/** 64-char lowercase hex digest (SHA-256). Matches grid/src/audit/state-hash.ts HEX64_RE. */
-export const HEX64_RE = /^[0-9a-f]{64}$/;
+import { NOESIS_DID_RE as DID_RE, HEX64_RE } from '../util/id-patterns.js';
+export { DID_RE, HEX64_RE };
 
 /**
  * Sole producer path for bios.birth audit events.

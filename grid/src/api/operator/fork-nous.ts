@@ -1,36 +1,30 @@
 /**
- * POST /api/v1/operator/fork/:nousDid — H4+ fork endpoint (FORK-01 / D-43-02).
+ * POST /api/v1/operator/fork/:nousDid — the owner's fork endpoint (FORK-01 / D-43-02).
  * GET /api/v1/operator/fork/:nousDid/download?token=X — one-time archive download.
  *
  * Phase 43 constitutional right-to-fork enforcement per D-V3-18. The operator must
  * be able to walk away with their Nous in a portable .tar.gz archive.
  *
+ * The Grid half of a fork: the archive holds what the Grid itself keeps about the Nous —
+ * its civic credential, its slice of the audit chain and a manifest. The Brain's memory
+ * lives on the owner's machine and is added there; the Grid never reads it.
+ *
  * SECURITY PROPERTIES:
- *   T-43-auth (Elevation of Privilege): H4+ header-trust gate + ownership check.
- *     Cross-operator fork attempt returns 403 cross_operator_forbidden.
- *   T-43-token (Spoofing): one-time token with 5-min TTL; atomic consume;
- *     token bound to nousDid (download route checks entry.nousDid === params.nousDid).
- *   T-43-order (Repudiation): audit event committed BEFORE bytes leave system.
+ *   T-43-auth: only the person who claimed the Nous's Brain (brain_tokens.operator_did,
+ *     keyed by the existence-DID the civic registry binds to this Civic-DID) may fork it.
+ *     Policy portal_session_required; anyone else → 403 cross_operator_forbidden.
+ *   T-43-token: one-time token with 5-min TTL; atomic consume; bound to nousDid.
+ *   T-43-order: audit event committed BEFORE bytes leave the system.
  *     On audit failure → 500 audit_emit_failed, no token issued, no bytes shipped.
- *   T-43-secrets (Information Disclosure): privacy gate in fork-archive-builder rejects
- *     MYSQL_URL/DATABASE_URL/SECRET/KEY/TOKEN/PASSWORD substrings in manifest.
- *   T-43-referer (Information Disclosure): Referrer-Policy: no-referrer header on download.
- *
- * ORDER INVARIANT (mirrors D-30 from Phase 8):
- *   archive build → audit append → token issue → response.
- *   Audit event committed BEFORE bytes leave system — non-repudiable trail.
- *   On any error before audit.append: NO token issued, NO bytes shipped.
- *
- * AUTH MODEL (D-25b-NEW-1):
- *   tier and operator_id read from server-trusted x-operator-tier / x-operator-id headers.
- *   Request body is NOT trusted for auth fields.
+ *   T-43-secrets: privacy gate in fork-archive-builder rejects credential-shaped
+ *     substrings in the manifest.
+ *   T-43-referer: Referrer-Policy: no-referrer on download.
  *
  * ERROR LADDER:
- *   400 — invalid_operator_id
- *   401 — tier_missing
- *   403 — tier_too_low / cross_operator_forbidden
- *   409 — brain_memory_in_memory_cannot_fork
+ *   403 — operator_scope_required (no Portal session) / cross_operator_forbidden (not the owner)
+ *   404 — unknown_nous (no Civic-DID in this Grid's registry)
  *   500 — archive_build_failed / audit_emit_failed
+ *   503 — db_unavailable / civic_registry_unavailable
  *   200 — success, JSON response with download_url + hashes
  *
  * See: FORK-01, D-43-02, D-43-04, T-43-auth, T-43-token, T-43-order, T-43-secrets, T-43-referer.
@@ -43,81 +37,58 @@ import type { ApiError } from '../types.js';
 import { appendOperatorNousForked } from '../../audit/append-operator-nous-forked.js';
 import { buildForkArchive } from '../../export/fork-archive-builder.js';
 import { forkTokenStore } from './fork-token-store.js';
+import { ownsBrain } from '../../operator/data/operator-brain-store.js';
+import { HUMAN_DID_RE } from '../../util/id-patterns.js';
 
 export function registerForkNousRoute(app: FastifyInstance, services: GridServices): void {
 
     // POST /api/v1/operator/fork/:nousDid
     app.post<{ Params: { nousDid: string } }>('/api/v1/operator/fork/:nousDid', async (req, reply) => {
 
-        // ── Server-trusted operator context (set by the operator_only gate), threshold = 4 ─────
-        const tier = req.didContext?.operatorTier ?? 0;
-        if (tier < 4) {
+        const ownerDid = req.didContext?.operatorDid;
+        if (!ownerDid) {
             reply.code(403);
-            return { error: 'tier_too_low' } satisfies ApiError;
-        }
-        const operatorId = req.didContext?.operatorId;
-        if (!operatorId) {
-            reply.code(403);
-            return { error: 'not_operator' } satisfies ApiError;
+            return { error: 'operator_scope_required' } satisfies ApiError;
         }
         const nousDid = req.params.nousDid;
 
-        // ── Ownership check (T-43-auth mitigation) ──────────────────────────────────────
-        // Verify operator owns the target Nous. Uses injectable checker for testability.
-        // Production: services.checkOperatorOwnsNous (wired in launcher with DB lookup).
-        // When not wired (legacy/test mode without ownership enforcement), default-deny
-        // forces test injection.
-        if (services.checkOperatorOwnsNous) {
-            const ownsNous = await services.checkOperatorOwnsNous(operatorId, nousDid);
-            if (!ownsNous) {
-                reply.code(403);
-                return { error: 'cross_operator_forbidden' } satisfies ApiError;
-            }
-        } else {
-            // No ownership checker wired — reject by default (fail-safe, T-43-auth).
-            // Tests must inject services.checkOperatorOwnsNous.
+        if (!services.pool) {
+            reply.code(503);
+            return { error: 'db_unavailable' } satisfies ApiError;
+        }
+        if (!services.civicDidStore) {
+            reply.code(503);
+            return { error: 'civic_registry_unavailable' } satisfies ApiError;
+        }
+        const civicRecord = await services.civicDidStore.get(services.gridName, nousDid);
+        if (!civicRecord) {
+            reply.code(404);
+            return { error: 'unknown_nous' } satisfies ApiError;
+        }
+
+        if (!HUMAN_DID_RE.test(ownerDid)
+            || !(await ownsBrain(services.pool, services.gridName, ownerDid, civicRecord.existenceDid))) {
             reply.code(403);
             return { error: 'cross_operator_forbidden' } satisfies ApiError;
         }
 
-        // ── Determine Nous existence-DID ─────────────────────────────────────────────────
-        // In production, fetch from civic_did_registry. For now, derive a placeholder.
-        // The existence-DID is stored in the manifest — tests can inject getExistenceDid.
-        const nousExistenceDid = services.getExistenceDid
-            ? await services.getExistenceDid(nousDid)
-            : `did:noesis:nous:unknown`;
-
-        // ── Build archive ────────────────────────────────────────────────────────────────
         const gridId = services.gridName ?? (process.env['GRID_ID'] ?? 'genesis');
-        const dataDir = process.env['BRAIN_DATA_DIR'] ?? '';
         const exportedAt = new Date().toISOString();
         const exportedAtTick = services.currentTick ? services.currentTick() : 0;
-
-        // Civic VC JSON — placeholder stub (Phase 49 will wire real VC fetch from civicDidStore)
-        const civicVcJson = '{"@context":["https://www.w3.org/2018/credentials/v1"],"type":"VerifiableCredential"}';
 
         let archiveResult;
         try {
             archiveResult = await buildForkArchive({
                 nousDid,
                 gridId,
-                dataDir,
                 auditChain: services.audit,
-                civicVcJson,
+                civicVcJson: JSON.stringify(civicRecord.credentialJson),
                 exportedAtTick,
-                nousExistenceDid,
+                nousExistenceDid: civicRecord.existenceDid,
                 exportedAt,
             });
         } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err);
-            if (msg.includes('brain_memory_in_memory_cannot_fork')) {
-                reply.code(409);
-                return {
-                    error: 'brain_memory_in_memory_cannot_fork',
-                    detail: 'Brain is running with in-memory SQLite. Set BRAIN_DATA_DIR env var and restart Brain before forking.',
-                } as ApiError & { detail: string };
-            }
-            req.log.warn({ err: msg }, 'fork-archive-builder failed');
+            req.log.warn({ err: err instanceof Error ? err.message : String(err) }, 'fork-archive-builder failed');
             reply.code(500);
             return { error: 'archive_build_failed' } satisfies ApiError;
         }
@@ -128,11 +99,11 @@ export function registerForkNousRoute(app: FastifyInstance, services: GridServic
         // Order: archive built → audit append → token issue → response
         // On audit failure: NO token issued, NO bytes shipped.
         const civicDidHash = createHash('sha256').update(nousDid).digest('hex');
-        const operatorDidHash = createHash('sha256').update(operatorId).digest('hex');
+        const operatorDidHash = createHash('sha256').update(ownerDid).digest('hex');
         const tick = services.currentTick ? services.currentTick() : 0;
 
         try {
-            appendOperatorNousForked(services.audit, operatorId, {
+            appendOperatorNousForked(services.audit, ownerDid, {
                 civic_did_hash: civicDidHash,
                 fork_reason: 'operator_exit',
                 operator_did_hash: operatorDidHash,

@@ -15,9 +15,7 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
-
-const HEX64_RE = /^[0-9a-f]{64}$/i;
-const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
+import { HEX64_RE, ETH_ADDRESS_RE as ADDRESS_RE } from '../util/id-patterns.js';
 
 /** Closed 4-key payload. Keys ALPHABETICAL. */
 export interface PortalAccountLinkedPayload {

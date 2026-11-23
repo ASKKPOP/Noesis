@@ -6,7 +6,7 @@
  * Sole producer: grid/src/audit/append-operator-nous-forked.ts
  *
  * 9-step discipline:
- *   1. operatorId format guard (OPERATOR_ID_RE)
+ *   1. owner guard: the actor is the owner's human DID (HUMAN_DID_RE)
  *   2. payload type guard (plain object, non-null, non-array)
  *   3. literal/enum guard (fork_reason ∈ {operator_exit})
  *   4. regex/range guards (HEX64_RE for hash fields; non-negative integer for tick)
@@ -21,7 +21,7 @@ import { AuditChain } from '../../src/audit/chain.js';
 import { appendOperatorNousForked } from '../../src/audit/append-operator-nous-forked.js';
 
 function validOperatorId(): string {
-    return 'op:12345678-1234-4234-8234-123456789012';
+    return 'did:noesis:human:0xowner';
 }
 
 function validPayload() {
@@ -39,7 +39,7 @@ function makeChain(): AuditChain {
 }
 
 describe('appendOperatorNousForked — Step 1: operatorId format guard', () => {
-    it('Test 1: throws TypeError when operatorId does not match OPERATOR_ID_RE (invalid format)', () => {
+    it('Test 1: throws TypeError when operatorId is not a human DID (invalid format)', () => {
         expect(() =>
             appendOperatorNousForked(makeChain(), 'invalid-operator-id', validPayload()),
         ).toThrow(TypeError);
@@ -51,9 +51,9 @@ describe('appendOperatorNousForked — Step 1: operatorId format guard', () => {
         ).toThrow(TypeError);
     });
 
-    it('Test 1c: throws TypeError when operatorId is missing op: prefix', () => {
+    it('Test 1c: throws TypeError for a Grid staff op:<uuid> id — only the owner forks', () => {
         expect(() =>
-            appendOperatorNousForked(makeChain(), '12345678-1234-4234-8234-123456789012', validPayload()),
+            appendOperatorNousForked(makeChain(), 'op:12345678-1234-4234-8234-123456789012', validPayload()),
         ).toThrow(TypeError);
     });
 });
@@ -108,13 +108,13 @@ describe('appendOperatorNousForked — Step 4: regex/range guards', () => {
         ).toThrow(TypeError);
     });
 
-    it('Test 5b: throws TypeError when operator_did_hash fails HEX64_RE (uppercase)', () => {
+    it('Test 5b: accepts operator_did_hash in uppercase (HEX64 accepts both cases)', () => {
         expect(() =>
             appendOperatorNousForked(makeChain(), validOperatorId(), {
                 ...validPayload(),
                 operator_did_hash: 'A'.repeat(64),
             }),
-        ).toThrow(TypeError);
+        ).not.toThrow();
     });
 
     it('Test 5c: throws TypeError when package_hash fails HEX64_RE (not hex)', () => {

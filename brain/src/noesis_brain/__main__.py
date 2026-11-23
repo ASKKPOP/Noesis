@@ -35,7 +35,7 @@ import os
 import re
 import signal
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
@@ -51,6 +51,9 @@ from noesis_brain.memory.stream import MemoryStream
 from noesis_brain.rpc.server import RPCServer
 from noesis_brain.rpc.handler import BrainHandler
 from noesis_brain.http.server import BrainHttpServer
+
+if TYPE_CHECKING:
+    from noesis_brain.wire.client import GridWireClient
 
 
 def _slugify_nous_name(name: str) -> str:

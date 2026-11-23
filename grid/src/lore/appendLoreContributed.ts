@@ -20,19 +20,11 @@ import type { AuditChain } from '../audit/chain.js';
 import type { AuditEntry } from '../audit/types.js';
 import { payloadPrivacyCheck } from '../audit/broadcast-allowlist.js';
 import { LORE_CONTRIBUTED_KEYS, VALID_LORE_CATEGORIES, type LoreContributedPayload } from './types.js';
-
-/** DID regex. Phase 48 (Library v3, CIVLIB-02): widened to accept Civic-DIDs and
- *  sub-namespaced DIDs so a Civic-DID holder contributing to the Library emits the
- *  existing lore.contributed/lore.cited (the v2.4 lore commons IS the Library backend).
- *  Backward-compatible — `did:noesis:<name>` still matches; adds `did:civic:noesis:…`
- *  and sub-namespaces (`did:noesis:nous:…`). */
-export const DID_RE = /^did:(?:civic:)?noesis:[a-z0-9_:\-]+$/i;
+import { NOESIS_OR_CIVIC_DID_RE as DID_RE, HEX64_RE } from '../util/id-patterns.js';
+export { DID_RE, HEX64_RE };
 
 /** Canonical event type string — imported by listeners to avoid literal duplication. */
 export const LORE_CONTRIBUTED_EVENT = 'lore.contributed' as const;
-
-/** 64-char lowercase hex (full sha256 hexdigest). */
-export const HEX64_RE = /^[0-9a-f]{64}$/;
 
 export function appendLoreContributed(
     audit: AuditChain,

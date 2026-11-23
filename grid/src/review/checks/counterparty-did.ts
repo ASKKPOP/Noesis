@@ -3,8 +3,7 @@
 // Also rejects self-transfer (counterparty === proposerDid) — mirrors registry.ts:135 `self_transfer`.
 
 import { registerCheck } from '../registry.js';
-
-const DID_PATTERN = /^did:noesis:[a-z0-9_\-]+$/i;
+import { NOESIS_DID_RE as DID_PATTERN } from '../../util/id-patterns.js';
 
 registerCheck('invalid_counterparty_did', (ctx) => {
     if (!DID_PATTERN.test(ctx.counterparty)) {

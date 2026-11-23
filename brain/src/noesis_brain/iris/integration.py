@@ -21,7 +21,7 @@ No HTTP calls from this module.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from noesis_brain.iris.config import IRIS_CONTEXT_TOP_K
 from noesis_brain.iris.store import IrisStore

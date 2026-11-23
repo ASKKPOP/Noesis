@@ -9,9 +9,9 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
+import { HEX64_RE } from '../util/id-patterns.js';
 
 const GROUP_ID_RE = /^[a-z0-9_-]+:group:[a-z]+$/;
-const HEX64_RE = /^[0-9a-f]{64}$/i;
 const REASONS = ['voluntary', 'removed'] as const;
 
 /** Closed 4-key payload. Keys ALPHABETICAL. */

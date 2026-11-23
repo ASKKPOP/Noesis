@@ -6,7 +6,7 @@
  * in the Grid's audit chain AND embedded inside the fork package manifest.json.
  *
  * 9-step discipline (mirrors Phase 8 appendNousDeleted + Phase 13 appendOperatorExported):
- *   1. Operator-id format guard (OPERATOR_ID_RE — op:<uuid-v4>).
+ *   1. Owner guard: the actor is the person who claimed the Nous's Brain (HUMAN_DID_RE).
  *   2. Type guard on payload (must be plain object, non-null, non-array).
  *   3. Literal/enum guard: fork_reason ∈ {operator_exit}.
  *   4. Regex / range guards:
@@ -28,15 +28,8 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
-
-/** 64-hex SHA-256 — matches grid/src/audit/state-hash.ts HEX64_RE. */
-export const HEX64_RE = /^[0-9a-f]{64}$/;
-
-/**
- * Operator-identity regex — op:<uuid-v4> per Phase 6 D-04.
- * Matches OPERATOR_ID_REGEX from grid/src/api/types.ts.
- */
-export const OPERATOR_ID_RE = /^op:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+import { HEX64_RE, HUMAN_DID_RE } from '../util/id-patterns.js';
+export { HEX64_RE };
 
 /**
  * Valid fork reasons — closed enum, v3.0 only value.
@@ -72,9 +65,9 @@ export function appendOperatorNousForked(
     payload: OperatorNousForkedPayload,
 ): AuditEntry {
     // 1. Operator-id format guard.
-    if (typeof operatorId !== 'string' || !OPERATOR_ID_RE.test(operatorId)) {
+    if (typeof operatorId !== 'string' || !HUMAN_DID_RE.test(operatorId)) {
         throw new TypeError(
-            `appendOperatorNousForked: invalid operatorId — must match OPERATOR_ID_RE (op:<uuid-v4>), got ${JSON.stringify(operatorId)}`,
+            `appendOperatorNousForked: invalid operatorId — must be the owner's human DID (HUMAN_DID_RE), got ${JSON.stringify(operatorId)}`,
         );
     }
 

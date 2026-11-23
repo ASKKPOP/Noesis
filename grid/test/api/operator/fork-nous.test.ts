@@ -3,17 +3,14 @@
  *
  * Tests for grid/src/api/operator/fork-nous.ts.
  *
- * Auth model: server-trusted operator_only gate (req.didContext.operatorTier/
- *   operatorId), simulated here by withOperatorContext; H4+ threshold. The pure
- *   header-gate cases (401 tier_missing / 400 invalid_operator_id) moved to
- *   grid/test/api/operator-gate.test.ts.
+ * Auth model: the Portal session of the person who claimed the Nous's Brain
+ *   (brain_tokens.operator_did), simulated here by a preHandler that sets didContext.
  * Route: POST /api/v1/operator/fork/:nousDid
  * Download: GET /api/v1/operator/fork/:nousDid/download?token=<one-time-token>
  *
  * Strategy:
- *   - Inject services.checkOperatorOwnsNous stub to avoid DB dependency.
- *     The stub now receives the server-trusted operatorId (from context) as arg 1.
- *   - Mock buildForkArchive to return deterministic fake bytes (avoids needing real .db files).
+ *   - Mock ownsBrain (the brain_tokens claim lookup) to avoid a DB dependency.
+ *   - Mock buildForkArchive to return deterministic fake bytes.
  *   - Use Fastify app.inject() for HTTP simulation.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -22,9 +19,14 @@ import { createHash } from 'node:crypto';
 import { AuditChain } from '../../../src/audit/chain.js';
 import { registerForkNousRoute } from '../../../src/api/operator/fork-nous.js';
 import { forkTokenStore } from '../../../src/api/operator/fork-token-store.js';
-import { withOperatorContext } from '../../helpers/operator-session.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../../src/api/server.js';
+import { buildForkArchive } from '../../../src/export/fork-archive-builder.js';
+import type { CivicDidRecord } from '../../../src/civic-registry/types.js';
+import { ownsBrain } from '../../../src/operator/data/operator-brain-store.js';
+import type { Pool } from 'mysql2/promise';
+
+vi.mock('../../../src/operator/data/operator-brain-store.js', () => ({ ownsBrain: vi.fn() }));
 
 // ── Mock buildForkArchive to avoid needing real .db files ────────────────────
 vi.mock('../../../src/export/fork-archive-builder.js', () => {
@@ -46,47 +48,69 @@ const FAKE_BYTES = Buffer.from('FAKE_TAR_GZ_CONTENT', 'utf8');
 const FAKE_PACKAGE_HASH = createHash('sha256').update(FAKE_BYTES).digest('hex');
 const FAKE_EXPORT_HASH = 'a'.repeat(64);
 
-const OPERATOR_ID = 'op:11111111-1111-4111-8111-111111111111';
-const OPERATOR_B_ID = 'op:22222222-2222-4222-8222-222222222222';
+const OWNER_DID = 'did:noesis:human:0xowner';
+const OTHER_PERSON_DID = 'did:noesis:human:0xsomeoneelse';
 const NOUS_DID = 'did:civic:noesis:test-nous-abc';
+const NOUS_EXISTENCE_DID = 'did:noesis:nous:test-nous-abc';
+const NOUS_CREDENTIAL = { type: ['VerifiableCredential', 'CivicCredential'], credentialSubject: { id: NOUS_DID } };
+
+type CivicLookup = Pick<NonNullable<GridServices['civicDidStore']>, 'get'>;
+
+function civicStoreWith(record: Partial<CivicDidRecord> | null): CivicLookup {
+    return {
+        get: async (gridName: string, civicDid: string) =>
+            record && civicDid === NOUS_DID
+                ? ({ gridName, civicDid, existenceDid: NOUS_EXISTENCE_DID, credentialJson: NOUS_CREDENTIAL,
+                     status: 'active', issuedAtTick: 1, ...record } as CivicDidRecord)
+                : null,
+    };
+}
 
 function buildTestApp(opts: {
-    ownsNous?: (operatorId: string, nousDid: string) => Promise<boolean>;
+    sessionDid?: string | null;
     auditChain?: AuditChain;
-    operatorTier?: number;
-    operatorId?: string;
+    civicDidStore?: CivicLookup | null;
+    pool?: Pool | null;
 } = {}): { app: FastifyInstance; audit: AuditChain } {
     const audit = opts.auditChain ?? new AuditChain();
+
+    vi.mocked(ownsBrain).mockImplementation(async (_pool, _grid, operatorDid, brainDid) =>
+        operatorDid === OWNER_DID && brainDid === NOUS_EXISTENCE_DID);
 
     const services: Partial<GridServices> = {
         audit,
         gridName: 'test-grid',
         currentTick: () => 42,
-        checkOperatorOwnsNous: opts.ownsNous ?? (async () => true),
+        ...(opts.pool === null ? {} : { pool: opts.pool ?? ({} as Pool) }),
+        ...(opts.civicDidStore === null
+            ? {}
+            : { civicDidStore: (opts.civicDidStore ?? civicStoreWith({})) as GridServices['civicDidStore'] }),
     };
 
     const app = Fastify({ logger: false });
-    // Simulate the operator_only gate (server-trusted identity/tier, threshold H4).
-    withOperatorContext(app, {
-        ...(opts.operatorTier !== undefined ? { tier: opts.operatorTier } : {}),
-        ...(opts.operatorId !== undefined ? { operatorId: opts.operatorId } : {}),
-    });
+    const sessionDid = opts.sessionDid === undefined ? OWNER_DID : opts.sessionDid;
+    if (sessionDid !== null) {
+        app.addHook('preHandler', async (req) => {
+            req.didContext = { did: sessionDid, tier: 'human_visitor', operatorDid: sessionDid };
+        });
+    }
     registerForkNousRoute(app, services as GridServices);
     return { app, audit };
 }
 
-describe('POST /api/v1/operator/fork/:nousDid — header-trust auth (Plan 02)', () => {
+describe('POST /api/v1/operator/fork/:nousDid — only the Brain\'s owner may fork', () => {
     let app: FastifyInstance;
 
     beforeEach(() => {
         forkTokenStore._clear();
+        vi.mocked(buildForkArchive).mockClear();
     });
 
     afterEach(async () => {
         if (app) await app.close();
     });
 
-    it('43-02-01: returns 200 with download_url + package_hash on valid H4+ request (FORK-01)', async () => {
+    it('43-02-01: returns 200 with download_url + package_hash for the Brain owner (FORK-01)', async () => {
         const { app: a } = buildTestApp();
         app = a;
         await app.ready();
@@ -105,40 +129,49 @@ describe('POST /api/v1/operator/fork/:nousDid — header-trust auth (Plan 02)', 
         expect(body.bytes).toBe(FAKE_BYTES.length);
     });
 
-    it('43-02-03: returns 403 tier_too_low when operator tier < 4', async () => {
-        const { app: a } = buildTestApp({ operatorTier: 3 });
-        app = a;
+    it('returns 403 operator_scope_required without a Portal session', async () => {
+        ({ app } = buildTestApp({ sessionDid: null }));
         await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}`,
-        });
-
+        const res = await app.inject({ method: 'POST', url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}` });
         expect(res.statusCode).toBe(403);
-        expect(res.json()).toMatchObject({ error: 'tier_too_low' });
+        expect(res.json()).toMatchObject({ error: 'operator_scope_required' });
     });
 
-    it('43-02-05: returns 403 on cross-operator fork attempt (T-43-auth)', async () => {
-        // Operator B tries to fork a Nous owned by Operator A — must be rejected.
-        // The ownership checker receives the server-trusted operatorId (Operator B).
-        const { app: a } = buildTestApp({
-            operatorId: OPERATOR_B_ID,
-            ownsNous: async (operatorId, _nousDid) => {
-                // Only OPERATOR_ID owns NOUS_DID; OPERATOR_B_ID does not.
-                return operatorId === OPERATOR_ID;
-            },
-        });
-        app = a;
+    it('43-02-05: returns 403 cross_operator_forbidden when the signed-in person did not claim this Brain (T-43-auth)', async () => {
+        ({ app } = buildTestApp({ sessionDid: OTHER_PERSON_DID }));
         await app.ready();
-
-        const res = await app.inject({
-            method: 'POST',
-            url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}`,
-        });
-
+        const res = await app.inject({ method: 'POST', url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}` });
         expect(res.statusCode).toBe(403);
         expect(res.json()).toMatchObject({ error: 'cross_operator_forbidden' });
+        expect(buildForkArchive).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 cross_operator_forbidden for a Brain-token session, even the Nous itself', async () => {
+        ({ app } = buildTestApp({ sessionDid: NOUS_EXISTENCE_DID }));
+        await app.ready();
+        const res = await app.inject({ method: 'POST', url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}` });
+        expect(res.statusCode).toBe(403);
+        expect(res.json()).toMatchObject({ error: 'cross_operator_forbidden' });
+    });
+
+    it('returns 503 db_unavailable when the Grid has no database', async () => {
+        ({ app } = buildTestApp({ pool: null }));
+        await app.ready();
+        const res = await app.inject({ method: 'POST', url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}` });
+        expect(res.statusCode).toBe(503);
+        expect(res.json()).toMatchObject({ error: 'db_unavailable' });
+    });
+
+    it('records the owner as the actor of operator.nous_forked, with their DID hashed in the payload', async () => {
+        const audit = new AuditChain();
+        ({ app } = buildTestApp({ auditChain: audit }));
+        await app.ready();
+        const res = await app.inject({ method: 'POST', url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}` });
+        expect(res.statusCode).toBe(200);
+        const event = audit.all().find((e) => e.eventType === 'operator.nous_forked')!;
+        expect(event.actorDid).toBe(OWNER_DID);
+        expect((event.payload as { operator_did_hash: string }).operator_did_hash)
+            .toBe(createHash('sha256').update(OWNER_DID).digest('hex'));
     });
 });
 
@@ -324,5 +357,52 @@ describe('GET /api/v1/operator/fork/:nousDid/download — one-time token (Plan 0
 
         expect(res.statusCode).toBe(404);
         expect(res.json()).toMatchObject({ error: 'token_invalid_or_consumed' });
+    });
+});
+
+describe('POST /api/v1/operator/fork/:nousDid — identity comes from the civic registry', () => {
+    let app: FastifyInstance;
+
+    beforeEach(() => {
+        forkTokenStore._clear();
+        vi.mocked(buildForkArchive).mockClear();
+    });
+
+    afterEach(async () => {
+        if (app) await app.close();
+    });
+
+    it('records the registry existence-DID and credential in the archive, never a placeholder', async () => {
+        ({ app } = buildTestApp());
+        await app.ready();
+
+        const res = await app.inject({ method: 'POST', url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}` });
+
+        expect(res.statusCode).toBe(200);
+        const input = vi.mocked(buildForkArchive).mock.calls[0]![0];
+        expect(input.nousExistenceDid).toBe(NOUS_EXISTENCE_DID);
+        expect(JSON.parse(input.civicVcJson)).toEqual(NOUS_CREDENTIAL);
+    });
+
+    it('returns 404 unknown_nous when the Civic-DID is not in this Grid registry', async () => {
+        ({ app } = buildTestApp({ civicDidStore: civicStoreWith(null) }));
+        await app.ready();
+
+        const res = await app.inject({ method: 'POST', url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}` });
+
+        expect(res.statusCode).toBe(404);
+        expect(res.json()).toMatchObject({ error: 'unknown_nous' });
+        expect(buildForkArchive).not.toHaveBeenCalled();
+    });
+
+    it('returns 503 civic_registry_unavailable when no registry is wired', async () => {
+        ({ app } = buildTestApp({ civicDidStore: null }));
+        await app.ready();
+
+        const res = await app.inject({ method: 'POST', url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}` });
+
+        expect(res.statusCode).toBe(503);
+        expect(res.json()).toMatchObject({ error: 'civic_registry_unavailable' });
+        expect(buildForkArchive).not.toHaveBeenCalled();
     });
 });

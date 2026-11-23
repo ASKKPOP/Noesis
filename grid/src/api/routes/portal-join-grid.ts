@@ -19,8 +19,8 @@ import type { GridServices } from '../server.js';
 import { COOKIE_NAME, keyPairPromise } from '../portal/auth.js';
 import { NousSponsorStore } from '../../economy/nous-sponsor-store.js';
 import { GridRecommendationStore } from '../../economy/grid-recommendation-store.js';
+import { NOESIS_DID_WITH_COLONS_RE as NOUS_DID_RE } from '../../util/id-patterns.js';
 
-const NOUS_DID_RE = /^did:noesis:[a-z0-9_:\-]+$/i;
 const GRID_ID_RE = /^[a-z0-9][a-z0-9_-]{0,62}$/i;
 
 /** Resolve the human DID from the Portal session cookie, or send 401 and return null. */

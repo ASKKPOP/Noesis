@@ -11,9 +11,7 @@
  * Malformed entries are skipped (fail-safe). Empty/unset ⇒ empty map (fail-closed).
  */
 import { OPERATOR_ID_REGEX } from '../types.js';
-
-/** Human existence-DID shape (mirrors DID_RE in append-human-joined.ts). */
-const DID_RE = /^did:noesis:[a-z0-9_:\-]+$/i;
+import { NOESIS_DID_WITH_COLONS_RE as DID_RE } from '../../util/id-patterns.js';
 
 export interface OperatorGrant {
     readonly operatorId: string;

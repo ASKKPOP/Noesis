@@ -55,6 +55,7 @@ import { recordIou, settleIou, allIous, outstandingBetween, type LedgerDeps, typ
 import { buildFromBlueprint } from '../../civic/blueprint.js';
 import { coBuildStaffOf } from '../../civic/co-build.js';
 import { NousAccountStore } from '../../economy/nous-account-store.js';
+import { CIVIC_DID_RE, CIVIC_HUMAN_DID_PREFIX_RE as HUMAN_CIVIC_DID_RE } from '../../util/id-patterns.js';
 
 /** Clamp a wei balance (bigint) to a Number for the ParcelRegistry affordability check.
  *  Land prices are small integers; only the real chargeToTreasury debit is authoritative,
@@ -62,9 +63,6 @@ import { NousAccountStore } from '../../economy/nous-account-store.js';
 function affordableWei(balance: bigint): number {
     return balance > BigInt(Number.MAX_SAFE_INTEGER) ? Number.MAX_SAFE_INTEGER : Number(balance);
 }
-
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
-const HUMAN_CIVIC_DID_RE = /^did:civic:noesis:human:/i;
 
 /** sha256 hex — the same HEX64 owner-hash discipline the zoning.* producers expect. */
 function sha256Hex(input: string): string {

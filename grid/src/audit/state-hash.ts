@@ -17,9 +17,8 @@
  * See: 08-CONTEXT D-03, D-05, D-06, D-07.
  */
 import { createHash } from 'node:crypto';
-
-/** 64-hex SHA-256 digest — matches grid/src/api/operator/_validation.ts. */
-export const HEX64_RE = /^[0-9a-f]{64}$/;
+import { HEX64_RE } from '../util/id-patterns.js';
+export { HEX64_RE };
 
 /**
  * The 4 Brain component hashes. Key order in this interface is the

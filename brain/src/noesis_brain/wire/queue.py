@@ -33,7 +33,6 @@ import sqlite3
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 __all__ = ["WireQueue", "QueuedEvent", "derive_idempotency_key", "QUEUE_CAPACITY"]
 

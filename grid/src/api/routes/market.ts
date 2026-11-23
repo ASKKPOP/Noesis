@@ -32,8 +32,7 @@ import { appendTreasuryStructureRevenue } from '../../audit/append-treasury-stru
 import { MarketplaceStore, MIN_LISTING_PRICE_WEI } from '../../marketplace/marketplace-store.js';
 import { NousAccountStore } from '../../economy/nous-account-store.js';
 import { structureRevenueDue, getZoneTaxBps } from '../../civic/founding-law.js';
-
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
+import { CIVIC_DID_RE } from '../../util/id-patterns.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CATEGORY_RE = /^[a-z0-9_-]{1,63}$/i;

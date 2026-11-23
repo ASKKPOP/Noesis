@@ -15,12 +15,11 @@ function validInput() {
         gridId: 'genesis',
         exportHash: 'a'.repeat(64),
         chainTailHash: 'b'.repeat(64),
-        memoryFiles: ['nous.db'],
     };
 }
 
 describe('createForkManifest — schema (Plan 02)', () => {
-    it('43-02-23: returns object with all required fields (format_version, exported_at, exported_at_tick, nous_civic_did, nous_existence_did, grid_id, export_hash, chain_tail_hash, memory_files, note)', () => {
+    it('43-02-23: returns object with all required fields (format_version, exported_at, exported_at_tick, nous_civic_did, nous_existence_did, grid_id, export_hash, chain_tail_hash, note)', () => {
         const manifest = createForkManifest(validInput());
         expect(manifest).toHaveProperty('format_version');
         expect(manifest).toHaveProperty('exported_at');
@@ -30,13 +29,12 @@ describe('createForkManifest — schema (Plan 02)', () => {
         expect(manifest).toHaveProperty('grid_id');
         expect(manifest).toHaveProperty('export_hash');
         expect(manifest).toHaveProperty('chain_tail_hash');
-        expect(manifest).toHaveProperty('memory_files');
         expect(manifest).toHaveProperty('note');
     });
 
-    it('43-02-24: format_version is literal "1.0"', () => {
+    it('43-02-24: format_version is literal "2.0" (the Grid half, no Brain memory)', () => {
         const manifest = createForkManifest(validInput());
-        expect(manifest.format_version).toBe('1.0');
+        expect(manifest.format_version).toBe('2.0');
     });
 
     it('43-02-25: throws TypeError when chainTailHash does not match HEX64_RE', () => {
@@ -49,12 +47,10 @@ describe('createForkManifest — schema (Plan 02)', () => {
         expect(() => createForkManifest(input)).toThrow(TypeError);
     });
 
-    it('43-02-27: memory_files is an array of strings', () => {
+    it('43-02-27: lists no memory files and says the memory is added on the owner\'s machine', () => {
         const manifest = createForkManifest(validInput());
-        expect(Array.isArray(manifest.memory_files)).toBe(true);
-        for (const f of manifest.memory_files) {
-            expect(typeof f).toBe('string');
-        }
+        expect(manifest).not.toHaveProperty('memory_files');
+        expect(manifest.note).toMatch(/owner's machine/);
     });
 });
 

@@ -21,8 +21,7 @@ import { FURNITURE_CATALOG } from './furniture.js';
 import { isHumanDid } from './roles.js';
 import type { ParcelRegistry } from './parcel-registry.js';
 import type { Structure } from './types.js';
-
-const HEX64 = /^[0-9a-f]{64}$/;
+import { HEX64_RE } from '../util/id-patterns.js';
 
 /** A single recipe object — `kind` MUST be a Phase 59 furniture-catalog kind. */
 export interface BlueprintObject {
@@ -61,7 +60,7 @@ export interface BlueprintStoreDeps {
  * NO new furniture kinds). Throws on rejection; returns void on success.
  */
 export function validateRecipe(recipe: BlueprintRecipe): void {
-    if (!HEX64.test(recipe.blueprint_hash)) {
+    if (!HEX64_RE.test(recipe.blueprint_hash)) {
         throw new Error('blueprint_hash_not_hex64');
     }
     // A recipe kind must be a member of the Phase 59 closed furniture catalog (a recipe is

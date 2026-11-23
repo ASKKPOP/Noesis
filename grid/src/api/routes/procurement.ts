@@ -18,8 +18,7 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { ProcurementStore } from '../../economy/procurement-store.js';
 import { verifyDisbursementAuth } from '../../civic-registry/government-session.js';
-
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
+import { CIVIC_DID_RE } from '../../util/id-patterns.js';
 
 export function registerProcurementRoutes(app: FastifyInstance, services: GridServices): void {
     // GET /api/v1/procurement/notices?status=open

@@ -8,8 +8,7 @@ import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
 import { type LibraryCuratorElectedPayload, LIBRARY_CURATOR_ELECTED_KEYS } from '../library/types.js';
-
-const HEX64_RE = /^[0-9a-f]{64}$/i;
+import { HEX64_RE } from '../util/id-patterns.js';
 
 export function appendLibraryCuratorElected(audit: AuditChain, payload: LibraryCuratorElectedPayload): AuditEntry {
     // 1. Type guard.

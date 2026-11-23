@@ -76,8 +76,7 @@ Respond with ONLY the skill text — no preamble, no explanation, no quotes.
 """
 
 # Slug generation: strip non-alphanumeric and truncate to 40 chars.
-import re as _re
-_SLUG_RE = _re.compile(r"[^a-z0-9]+")
+_SLUG_RE = _re_ol.compile(r"[^a-z0-9]+")
 
 
 def _make_slug(buyer: str, seller: str, item: str) -> str:

@@ -11,8 +11,7 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { NousRegistrationStore } from '../../portal-workflows/nous-registration-store.js';
 import { NOUS_REJECT_REASONS, type NousRejectReason } from '../../portal-workflows/nous-registration-types.js';
-
-const DID_RE = /^did:(?:civic:)?noesis:[a-z0-9_:\-]+$/i;
+import { NOESIS_OR_CIVIC_DID_RE as DID_RE } from '../../util/id-patterns.js';
 
 export function registerPortalNousApprovalRoutes(app: FastifyInstance, services: GridServices): void {
     const grid = services.gridName ?? 'genesis';

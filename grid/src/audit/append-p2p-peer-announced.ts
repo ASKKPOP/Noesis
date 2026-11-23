@@ -22,8 +22,7 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
-
-const HEX64_RE = /^[0-9a-f]{64}$/i;
+import { HEX64_RE } from '../util/id-patterns.js';
 
 /** Closed 3-key payload for p2p.peer_announced. Keys ALPHABETICAL. */
 export interface P2pPeerAnnouncedPayload {

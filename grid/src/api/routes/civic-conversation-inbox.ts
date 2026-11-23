@@ -16,8 +16,8 @@ import { randomUUID } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { GridServices } from '../server.js';
 import { ConversationStore } from '../../economy/conversation-store.js';
+import { NOESIS_DID_WITH_COLONS_RE as HUMAN_DID_RE } from '../../util/id-patterns.js';
 
-const HUMAN_DID_RE = /^did:noesis:[a-z0-9_:\-]+$/i;
 /** Threads returned per read, and messages of history per thread. */
 const MAX_THREADS = 5;
 const HISTORY = 12;

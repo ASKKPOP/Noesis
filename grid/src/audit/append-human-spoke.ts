@@ -20,6 +20,7 @@ import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
 import { DID_RE } from './append-human-joined.js';
+import { HEX64_RE } from '../util/id-patterns.js';
 
 export interface HumanSpokePayload {
     readonly human_did: string;  // DID_RE
@@ -30,8 +31,6 @@ export interface HumanSpokePayload {
 
 // Alphabetical — matches closed-tuple check (step 6)
 const EXPECTED_KEYS = ['human_did', 'msg_hash', 'nous_did', 'tick'] as const;
-
-const HEX64_RE = /^[0-9a-f]{64}$/;
 
 export function appendHumanSpoke(
     audit: AuditChain,

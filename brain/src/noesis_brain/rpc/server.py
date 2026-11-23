@@ -13,7 +13,6 @@ from noesis_brain.rpc.types import (
     RPCResponse,
     RPCError,
     ERR_PARSE,
-    ERR_METHOD_NOT_FOUND,
     ERR_INTERNAL,
     ERR_INVALID_REQUEST,
 )

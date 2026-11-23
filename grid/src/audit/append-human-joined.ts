@@ -19,16 +19,8 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
-
-/** 64-hex SHA-256 — matches grid/src/audit/state-hash.ts HEX64_RE. */
-export const HEX64_RE = /^[0-9a-f]{64}$/;
-
-/**
- * DID regex for human_did — WEB3-05 base pattern.
- * Updated Phase 28: allows colons in sub-segments to support did:noesis:human:* and
- * did:noesis:human-nous:* DID schemes introduced by the personal Nous spawn flow.
- */
-export const DID_RE = /^did:noesis:[a-z0-9_:\-]+$/i;
+import { HEX64_RE, NOESIS_DID_WITH_COLONS_RE as DID_RE } from '../util/id-patterns.js';
+export { HEX64_RE, DID_RE };
 
 /** Closed 4-key payload for human.joined (WEB3-04). */
 export interface HumanJoinedPayload {

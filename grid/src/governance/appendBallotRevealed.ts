@@ -25,8 +25,8 @@ import {
 import { verifyReveal } from './commit-reveal.js';
 import { GovernanceError } from './errors.js';
 import type { GovernanceStore } from './store.js';
+import { NOESIS_DID_RE as DID_RE } from '../util/id-patterns.js';
 
-const DID_RE = /^did:noesis:[a-z0-9_\-]+$/i;
 const NONCE_RE = /^[0-9a-f]{32}$/;
 const VALID_CHOICES: ReadonlySet<string> = new Set(['yes', 'no', 'abstain']);
 

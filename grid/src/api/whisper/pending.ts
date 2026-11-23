@@ -17,8 +17,7 @@
 
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { WhisperRouteDeps } from './routes.js';
-
-const DID_RE = /^did:noesis:[a-zA-Z0-9_\-]+$/;
+import { NOESIS_DID_CASE_SENSITIVE_PREFIX_RE as DID_RE } from '../../util/id-patterns.js';
 
 /**
  * Build Fastify handler for GET /api/v1/nous/:did/whispers/pending.

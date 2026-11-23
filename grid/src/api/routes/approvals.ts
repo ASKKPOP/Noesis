@@ -13,8 +13,7 @@ import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { ApprovalStore } from '../../economy/approval-store.js';
-
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
+import { CIVIC_DID_RE } from '../../util/id-patterns.js';
 
 export function registerApprovalRoutes(app: FastifyInstance, services: GridServices): void {
     // POST /api/v1/civic/approvals

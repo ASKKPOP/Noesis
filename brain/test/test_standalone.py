@@ -48,17 +48,16 @@ _CONFIG = {
 # ── Helper: build a valid tar.gz archive ──────────────────────────────────────
 
 def _build_valid_archive(src_dir: Path, archive: Path) -> None:
-    """Pack src_dir contents into archive (tar.gz), preserving relative paths."""
+    """Pack src_dir into archive (tar.gz). export_hash covers the Grid half only:
+    every file except manifest.json and the owner's memory/ folder."""
     import hashlib
 
-    # Build file list (relative paths)
     files = sorted(p for p in src_dir.rglob("*") if p.is_file())
 
-    # Compute correct export_hash (excluding manifest.json)
     h = hashlib.sha256()
     for f in files:
         rel = f.relative_to(src_dir).as_posix()
-        if rel == "manifest.json":
+        if rel == "manifest.json" or rel.startswith("memory/"):
             continue
         h.update(rel.encode("utf-8"))
         h.update(b"\x00")
@@ -67,7 +66,7 @@ def _build_valid_archive(src_dir: Path, archive: Path) -> None:
 
     # Write manifest with correct hash
     manifest = {
-        "format_version": "1.0",
+        "format_version": "2.0",
         "exported_at": "2026-05-27T12:00:00Z",
         "exported_at_tick": 42,
         "nous_civic_did": "did:civic:noesis:test",
@@ -75,7 +74,6 @@ def _build_valid_archive(src_dir: Path, archive: Path) -> None:
         "grid_id": "genesis",
         "export_hash": export_hash,
         "chain_tail_hash": "d" * 64,
-        "memory_files": ["nous.db"],
         "note": "test",
     }
     (src_dir / "manifest.json").write_text(json.dumps(manifest))
@@ -163,11 +161,12 @@ class TestStandaloneImport:
             verify_and_unpack(archive, tmp_path / "extract")
 
     def test_valid_archive_returns_manifest(self, tmp_path: Path) -> None:
-        """verify_and_unpack on a valid archive returns the manifest dict."""
+        """A Grid half with the owner's memory/ added still verifies and imports."""
         from noesis_brain.standalone.importer import verify_and_unpack
 
         src_dir = tmp_path / "src"
-        src_dir.mkdir()
+        (src_dir / "credentials").mkdir(parents=True)
+        (src_dir / "credentials" / "civic-did.vc.json").write_text('{"type":"VerifiableCredential"}')
         (src_dir / "memory").mkdir()
         (src_dir / "memory" / "nous.db").write_bytes(b"SQLITE_DB_BYTES")
 
@@ -176,9 +175,32 @@ class TestStandaloneImport:
 
         extract_dir = tmp_path / "extract"
         manifest = verify_and_unpack(archive, extract_dir)
-        assert manifest["format_version"] == "1.0"
+        assert manifest["format_version"] == "2.0"
         assert manifest["nous_existence_did"] == "did:noesis:nous:test"
         assert (extract_dir / "memory" / "nous.db").exists()
+
+    def test_tampered_grid_half_is_rejected_even_with_memory_added(self, tmp_path: Path) -> None:
+        """The owner may add memory/, but a changed Grid-half file fails verification."""
+        from noesis_brain.standalone.importer import verify_and_unpack
+
+        src_dir = tmp_path / "src"
+        (src_dir / "credentials").mkdir(parents=True)
+        vc = src_dir / "credentials" / "civic-did.vc.json"
+        vc.write_text('{"type":"VerifiableCredential"}')
+        (src_dir / "memory").mkdir()
+        (src_dir / "memory" / "nous.db").write_bytes(b"SQLITE_DB_BYTES")
+        archive = tmp_path / "fork.tar.gz"
+        _build_valid_archive(src_dir, archive)
+
+        tampered = tmp_path / "tampered.tar.gz"
+        vc.write_text('{"type":"VerifiableCredential","forged":true}')
+        with tarfile_module.open(tampered, "w:gz") as tf:
+            for f in src_dir.rglob("*"):
+                if f.is_file():
+                    tf.add(f, arcname=f.relative_to(src_dir).as_posix())
+
+        with pytest.raises(ValueError, match="export_hash mismatch"):
+            verify_and_unpack(tampered, tmp_path / "extract")
 
 
 # ── TestStandaloneMode ────────────────────────────────────────────────────────

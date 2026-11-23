@@ -448,11 +448,10 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/p2p/turn-credentials':    'civic_did_required',  // Brain JWT TURN auth
 
     // Phase 43 FORK-01 — Fork endpoint (2 entries)
-    // SECURITY 2026-07-09: the POST that builds the brain .tar.gz is now operator_only
-    // (server-trusted gate). The GET download stays 'public' — it authenticates via a
-    // one-time token in the query string (issued by the POST), not an operator session,
-    // so a browser click without the operator cookie can still fetch the archive.
-    'POST /api/v1/operator/fork/:nousDid':          'operator_only',  // H4+ gate, builds .tar.gz
+    // The POST builds the Grid half of a fork (credential + audit slice) for the person who
+    // claimed the Nous's Brain. The GET download stays 'public' — it authenticates via a
+    // one-time token in the query string (issued by the POST), not a session.
+    'POST /api/v1/operator/fork/:nousDid':          'portal_session_required',  // the Brain's owner only (checked in the handler)
     'GET /api/v1/operator/fork/:nousDid/download':  'public',         // one-time-token download
 
     // Phase 44 MKT-01..06 — Civic marketplace routes (8 new entries per RESEARCH.md Pattern 4).

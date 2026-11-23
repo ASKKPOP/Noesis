@@ -8,8 +8,7 @@ import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import type { RowDataPacket } from 'mysql2/promise';
 import { CivicDueStore } from '../../economy/civic-due-store.js';
-
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
+import { CIVIC_DID_RE } from '../../util/id-patterns.js';
 
 export function registerCivicDueRoutes(app: FastifyInstance, services: GridServices): void {
     app.get('/api/v1/civic/dues', async (req, reply) => {

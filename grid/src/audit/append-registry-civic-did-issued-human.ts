@@ -16,10 +16,7 @@
 import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
-
-// Human operator-DIDs: did:noesis:human:0x<40hex> (SIWE) or did:noesis:human:email:<uuid>.
-const HUMAN_DID_RE = /^did:noesis:human:[a-z0-9_:\\-]+$/i;
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\\-]+$/i;
+import { HUMAN_DID_RE, CIVIC_DID_RE } from '../util/id-patterns.js';
 
 /** Closed 4-key payload for registry.civic_did_issued_human. */
 export interface RegistryCivicDidIssuedHumanPayload {

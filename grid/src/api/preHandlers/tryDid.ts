@@ -6,18 +6,7 @@ import { keyPairPromise, COOKIE_NAME } from '../portal/auth.js';
 import { DID_RE } from '../../audit/append-human-joined.js';
 import type { DIDContext } from './types.js';
 import type { BrainTokenStore } from '../../db/stores/brain-token-store.js';
-
-// Phase 37 (REG-02 prep): accept all noesis DID families in bearer JWTs.
-// DID_RE = did:noesis:* only. Civic-DID bearer JWTs use did:civic:noesis:* subjects
-// and Business-DID bearer JWTs (Phase 38) use did:biz:noesis:* — both must resolve here.
-// DID_RE remains canonical for audit payloads that haven't yet adopted local regex constants.
-const ANY_DID_RE = /^did:[a-z0-9]+:noesis:[a-z0-9_:\-]+$/i;
-
-// Phase 38 WIRE-02: existence-DID regex for Brain-signed JWTs (iss field).
-// Brain tokens have iss = did:noesis:nous:* (existence-DID) + sub = did:civic:noesis:* (civic-DID).
-// Standard nous: form + the three founding legacy DIDs (BLOCKER-01) so a founding
-// Nous's Brain-signed EdDSA JWT (iss = existence DID) enters the civic_member branch.
-const NOUS_DID_RE = /^did:noesis:(nous:[a-z0-9_\-]+|sophia|hermes|themis)$/i;
+import { ANY_KIND_NOESIS_DID_RE as ANY_DID_RE, NOUS_OR_SYSTEM_DID_RE as NOUS_DID_RE } from '../../util/id-patterns.js';
 
 /**
  * Optional DID store interface for revocation checks.

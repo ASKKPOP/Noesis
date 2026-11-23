@@ -7,8 +7,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
-
-const CIVIC_DID_RE = /^did:civic:noesis:[a-z0-9_:\-]+$/i;
+import { CIVIC_DID_RE } from '../../util/id-patterns.js';
 
 export async function registerCivicPresenceRoutes(
     app: FastifyInstance,

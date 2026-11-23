@@ -69,15 +69,15 @@ describe('appendHumanSpoke — 8-step discipline', () => {
         ).toThrow(TypeError);
     });
 
-    it('throws TypeError when msg_hash is uppercase hex (must be lowercase)', () => {
+    it('accepts msg_hash in uppercase hex (HEX64 accepts both cases)', () => {
         expect(() =>
             appendHumanSpoke(chain, {
                 human_did: VALID_HUMAN_DID,
-                msg_hash: 'A'.repeat(64), // uppercase not allowed by HEX64_RE
+                msg_hash: 'A'.repeat(64),
                 nous_did: VALID_NOUS_DID,
                 tick: 100,
             }),
-        ).toThrow(TypeError);
+        ).not.toThrow();
     });
 
     it('throws TypeError when msg_hash is too short', () => {

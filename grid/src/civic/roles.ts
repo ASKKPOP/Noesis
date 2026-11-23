@@ -13,6 +13,7 @@
  * resumes at the existing level (the severance FSM retains the edge as history rather
  * than deleting it).
  */
+import { CIVIC_HUMAN_DID_PREFIX_RE as HUMAN_CIVIC_DID_RE } from '../util/id-patterns.js';
 
 /** The three role kinds. `owner` is implicit from Parcel.ownerDid (never a stored edge). */
 export type Role = 'owner' | 'staff' | 'guest';
@@ -55,9 +56,6 @@ export const ROLE_CAPABILITIES: Readonly<Record<Role, readonly string[]>> = Obje
         'build', 'furnish', 'bind_shop', 'name_place', 'set_entry_policy', 'grant_role', 'revoke_role',
     ]),
 });
-
-/** Civic-DID form reserved for human operators (D-NH-07 precedent: civic-parcels.ts). */
-const HUMAN_CIVIC_DID_RE = /^did:civic:noesis:human:/i;
 
 /** True if `did` is a human operator Civic-DID — such DIDs can NEVER hold a role edge. */
 export function isHumanDid(did: string): boolean {

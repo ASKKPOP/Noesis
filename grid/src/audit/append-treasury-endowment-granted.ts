@@ -8,8 +8,7 @@ import type { AuditChain } from './chain.js';
 import type { AuditEntry } from './types.js';
 import { payloadPrivacyCheck } from './broadcast-allowlist.js';
 import { type TreasuryEndowmentGrantedPayload, TREASURY_ENDOWMENT_GRANTED_KEYS } from '../typeb/types.js';
-
-const HEX64_RE = /^[0-9a-f]{64}$/i;
+import { HEX64_RE } from '../util/id-patterns.js';
 
 export function appendTreasuryEndowmentGranted(audit: AuditChain, payload: TreasuryEndowmentGrantedPayload): AuditEntry {
     if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
