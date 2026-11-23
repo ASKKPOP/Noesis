@@ -831,3 +831,10 @@ the Steward Console Fork button now gets 403 for staff who don't own the Nous. S
 diagram, repository table (adds brain-rs, viz-rs, dashboard, steward, apps/nous-mac, contracts), REST + WebSocket
 wire, `scripts/quickstart.sh`, one milestone table in place of the per-phase history, a "not done yet" list.
 No research page changed. Found: no `LICENSE` file although README and package.json say MIT.
+
+## [2026-11-23] finding | What is wired — source audit for the README
+
+Four read-only passes plus hand checks → [[wiring-audit-2026-11]]. Not wired: Iris, Hypnos, skills, lore, whisper,
+Brain-to-Brain data, wiki writing, Hermes. Polis-only routes are unreachable (no code signs a Polis session). Local
+compose Brains never reach the local Grid (`GRID_ENDPOINT` is read by nothing). `README.md` rewritten with a mark
+per item (runs / limited / not wired / not built). Open: the public wiki still describes the not-wired parts as behaviour.
