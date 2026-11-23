@@ -1,0 +1,36 @@
+name: verification
+
+# The model legs of the Triple Verification Rule: TLC on every TLA+ spec and a
+# clean Lean build. The property-based tests run in tests.yml with each package.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  models:
+    name: TLA+ (TLC) and Lean
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install elan (Lean toolchain manager)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: TLC on every spec, then lake build with axiom check
+        run: ./verification/run.sh

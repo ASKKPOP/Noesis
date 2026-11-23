@@ -111,6 +111,9 @@ jobs:
       - name: Every scripts/check-*.mjs gate is run by a workflow
         run: node scripts/check-gates-wired.mjs
 
+      - name: Triple Verification registry — every property has its TLA+, Lean and property-test file; no sorry/axiom
+        run: node scripts/check-verification.mjs
+
       - name: Ratchet — copied anti-patterns may only go down (inline id regex, useEffect, type escapes, suppressions, UI timers)
         run: node scripts/check-ratchet.mjs
 

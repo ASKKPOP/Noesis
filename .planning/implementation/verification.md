@@ -28,10 +28,25 @@ flowchart TD
 
 ## Status today (read this first)
 
-As of 2026-11-23 the repository has **no TLA+ spec, no Lean project, and neither toolchain installed**.
-Property-based testing exists in one file (`protocol/test/unit/crdt-properties.test.ts`, fast-check).
-Until the toolchains are bootstrapped, no task can be reported as fully verified: the close-out must name
-each leg that did not run. Code written before 2026-11-23 is unverified by these rules.
+The toolchain was bootstrapped on 2026-11-23. **One area is verified under these rules: vector clocks**
+(`P-VCLOCK-01…06`, `protocol/src/knowledge.ts`). Everything else written before that date is unverified.
+
+| Piece | Where |
+|-------|-------|
+| Property registry | `verification/PROPERTIES.md` |
+| TLA+ specs | `verification/tla/` — TLC 1.7.4, jar fetched and checksum-pinned by `verification/run.sh` |
+| Lean proofs | `verification/lean/` — Lake project, toolchain pinned in `lean-toolchain` |
+| Run both model legs | `./verification/run.sh` (clean TLC run on every spec, clean `lake build`, axiom check) |
+| Property-test libraries | fast-check in `protocol`, `grid`, `dashboard` (`cli` has no test suite yet); Hypothesis in `brain`; proptest in `brain-rs`, `viz-rs`; Foundry has fuzzing built in |
+| Static gate | `scripts/check-verification.mjs` (in `rig-invariants.yml`) |
+| CI | `.github/workflows/verification.yml` runs `verification/run.sh`; property tests run with each package in `tests.yml` |
+
+Local setup (macOS): `brew install openjdk elan-init`. Property tests take `PBT_SEED` to replay a run and
+`PBT_RUNS` to change the case count.
+
+**What the gate cannot do:** it checks that every registered property has its three files and that no proof
+is faked. It cannot tell that a task which changed logic registered any property at all. That stays with
+review and the V-11 close-out table.
 
 ## V-1 · What each leg proves, and what it does not
 
@@ -109,8 +124,8 @@ code; back-fill is its own task, done only when asked.
 |------|---------|-------|
 | TypeScript (`grid/`, `protocol/`, `dashboard/`, `cli/`) | fast-check | the package's test directory, `*.property.test.ts` |
 | Python (`brain/`) | Hypothesis | `brain/test/`, `test_*_properties.py` |
-| Rust (`brain-rs/`, `viz-rs/`) | proptest | the crate's `tests/` |
-| Solidity (`contracts/`) | Foundry fuzz + invariant tests | `contracts/test/` |
+| Rust (`brain-rs/`, `viz-rs/`) | proptest | the crate's `tests/`, `*_properties.rs` |
+| Solidity (`contracts/`) | Foundry fuzz + invariant tests | `contracts/test/`, `*.invariant.t.sol` |
 
 - Inputs are **generated**, never a hand-written list. Generators must cover: empty, one, many, maximum
   size, duplicates, boundary numbers (0, 1, −1, max, max+1), invalid and hostile values, and unicode where

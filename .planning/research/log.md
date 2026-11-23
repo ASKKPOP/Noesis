@@ -855,3 +855,12 @@ User-mandated: every task verified three ways. Rules V-1…V-11 written to `.pla
 short form in `CLAUDE.md`, pointer in `STATE.md`. Repo state found: no TLA+ spec, no Lean project, neither toolchain
 installed, one fast-check file (`protocol/test/unit/crdt-properties.test.ts`). Open: toolchain bootstrap, `verification/`
 tree, CI gate. No research page changed.
+
+## [2026-11-23] build | Verification toolchain bootstrapped; vector clocks are the first verified area
+
+`verification/` holds the TLA+ specs, the Lean project, the property registry and `run.sh`; `scripts/check-verification.mjs`
+is the static gate; `.github/workflows/verification.yml` runs TLC and Lean. First area: vector clocks (`P-VCLOCK-01…06`).
+The first property-test run found a real defect: a node id naming an `Object.prototype` member (`toString`) made
+`mergeVectorClocks` return `NaN`, and `__proto__` was dropped; fixed in `protocol/src/knowledge.ts`. Also found:
+`brain/uv.lock` stale since June (no `trafilatura`, `h2`); regenerated. Open: counts from remote peers are not validated.
+No research page changed.

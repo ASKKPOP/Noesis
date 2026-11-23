@@ -233,6 +233,12 @@ export interface AgentModel {
 
 export type VectorClockOrder = 'before' | 'after' | 'concurrent' | 'equal';
 
+/** A clock's count for a node; 0 when absent. Own entries only: a node id such
+ * as "toString" must not read the inherited Object.prototype member. */
+function ownCount(clock: Record<string, number>, node: string): number {
+    return (Object.prototype.hasOwnProperty.call(clock, node) && clock[node]) || 0;
+}
+
 /**
  * Compare two vector clocks for causal ordering.
  * Returns:
@@ -250,8 +256,8 @@ export function compareVectorClocks(
     let bLess = false;
 
     for (const node of allNodes) {
-        const va = a[node] || 0;
-        const vb = b[node] || 0;
+        const va = ownCount(a, node);
+        const vb = ownCount(b, node);
         if (va < vb) aLess = true;
         if (va > vb) bLess = true;
         if (aLess && bLess) return 'concurrent';
@@ -271,7 +277,13 @@ export function mergeVectorClocks(
 ): Record<string, number> {
     const merged: Record<string, number> = { ...a };
     for (const [node, count] of Object.entries(b)) {
-        merged[node] = Math.max(merged[node] || 0, count);
+        // defineProperty, not assignment: a node id of "__proto__" must stay an entry.
+        Object.defineProperty(merged, node, {
+            value: Math.max(ownCount(merged, node), count),
+            writable: true,
+            enumerable: true,
+            configurable: true,
+        });
     }
     return merged;
 }

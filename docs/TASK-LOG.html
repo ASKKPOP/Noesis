@@ -71,12 +71,33 @@
     <li><b>Rules written</b> <span class="tag done">done</span> — <a href="../.planning/implementation/verification.md">.planning/implementation/verification.md</a> (V‑1…V‑11): what each leg proves, task classes A/B/C, properties-first with shared IDs, TLA+ rules, Lean rules, property-test rules per language, mutation check, run counts, allowed N/A reasons, order of work, close-out table. Short form added to <code>CLAUDE.md</code> (“Triple Verification Rule”); pointer in <code>.planning/STATE.md</code> and the implementation index.</li>
     <li><b>Class C — no logic changed.</b> This task is documentation only; no leg applies.</li>
     <li><b>Found</b> — the repository has no TLA+ spec, no Lean project, and neither TLC nor Lean installed. Property-based testing exists in one file (<code>protocol/test/unit/crdt-properties.test.ts</code>). Hypothesis and proptest are not dependencies.</li>
-    <li><b>Not done</b> <span class="tag blocked">open</span> — toolchain bootstrap (TLC, Lean/Lake, Hypothesis, proptest, fast-check in <code>grid</code>/<code>dashboard</code>), <code>verification/</code> directory and property registry, a CI gate that enforces the rule. Until then the rule is enforced by review only, and every logic task must report its legs as NOT VERIFIED.</li>
+    <li><b>Bootstrap</b> — done later the same session, see below.</li>
   </ul>
   <div class="panel"><ul class="dec">
     <li><b>Decision (Claude's reading, open to correction):</b> “all tasks” is applied as: every task is classified; tasks that change logic need all three legs; documentation/styling/config tasks record “Class C”. <span class="q">A TLA+ spec or Lean proof of a wiki edit would be empty and would only look like verification.</span></li>
     <li><b>Decision:</b> the rules live in the private developer tree, not the public wiki (D‑WIKI‑07 — development process is not system knowledge).</li>
   </ul></div>
+
+  <h3>Bootstrap — toolchains, first verified area, gate</h3>
+  <ul>
+    <li><b>Toolchains installed</b> <span class="tag done">done</span> — Java (Homebrew openjdk), TLC 1.7.4 (jar fetched by <code>verification/run.sh</code>, SHA‑256 pinned), Lean 4 via elan (<code>v4.15.0</code> pinned). fast-check added to <code>grid</code>, <code>dashboard</code>; Hypothesis to <code>brain</code>; proptest to <code>brain-rs</code>, <code>viz-rs</code>.</li>
+    <li><b>First verified area: vector clocks</b> <span class="tag done">done</span> — <code>verification/tla/VectorClock.tla</code>, <code>verification/lean/Verification/VectorClock.lean</code>, <code>protocol/test/unit/vector-clock.property.test.ts</code>, registry <a href="../verification/PROPERTIES.md">verification/PROPERTIES.md</a>.</li>
+    <li><b>Defect found and fixed</b> <span class="tag done">done</span> — the first property-test run failed: <code>mergeVectorClocks({}, {"toString": 0})</code> returned <code>NaN</code>, because <code>merged[node] || 0</code> read <code>Object.prototype.toString</code>. A node id of <code>__proto__</code> was dropped by assignment. Clocks arrive from remote peers, so both were reachable from the network. Fixed in <code>protocol/src/knowledge.ts</code> (<code>ownCount</code>, <code>defineProperty</code>); both kept as regression cases.</li>
+    <li><b>Gate and CI</b> <span class="tag done">done</span> — <code>scripts/check-verification.mjs</code> (32nd gate, wired in <code>rig-invariants.yml</code>); <code>.github/workflows/verification.yml</code> runs TLC and the Lean build.</li>
+    <li><b>Found, not caused by this work</b> — <code>brain/uv.lock</code> was stale since June: it lacked <code>trafilatura</code> and <code>h2</code>, which <code>pyproject.toml</code> requires, so CI (<code>uv sync --frozen</code>) ran without them. Regenerated; this also moved <code>urllib3</code> 2.6.3→2.8.0 and <code>charset-normalizer</code> 3.4.7→3.5.3. Three <code>protocol/test/integration/real-agents-e2e</code> tests fail locally with and without this change (they need a live Ollama model and OpenRouter).</li>
+  </ul>
+<pre>Class: A
+Property     TLA+ (3 replicas, 3 ticks; 25,000 distinct states)  Lean (no bound)                 PBT (cases x seeds)   Mutation caught
+P-VCLOCK-01  VectorClock.tla MergeCommutative                    merge_comm                      1,000 x 10 + 10,000   PBT yes
+P-VCLOCK-02  VectorClock.tla MergeAssociative                    merge_assoc                     1,000 x 10 + 10,000   PBT yes
+P-VCLOCK-03  VectorClock.tla MergeIdempotent                     merge_idem                      1,000 x 10 + 10,000   not broken separately
+P-VCLOCK-04  VectorClock.tla MergeUpperBound                     merge_upper_bound, merge_least  1,000 x 10 + 10,000   TLC yes, PBT yes
+P-VCLOCK-05  VectorClock.tla NoFutureKnowledge                   noFuture_reachable              1,000 x 10 + 10,000   TLC yes, Lean yes, PBT yes
+P-VCLOCK-06  VectorClock.tla NeverBackward                       step_never_backward             1,000 x 10 + 10,000   PBT yes
+TLC and lake build: 2 clean runs each. Suites after the change: protocol unit 380, grid 4522, brain 1543, brain-rs 22, dashboard 960 — all pass.
+Not verified: negative, fractional or NaN counts from a remote peer (not rejected today); liveness (none promised);
+the tick step is mirrored in the test because the code increments inline; KnowledgeCard merge and HLC;
+the new CI workflow and gate step had not run on GitHub when this was written.</pre>
 
   <!-- ============================ SESSION 31 ============================ -->
   <h2>Session 31 — 2026‑11‑23 · “Bring the public wiki in line with what runs”</h2>

@@ -8,7 +8,7 @@ owners: [henry, claude]
 
 # CI gates — the constitutional checks
 
-> A set of `scripts/check-*.mjs` scripts that mechanically enforce the system's non-negotiable invariants in CI. Each gate turns a philosophy/architecture rule into a build-blocking check. Source: `scripts/check-*.mjs` (31 gates). All 31 run on every push and pull request in `.github/workflows/rig-invariants.yml`; `check-gates-wired` fails the build if a gate script is added without a workflow step.
+> A set of `scripts/check-*.mjs` scripts that mechanically enforce the system's non-negotiable invariants in CI. Each gate turns a philosophy/architecture rule into a build-blocking check. Source: `scripts/check-*.mjs` (32 gates). All 32 run on every push and pull request in `.github/workflows/rig-invariants.yml`; `check-gates-wired` fails the build if a gate script is added without a workflow step.
 
 ## 🗺️ At a glance
 
@@ -35,6 +35,7 @@ flowchart TD
 | **Money** | `check-ledger-b-money` · `check-treasury-no-bios-death` | Ledger-B stays retired (no `transferWei`, no `balance_wei` money); treasury exhaustion never causes a Type B `bios.death` |
 | **Rig / replay isolation** | `check-rig-invariants` · `check-replay-readonly` | Researcher-rig events never reach production; replay chains are read-only |
 | **Hygiene** | `check-no-silent-catch` · `check-observability-no-todo` · `check-gates-wired` · `check-ratchet` | No silent `.catch`; structured logging; no TODO in observability paths; every gate script is run by a CI workflow; copied anti-patterns (inline DID/HEX64/address regex, `useEffect`, type escapes, checker suppressions, UI timers) may only go down from the counts in `scripts/ratchet-baseline.json`. Lower a baseline with `node scripts/check-ratchet.mjs --update` (it never raises one) |
+| **Verification** | `check-verification` | Triple Verification Rule, static half: every row of `verification/PROPERTIES.md` names a TLA+ spec, a Lean file and a property test that each carry the property's ID; no unregistered ID; no `sorry` / `admit` / `axiom` / `native_decide` in Lean; every `.tla` has a `.cfg`. The dynamic half (TLC + `lake build`) is `verification/run.sh`, run by `.github/workflows/verification.yml`. See [verification.md](verification.md) |
 | **Docs** | `check-wiki` · `check-map-sync` | Wiki page invariants (front-matter, At-a-glance diagram, one canonical per topic) — see `PROTOCOL.md`; the canonical world map and its dashboard copy stay identical |
 
 ## Test suites in CI
