@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noēsis — "All Code Is Slop": the talk, and what we applied</title>
+<meta name="description" content="What Lauren Tan's talk (Grok Bot team, via an AgentOS Korean walkthrough) says about keeping agent-written code trustworthy, how Noēsis measured against it, and what was applied on 2026-11-22: all 30 check gates and 7,447 tests now gate every pull request (was 16 gates and 27 tests), 28 of 29 broken tests fixed, three flaky tests fixed, one real replay-page bug found.">
+<style>
+:root{
+  --bg:#0a0e14; --surface:#121a25; --surface2:#17212e; --border:#22303f; --border-soft:#1a2633;
+  --text:#e6edf3; --muted:#a9b6c4; --muted2:#7d8c9c;
+  --accent:#5fb0e8; --accent2:#46e0d0;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --neutral:#5d6b7a;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --mono:'SFMono-Regular',ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR','Apple SD Gothic Neo',sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg)}
+body{color:var(--text);font-family:var(--sans);line-height:1.65;font-size:15.5px;overflow-wrap:anywhere}
+.wrap{max-width:1040px;margin:0 auto;padding:40px 16px 90px}
+h1{font-size:32px;line-height:1.2;margin:8px 0 8px}
+h2{font-size:22px;margin:54px 0 12px;padding-top:20px;border-top:1px solid var(--border-soft)}
+h2 .n{font-family:var(--mono);color:var(--muted2);font-size:15px;margin-right:8px}
+h3{font-size:17px;margin:26px 0 8px;color:var(--accent)}
+p,li{color:var(--muted)}
+strong{color:var(--text)}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:13px;background:var(--border-soft);padding:1px 6px;border-radius:4px;color:var(--accent2)}
+.k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2)}
+.lede{font-size:18px;color:var(--text);margin:6px 0}
+.ko{color:var(--muted)}
+.lede.ko{font-size:16.5px;color:var(--muted)}
+.lang{display:inline-block;font-family:var(--mono);font-size:10px;color:var(--muted2);border:1px solid var(--border);border-radius:4px;padding:0 6px;margin-right:6px;vertical-align:2px}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 14px;margin:18px 0 4px;font-size:14px}
+nav.toc a{text-decoration:none}
+.bi{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px}
+.bi>*{min-width:0}
+@media (max-width:820px){.bi{grid-template-columns:1fr}}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin:16px 0}
+.box>*{min-width:0}
+.box.good{border-left:3px solid var(--good)}
+.box.warn{border-left:3px solid var(--warn)}
+.box.crit{border-left:3px solid var(--crit)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0 8px}
+@media (max-width:820px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 14px 12px;min-width:0}
+.tile .v{font-size:28px;font-weight:700;color:var(--text);line-height:1.15;font-variant-numeric:tabular-nums}
+.tile .v .was{font-size:17px;font-weight:500;color:var(--muted2);text-decoration:line-through;margin-right:6px}
+.tile .l{font-size:13px;color:var(--muted);margin-top:4px}
+.tile .l .ko{display:block;font-size:12px;color:var(--muted2)}
+.tbl{overflow-x:auto;margin:14px 0;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px}
+th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--surface);color:var(--text);font-weight:600}
+td{color:var(--muted)}
+td .ko,th .ko{display:block;font-size:12.5px;color:var(--muted2);font-weight:400;margin-top:2px}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--text)}
+.st{display:inline-block;font-family:var(--mono);font-size:11px;border-radius:4px;padding:0 6px;white-space:nowrap;border:1px solid}
+.st.good{color:#5fd35f;border-color:var(--good)}
+.st.warn{color:var(--warn);border-color:var(--warn)}
+.st.crit{color:#ef7575;border-color:var(--crit)}
+.st.neu{color:var(--muted);border-color:var(--neutral)}
+figure{margin:18px 0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 14px 10px}
+figure svg{display:block;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--muted2);margin-top:8px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);margin:2px 0 8px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:14px 0}
+@media (max-width:820px){.cards{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;min-width:0}
+.card h4{margin:0 0 4px;font-size:15px;color:var(--text)}
+.card .t{font-family:var(--mono);font-size:11px;color:var(--muted2)}
+.card ul{margin:6px 0 0;padding-left:18px}
+.card li{font-size:14px}
+.mono{font-family:var(--mono)}
+.hex{font-family:var(--mono);font-size:15px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;display:block;margin:6px 0;overflow-x:auto;white-space:nowrap}
+.hex b{color:var(--bg);background:var(--warn);border-radius:3px;padding:0 2px}
+.hex s{color:var(--muted2)}
+.src{font-size:13px;color:var(--muted2)}
+.foot{margin-top:60px;font-size:13px;color:var(--muted2);border-top:1px solid var(--border-soft);padding-top:16px}
+svg text{font-family:var(--sans)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="k">Noēsis · Engineering · Talk analysis + applied work · 2026-11-22</div>
+<h1>"All Code Is Slop": the talk, and what we applied</h1>
+<p class="lede">The talk's method is one Noēsis already believed in but only half enforced. Today we closed the biggest gap: <strong>every check gate and every test suite now runs on every pull request</strong>, and the first runs found 28 stale tests, four tests whose result depended on timing or the machine, and one real bug.</p>
+<p class="lede ko"><span class="lang">KO</span>발표의 방법론은 Noēsis가 이미 믿고 있었지만 절반만 강제하던 것입니다. 오늘 가장 큰 공백을 메웠습니다. <strong>모든 검사 게이트와 모든 테스트 스위트가 이제 모든 PR에서 실행</strong>되며, 첫 실행들에서 낡은 테스트 28개, 타이밍이나 기기에 따라 결과가 달라지는 테스트 4개, 실제 버그 1개가 드러났습니다.</p>
+
+<div class="tiles">
+  <div class="tile"><div class="v"><span class="was">16</span>30</div><div class="l">check gates run by CI<span class="ko">CI가 실행하는 검사 게이트</span></div></div>
+  <div class="tile"><div class="v"><span class="was">27</span>7,447</div><div class="l">tests that gate every PR<span class="ko">모든 PR을 막는 테스트 수</span></div></div>
+  <div class="tile"><div class="v"><span class="was">29</span>1</div><div class="l">tests skipped as broken<span class="ko">깨져서 건너뛰는 테스트</span></div></div>
+  <div class="tile"><div class="v">4</div><div class="l">PRs merged in 71 min, no source code changed<span class="ko">71분 동안 병합한 PR, 소스 코드 변경 없음</span></div></div>
+</div>
+
+<nav class="toc">
+  <a href="#talk">1 · The talk</a><a href="#pyramid">2 · The pyramid</a><a href="#before">3 · Where we stood</a><a href="#applied">4 · What we applied</a><a href="#found">5 · What CI found</a><a href="#errors">6 · Errors &amp; status</a><a href="#important">7 · What matters</a><a href="#pstack">8 · pstack</a><a href="#next">9 · Next</a><a href="#evidence">10 · Evidence</a>
+</nav>
+
+<!-- ============================================================ 1 -->
+<h2 id="talk"><span class="n">01</span>The talk / 발표 내용</h2>
+<div class="bi">
+  <div>
+    <p>The source is a 23-minute Korean walkthrough on the <strong>AgentOS</strong> YouTube channel (published 2026-11-15) of <strong>Lauren Tan</strong>'s talk <em>"All Code Is Slop (Except Mine)"</em> at the AI Engineer conference. She works on <strong>Grok Bot</strong>, an agent desktop app (Electron), and is the author of the <code>pstack</code> plugin. "Slop" means low-quality output an AI produced carelessly.</p>
+    <p>Her thesis: an engineer's job is now to <strong>keep or raise code quality while output rises massively</strong>. She calls the method "trust": not blind trust, but investing in the agent's environment until you can trust it to do the right thing. It took her six months.</p>
+  </div>
+  <div class="ko">
+    <p><span class="lang">KO</span>출처는 <strong>AgentOS</strong> 유튜브 채널의 23분짜리 한국어 해설 영상(2026-11-15 게시)이며, 원본은 AI Engineer 컨퍼런스에서 <strong>로렌 탄(Lauren Tan)</strong>이 한 발표 <em>"All Code Is Slop (Except Mine)"</em>입니다. 발표자는 에이전트 데스크톱 앱(Electron)인 <strong>Grok Bot</strong>을 만들고, <code>pstack</code> 플러그인의 저자입니다. "슬롭"은 AI가 대충 찍어낸 낮은 품질의 결과물을 뜻합니다.</p>
+    <p>핵심 주장은 엔지니어의 일이 이제 <strong>산출량이 크게 늘어도 코드 품질을 유지하거나 높이는 것</strong>이라는 점입니다. 방법의 이름은 "신뢰"입니다. 맹목적 신뢰가 아니라, 에이전트가 옳은 일을 한다고 믿을 수 있을 때까지 에이전트의 환경에 투자하는 것입니다. 그녀는 여섯 달이 걸렸다고 합니다.</p>
+  </div>
+</div>
+
+<h3>Numbers shown in the talk (self-reported) / 발표에 나온 숫자 (본인 제시)</h3>
+<div class="tbl"><table>
+<tr><th>Claim<span class="ko">주장</span></th><th>Value<span class="ko">값</span></th></tr>
+<tr><td>Pull requests merged by the team in October<span class="ko">10월 한 달 팀이 병합한 PR</span></td><td class="num">≈ 11,000</td></tr>
+<tr><td>Share of those reverted, steady<span class="ko">되돌린 비율 (안정적)</span></td><td class="num">≈ 0.5 %</td></tr>
+<tr><td>People with at least one PR in October<span class="ko">10월에 PR을 1개 이상 낸 사람</span></td><td class="num">227</td></tr>
+<tr><td>Her own monthly PRs: March → last month<span class="ko">본인의 월간 PR: 3월 → 지난달</span></td><td class="num">68 → ≈ 3,000</td></tr>
+<tr><td>PRs to review per day: 2024 → now<span class="ko">하루 리뷰할 PR: 2024년 → 지금</span></td><td class="num">3 → ≈ 300</td></tr>
+<tr><td>Code comments in the codebase: end of July → now<span class="ko">코드 주석 수: 7월 말 → 지금</span></td><td class="num">65,824 → 1,227</td></tr>
+<tr><td>A step chart rising as corrections became rules (axis unnamed)<span class="ko">교정이 규칙이 될 때마다 오르는 계단 그래프 (축 이름 없음)</span></td><td class="num">7 → 167</td></tr>
+<tr><td>Share of a developer's daily tokens spent on verification (a tweet she cites)<span class="ko">한 개발자의 하루 토큰 중 검증에 쓰는 비율 (인용한 트윗)</span></td><td class="num">≈ 70 %</td></tr>
+<tr><td>Stable desktop release, said "about daily"; slide median interval Sep / Oct<span class="ko">안정판 릴리스, 말로는 "하루 한 번쯤"; 슬라이드 중앙값 9월 / 10월</span></td><td class="num">25 h / 28 h</td></tr>
+</table></div>
+<p class="src">The narrator says these are the speaker's own figures and could not be checked. We did not check them either. / 해설자는 이 숫자들이 발표자가 직접 제시한 값이라 확인할 수 없었다고 밝힙니다. 우리도 확인하지 않았습니다.</p>
+
+<h3>Her concrete examples / 구체적인 사례</h3>
+<div class="cards">
+  <div class="card"><h4>Ban what needs nuance</h4><div class="t">Codebase</div><p>React <code>useEffect</code> is easy to misuse, and agents misuse it. Grok Bot bans it in product code; it is allowed only inside the framework's own APIs. The problem is gone "categorically".</p><p class="ko">미묘해서 잘못 쓰기 쉬운 <code>useEffect</code>를 제품 코드에서 금지하고 프레임워크 내부에서만 허용합니다. 문제가 "범주째" 사라집니다.</p></div>
+  <div class="card"><h4>Context through folders</h4><div class="t">Static analysis</div><p>Two top-level folders, one for Electron's main process and one for its renderer, with imports between them banned by a dependency checker and lint rules. Agents stopped causing UI jank by importing main-thread code.</p><p class="ko">최상위 폴더 두 개로 나누고 서로 가져다 쓰는 것을 의존성 검사기와 린트로 금지했습니다. 에이전트가 메인 스레드 코드를 가져와 화면을 버벅이게 하는 일이 없어졌습니다.</p></div>
+  <div class="card"><h4>Comments as excuses</h4><div class="t">Prose</div><p>Agents wrote comments justifying quick fixes (timers patched over an architecture clash). The timers spread and the app slowed. Grok Bot bans 99 % of comments and adds lint errors that name the root cause instead.</p><p class="ko">에이전트가 땜질(타이머)을 정당화하는 주석을 썼고, 타이머가 퍼져 앱이 느려졌습니다. 주석 99%를 금지하고, 근본 원인을 알려 주는 린트 오류로 대신합니다.</p></div>
+  <div class="card"><h4>Review evidence, not code</h4><div class="t">Verification</div><p>Agents run the app (Chrome DevTools protocol) using a "feature map" of every user-facing feature, and leave videos, screenshots and diagrams. TLA+ checks multi-device notification flows; Lean proves a virtual-list algorithm; property-based tests probe the UI.</p><p class="ko">에이전트가 모든 기능의 "기능 지도"를 보고 앱을 직접 실행해 영상·스크린샷·다이어그램을 증거로 남깁니다. TLA+로 알림 흐름을, Lean으로 가상 목록 알고리즘을 검증하고, 속성 기반 테스트로 UI를 시험합니다.</p></div>
+</div>
+
+<!-- ============================================================ 2 -->
+<h2 id="pyramid"><span class="n">02</span>The inverted pyramid / 거꾸로 선 피라미드</h2>
+<div class="bi">
+  <p>Her answer to "where should I spend time on the agent's environment" is an inverted pyramid, widest layer first. The top two layers are <strong>deterministic</strong>: they constrain what agents can do and force the right thing by default. Prose (rules files, skills, <code>AGENTS.md</code>) is a thin layer kept for judgment calls only.</p>
+  <p class="ko"><span class="lang">KO</span>"에이전트 환경의 어디에 시간을 써야 하는가"에 대한 답은 넓은 층부터 쌓은 거꾸로 선 피라미드입니다. 위의 두 층은 <strong>결정적</strong>입니다. 에이전트가 할 수 있는 일을 제한하고 기본값으로 옳은 일을 하게 만듭니다. 산문(규칙 파일, 스킬, <code>AGENTS.md</code>)은 판단이 필요한 것만 담는 얇은 층입니다.</p>
+</div>
+
+<figure>
+<div class="legend"><span><i style="background:var(--good)"></i>✓ strong / 강함</span><span><i style="background:var(--warn)"></i>▲ partial / 부분적</span><span><i style="background:var(--neutral)"></i>● unchanged by design / 의도적으로 유지</span></div>
+<svg viewBox="0 0 760 400" role="img" aria-labelledby="pyrT pyrD">
+  <title id="pyrT">The talk's inverted pyramid with Noēsis's status in each layer after today's work</title>
+  <desc id="pyrD">Five layers from widest to narrowest: codebase (strong), static analysis (partial: all 30 gates in CI, no ESLint config), verification (partial: 7,447 tests in CI, no property or formal checks on money paths), prose (partial: the heaviest layer here), human review (kept: auto-merge not adopted).</desc>
+  <g>
+    <polygon points="10,10 750,10 696,76 64,76" fill="rgba(12,163,12,.22)" stroke="#0ca30c" stroke-width="1.5"><title>Codebase — strong</title></polygon>
+    <text x="380" y="38" text-anchor="middle" fill="#e6edf3" font-size="16" font-weight="700">1 · Codebase</text>
+    <text x="380" y="60" text-anchor="middle" fill="#a9b6c4" font-size="12.5">✓ sole producers · frozen allowlist · withLedger · zones keyed by kind</text>
+  </g>
+  <g>
+    <polygon points="74,86 686,86 632,152 128,152" fill="rgba(250,178,25,.16)" stroke="#fab219" stroke-width="1.5"><title>Static analysis — partial</title></polygon>
+    <text x="380" y="114" text-anchor="middle" fill="#e6edf3" font-size="16" font-weight="700">2 · Static analysis</text>
+    <text x="380" y="136" text-anchor="middle" fill="#a9b6c4" font-size="12.5">▲ 30 of 30 gates in CI (was 16) · no ESLint config</text>
+  </g>
+  <g>
+    <polygon points="138,162 622,162 568,228 192,228" fill="rgba(250,178,25,.16)" stroke="#fab219" stroke-width="1.5"><title>Verification — partial</title></polygon>
+    <text x="380" y="190" text-anchor="middle" fill="#e6edf3" font-size="16" font-weight="700">3 · Verification</text>
+    <text x="380" y="212" text-anchor="middle" fill="#a9b6c4" font-size="12.5">▲ 7,447 tests in CI (was 27) · no property/formal</text>
+  </g>
+  <g>
+    <polygon points="202,238 558,238 504,304 256,304" fill="rgba(250,178,25,.16)" stroke="#fab219" stroke-width="1.5"><title>Prose — partial (heavy)</title></polygon>
+    <text x="380" y="266" text-anchor="middle" fill="#e6edf3" font-size="16" font-weight="700">4 · Prose</text>
+    <text x="380" y="288" text-anchor="middle" fill="#a9b6c4" font-size="12.5">▲ heaviest layer here</text>
+  </g>
+  <g>
+    <polygon points="266,314 494,314 440,380 320,380" fill="rgba(93,107,122,.25)" stroke="#5d6b7a" stroke-width="1.5"><title>Human review — kept</title></polygon>
+    <text x="380" y="342" text-anchor="middle" fill="#e6edf3" font-size="15" font-weight="700">5 · Human review</text>
+    <text x="380" y="363" text-anchor="middle" fill="#a9b6c4" font-size="12">● kept</text>
+  </g>
+</svg>
+<figcaption>Width = where the talk says to invest. Colour = Noēsis after today. / 너비 = 발표가 말하는 투자 비중. 색 = 오늘 작업 이후 Noēsis의 상태.</figcaption>
+</figure>
+
+<div class="cards">
+  <div class="card"><h4>Rule 1 · Every correction becomes a check</h4><p>When you correct an agent, do not add a line to a rules file. Turn it into a lint rule, test, type or API change. A rule in code is reproducible; a rule in prose is a hope.</p><p class="ko"><span class="lang">KO</span>에이전트를 교정할 때 규칙 파일에 한 줄을 보태지 말고 린트 규칙·테스트·타입·API 변경으로 바꾸라는 것입니다. 코드 속 규칙은 재현되지만 산문 속 규칙은 바람일 뿐입니다.</p></div>
+  <div class="card"><h4>Rule 2 · Fix the inner loop before automating it</h4><p>If the loop that writes code produces slop, automating it produces more slop at higher token cost. Block new anti-patterns first, clean up old ones next, then make verification strong.</p><p class="ko"><span class="lang">KO</span>코드를 쓰는 안쪽 루프가 슬롭을 내면, 자동화는 더 많은 토큰으로 더 많은 슬롭을 만들 뿐입니다. 새 안티패턴부터 막고, 기존 것을 치우고, 검증을 단단히 하라는 순서입니다.</p></div>
+</div>
+
+<!-- ============================================================ 3 -->
+<h2 id="before"><span class="n">03</span>Where Noēsis stood this afternoon / 오늘 오후 Noēsis의 상태</h2>
+<div class="bi">
+  <p>Measured on <code>main</code> at <code>fe98f4ad</code> before any change. The codebase layer was strong, but the deterministic checks Noēsis had already written mostly were not enforced: <strong>CI ran 16 of 29 gate scripts and 11 of grid's 509 test files</strong>. Everything else ran only when someone remembered to run it.</p>
+  <p class="ko"><span class="lang">KO</span>변경 전 <code>main</code>(<code>fe98f4ad</code>)에서 측정했습니다. 코드베이스 층은 강했지만, Noēsis가 이미 작성해 둔 결정적 검사는 대부분 강제되지 않았습니다. <strong>CI는 게이트 스크립트 29개 중 16개, grid 테스트 파일 509개 중 11개만 실행</strong>했습니다. 나머지는 누군가 기억해서 실행할 때만 돌았습니다.</p>
+</div>
+<div class="tbl"><table>
+<tr><th>Layer<span class="ko">층</span></th><th>What we had<span class="ko">가진 것</span></th><th>Gap (before)<span class="ko">공백 (변경 전)</span></th></tr>
+<tr><td>Codebase<span class="ko">코드베이스</span></td><td>Sole-producer discipline, frozen broadcast allowlist, <code>withLedger</code>, zones keyed by kind<span class="ko">단일 생산자 규율, 고정 허용 목록, withLedger, kind 기준 구역</span></td><td><span class="st good">none found</span></td></tr>
+<tr><td>Static analysis<span class="ko">정적 분석</span></td><td>29 <code>scripts/check-*.mjs</code> gates, all passing<span class="ko">게이트 29개, 전부 통과</span></td><td>CI ran 16; 9 ran only under <code>npm test</code>; 4 ran nowhere automatic. ESLint 9 installed but <strong>no config file</strong>.<span class="ko">CI 16개, npm test 전용 9개, 자동 실행 없음 4개. ESLint 설정 파일 없음.</span></td></tr>
+<tr><td>Verification<span class="ko">검증</span></td><td>Test files: grid 509, Brain (Python) 154, dashboard 114, protocol 44<span class="ko">테스트 파일: grid 509, Brain 154, dashboard 114, protocol 44</span></td><td>CI ran only <code>grid/test/rig</code> (27 tests) and the real-MySQL checks. No pytest, cargo, tsc or full suite.<span class="ko">CI는 rig 테스트 27개와 MySQL 검사만 실행. pytest·cargo·tsc·전체 스위트 없음.</span></td></tr>
+<tr><td>Property / formal<span class="ko">속성 / 형식 검증</span></td><td><code>fast-check</code> in one protocol test file<span class="ko">protocol 테스트 파일 1개에서만 사용</span></td><td>No TLA+ or Lean; money paths (IOU ledger, civic dues) have none<span class="ko">TLA+/Lean 없음. 돈이 오가는 경로에 없음</span></td></tr>
+<tr><td>Prose<span class="ko">산문</span></td><td>206-line project <code>CLAUDE.md</code>, ≈ 2,300 lines of global agent instructions, 22 memory notes<span class="ko">프로젝트 CLAUDE.md 206줄, 전역 지침 약 2,300줄, 메모 22개</span></td><td>Heavy in the layer the talk says to keep smallest<span class="ko">발표가 가장 작게 두라는 층이 가장 두꺼움</span></td></tr>
+</table></div>
+
+<!-- ============================================================ 4 -->
+<h2 id="applied"><span class="n">04</span>What we applied / 적용한 것</h2>
+<div class="bi">
+  <p>Four pull requests in 71 minutes. None changed product source code: they changed CI workflows, tests, one new gate script and planning docs. Each was checked twice before merge and once more on <code>main</code>.</p>
+  <p class="ko"><span class="lang">KO</span>71분 동안 PR 4개. 제품 소스 코드는 바꾸지 않았습니다. CI 워크플로, 테스트, 새 게이트 스크립트 1개, 계획 문서만 바꿨습니다. 모두 병합 전에 두 번, <code>main</code>에서 한 번 더 확인했습니다.</p>
+</div>
+
+<figure>
+<svg viewBox="0 0 760 190" role="img" aria-labelledby="tlT">
+  <title id="tlT">Timeline, 2026-11-22 Pacific time: analysis at 15:43, PR 54 merged 16:25, PR 57 16:45 to 17:05, PR 58 17:13 to 17:20, PR 59 17:24 to 17:35; main was red from 17:21 to 17:35.</title>
+  <line x1="40" y1="150" x2="720" y2="150" stroke="#22303f" stroke-width="1"/>
+  <g fill="#7d8c9c" font-size="11" text-anchor="middle">
+    <line x1="40" y1="146" x2="40" y2="154" stroke="#3a4a5c"/><text x="40" y="168">15:40</text>
+    <line x1="153" y1="146" x2="153" y2="154" stroke="#3a4a5c"/><text x="153" y="168">16:00</text>
+    <line x1="267" y1="146" x2="267" y2="154" stroke="#3a4a5c"/><text x="267" y="168">16:20</text>
+    <line x1="380" y1="146" x2="380" y2="154" stroke="#3a4a5c"/><text x="380" y="168">16:40</text>
+    <line x1="493" y1="146" x2="493" y2="154" stroke="#3a4a5c"/><text x="493" y="168">17:00</text>
+    <line x1="607" y1="146" x2="607" y2="154" stroke="#3a4a5c"/><text x="607" y="168">17:20</text>
+    <line x1="720" y1="146" x2="720" y2="154" stroke="#3a4a5c"/><text x="720" y="168">17:40</text>
+  </g>
+  <text x="2" y="84" fill="#7d8c9c" font-size="11">PRs</text>
+  <text x="2" y="126" fill="#7d8c9c" font-size="11">main</text>
+  <circle cx="57" cy="80" r="5" fill="#3987e5"><title>15:43 analysis measured main at fe98f4ad</title></circle>
+  <text x="57" y="62" fill="#e6edf3" font-size="11.5" text-anchor="middle">analysis</text>
+  <rect x="289" y="74" width="6" height="12" rx="3" fill="#3987e5"><title>#54 · 16:24–16:25 · 13 gates wired + check-gates-wired</title></rect>
+  <text x="292" y="62" fill="#e6edf3" font-size="11.5" text-anchor="middle">#54 gates</text>
+  <rect x="408" y="74" width="114" height="12" rx="4" fill="#3987e5"><title>#57 · 16:45–17:05 · tests workflow, 6 jobs</title></rect>
+  <text x="465" y="104" fill="#e6edf3" font-size="11.5" text-anchor="middle">#57 test suites</text>
+  <rect x="567" y="74" width="40" height="12" rx="4" fill="#3987e5"><title>#58 · 17:13–17:20 · 28 stale tests fixed</title></rect>
+  <text x="560" y="62" fill="#e6edf3" font-size="11.5" text-anchor="middle">#58 28 tests</text>
+  <rect x="629" y="74" width="63" height="12" rx="4" fill="#3987e5"><title>#59 · 17:24–17:35 · 2 flaky tests fixed</title></rect>
+  <text x="690" y="62" fill="#e6edf3" font-size="11.5" text-anchor="middle">#59 flaky</text>
+  <rect x="612" y="118" width="80" height="12" rx="4" fill="#d03b3b"><title>main red 17:21–17:35: a flaky watchdog test failed after #58 merged</title></rect>
+  <text x="604" y="127" fill="#e6edf3" font-size="11" text-anchor="end">red ~15 min</text>
+  <rect x="694" y="118" width="26" height="12" rx="4" fill="#0ca30c"><title>17:38 all three workflows green on main at 7aa4d85a</title></rect>
+</svg>
+<figcaption>Pull-request open → merge, Pacific time. <code>main</code> was red for about 15 minutes after #58: a flaky test that had passed six runs failed there; #59 fixed it. Hover a bar for details. / PR 생성 → 병합 (태평양 시간). #58 이후 약 15분간 <code>main</code>이 실패 상태였습니다. 6회 통과했던 불안정 테스트가 실패했고 #59가 고쳤습니다.</figcaption>
+</figure>
+
+<h3>Check gates run by CI / CI가 실행하는 검사 게이트</h3>
+<figure>
+<div class="legend"><span><i style="background:var(--good)"></i>✓ run by CI on every PR / 모든 PR에서 CI 실행</span><span><i style="background:var(--warn)"></i>▲ only under local <code>npm test</code> / 로컬 npm test에서만</span><span><i style="background:var(--crit)"></i>✕ run nowhere automatic / 자동 실행 없음</span></div>
+<svg viewBox="0 0 760 120" role="img" aria-labelledby="gT">
+  <title id="gT">Check gates: before, 16 run by CI, 9 only under npm test, 4 nowhere (29 total). After, 30 of 30 run by CI.</title>
+  <text x="0" y="38" fill="#e6edf3" font-size="13" font-weight="600">Before</text>
+  <text x="0" y="54" fill="#7d8c9c" font-size="11">fe98f4ad · 29</text>
+  <rect x="180" y="24" width="297" height="32" rx="4" fill="#0ca30c"><title>16 gates run by CI</title></rect>
+  <text x="190" y="45" fill="#0a0e14" font-size="13" font-weight="700">16 in CI</text>
+  <rect x="479" y="24" width="166" height="32" rx="0" fill="#fab219"><title>9 gates only under npm test</title></rect>
+  <text x="489" y="45" fill="#0a0e14" font-size="13" font-weight="700">9 npm test only</text>
+  <rect x="647" y="24" width="73" height="32" rx="4" fill="#d03b3b"><title>4 gates run nowhere automatic: check-wiki, check-replay-readonly, check-cross-house-injection, check-cognitive-snapshot-plaintext</title></rect>
+  <text x="655" y="45" fill="#0a0e14" font-size="13" font-weight="700">4 none</text>
+  <text x="0" y="90" fill="#e6edf3" font-size="13" font-weight="600">After #54</text>
+  <text x="0" y="106" fill="#7d8c9c" font-size="11">93f10e8a · 30</text>
+  <rect x="180" y="76" width="560" height="32" rx="4" fill="#0ca30c"><title>30 of 30 gates run by CI (29 + the new check-gates-wired)</title></rect>
+  <text x="190" y="97" fill="#0a0e14" font-size="13" font-weight="700">30 in CI · incl. new check-gates-wired</text>
+</svg>
+<figcaption>The 30th gate, <code>check-gates-wired</code>, fails the build if a <code>check-*.mjs</code> script exists without a workflow step, so a gate can no longer be written and forgotten. With <code>main</code>'s old workflow it lists 14 unwired gates and exits 1. / 30번째 게이트 <code>check-gates-wired</code>는 워크플로 단계가 없는 게이트 스크립트가 있으면 빌드를 실패시킵니다. 예전 워크플로로 실행하면 미연결 게이트 14개를 나열하고 실패합니다.</figcaption>
+</figure>
+
+<h3>Tests that gate every PR / 모든 PR을 막는 테스트</h3>
+<figure>
+<svg viewBox="0 0 760 300" role="img" aria-labelledby="tT">
+  <title id="tT">Tests run on every PR after the change, per suite: grid 4,441; brain 1,542; dashboard 946; protocol 479; brain-rs 22; steward 12; dashboard e2e 5. Before: 27 grid rig tests only.</title>
+  <g font-size="12.5">
+    <text x="150" y="28" fill="#e6edf3" text-anchor="end">grid (vitest)</text>
+    <rect x="160" y="14" width="500" height="20" rx="4" fill="#3987e5"><title>grid · 503 files · 4,441 tests (Node 20)</title></rect>
+    <text x="666" y="29" fill="#e6edf3" font-weight="600">4,441</text>
+    <text x="150" y="62" fill="#e6edf3" text-anchor="end">brain (pytest)</text>
+    <rect x="160" y="48" width="174" height="20" rx="4" fill="#3987e5"><title>brain · 1,542 tests incl. parity fixtures</title></rect>
+    <text x="340" y="63" fill="#e6edf3" font-weight="600">1,542</text>
+    <text x="150" y="96" fill="#e6edf3" text-anchor="end">dashboard (vitest)</text>
+    <rect x="160" y="82" width="106" height="20" rx="4" fill="#3987e5"><title>dashboard · 110 files · 946 tests (Node 22)</title></rect>
+    <text x="272" y="97" fill="#e6edf3" font-weight="600">946</text>
+    <text x="150" y="130" fill="#e6edf3" text-anchor="end">protocol (vitest)</text>
+    <rect x="160" y="116" width="54" height="20" rx="4" fill="#3987e5"><title>protocol · 34 files · 479 tests (Node 22)</title></rect>
+    <text x="220" y="131" fill="#e6edf3" font-weight="600">479</text>
+    <text x="150" y="164" fill="#e6edf3" text-anchor="end">brain-rs (cargo)</text>
+    <rect x="160" y="150" width="3" height="20" rx="1.5" fill="#3987e5"><title>brain-rs · 22 tests incl. parity fixtures</title></rect>
+    <text x="169" y="165" fill="#e6edf3" font-weight="600">22</text>
+    <text x="150" y="198" fill="#e6edf3" text-anchor="end">steward (vitest)</text>
+    <rect x="160" y="184" width="2" height="20" rx="1" fill="#3987e5"><title>steward · 3 files · 12 tests + type-check</title></rect>
+    <text x="168" y="199" fill="#e6edf3" font-weight="600">12</text>
+    <text x="150" y="232" fill="#e6edf3" text-anchor="end">dashboard e2e</text>
+    <rect x="160" y="218" width="2" height="20" rx="1" fill="#3987e5"><title>Playwright · 5 browser tests (1 skipped, see §5)</title></rect>
+    <text x="168" y="233" fill="#e6edf3" font-weight="600">5</text>
+    <line x1="160" y1="252" x2="740" y2="252" stroke="#22303f"/>
+    <text x="150" y="280" fill="#7d8c9c" text-anchor="end">before: rig only</text>
+    <rect x="160" y="266" width="3" height="20" rx="1.5" fill="#5d6b7a"><title>Before: 27 tests in grid/test/rig</title></rect>
+    <text x="169" y="281" fill="#a9b6c4" font-weight="600">27</text>
+  </g>
+</svg>
+<figcaption>Totals from the run on <code>main</code> at <code>7aa4d85a</code> (run 45095387985): <strong>7,447 tests</strong>, up from 27. Grid also type-checks with <code>tsc</code>; Brain and brain-rs both replay the parity fixtures, so a one-sided change to the frozen Brain contract now fails CI. / <code>main</code>(<code>7aa4d85a</code>) 실행 기준 <strong>테스트 7,447개</strong>(이전 27개). Brain과 brain-rs 모두 패리티 픽스처를 재생하므로, 한쪽만 바꾼 Brain 계약 변경은 이제 CI에서 실패합니다.</figcaption>
+</figure>
+
+<h3>The CI layout now / 현재 CI 구성</h3>
+<div class="cards">
+  <div class="card"><h4>rig-invariants.yml</h4><div class="t">push · pull_request</div><ul><li>30 <code>check-*.mjs</code> gates (privacy, sovereignty, audit, determinism, civic, money, docs)</li><li>grid rig suite</li></ul><p class="ko">게이트 30개 + rig 스위트</p></div>
+  <div class="card"><h4>tests.yml <span class="st good">new</span></h4><div class="t">pull_request · push to main</div><ul><li><code>protocol</code> Node 22 · <code>grid</code> Node 20 (= prod image)</li><li><code>web</code> dashboard + steward · <code>dashboard-e2e</code> Playwright</li><li><code>brain</code> pytest · <code>brain-rs</code> cargo</li></ul><p class="ko">작업 6개, 신규</p></div>
+  <div class="card"><h4>real-mysql-migrations.yml</h4><div class="t">push · pull_request</div><ul><li>full migration chain on MySQL 8.0</li><li>task board + IOU ledger settlement</li></ul><p class="ko">MySQL 8.0 마이그레이션 + 정산 검사 (기존)</p></div>
+  <div class="card"><h4>nightly-rig-bench.yml</h4><div class="t">schedule 02:00 UTC</div><ul><li>50-Nous researcher-rig benchmark</li></ul><p class="ko">야간 벤치마크 (기존)</p></div>
+</div>
+
+<!-- ============================================================ 5 -->
+<h2 id="found"><span class="n">05</span>What CI found on its first runs / 첫 실행에서 CI가 찾은 것</h2>
+<div class="bi">
+  <p>Turning the suites on exposed tests that had been red on <code>main</code> for months without anyone seeing it. 29 had to be quarantined to land the workflow. Investigation showed <strong>28 were stale tests, not product regressions</strong>; one is a real bug.</p>
+  <p class="ko"><span class="lang">KO</span>스위트를 켜자 몇 달째 아무도 모른 채 <code>main</code>에서 실패하던 테스트가 드러났습니다. 워크플로를 넣기 위해 29개를 격리했고, 조사해 보니 <strong>28개는 제품 회귀가 아니라 낡은 테스트</strong>였고 1개는 실제 버그였습니다.</p>
+</div>
+
+<figure>
+<div class="legend"><span><i style="background:var(--s1)"></i>16 updated to current UI / 현재 UI에 맞게 갱신</span><span><i style="background:var(--s3)"></i>12 removed with a deleted page / 삭제된 페이지와 함께 제거</span><span><i style="background:var(--crit)"></i>✕ 1 still skipped: product bug / 제품 버그로 계속 건너뜀</span></div>
+<svg viewBox="0 0 760 64" role="img" aria-labelledby="qT">
+  <title id="qT">29 quarantined tests: 16 updated, 12 removed with their deleted page, 1 still skipped because the product is wrong.</title>
+  <rect x="0" y="8" width="397" height="34" rx="4" fill="#3987e5"><title>16 tests updated to the current UI</title></rect>
+  <text x="12" y="30" fill="#0a0e14" font-size="13" font-weight="700">16 updated</text>
+  <rect x="399" y="8" width="296" height="34" rx="0" fill="#199e70"><title>12 tests of a page replaced on 2026-05-26</title></rect>
+  <text x="411" y="30" fill="#0a0e14" font-size="13" font-weight="700">12 removed</text>
+  <rect x="697" y="8" width="43" height="34" rx="4" fill="#d03b3b"><title>1 replay test: the page is broken</title></rect>
+  <text x="718" y="30" fill="#0a0e14" font-size="13" font-weight="700" text-anchor="middle">1</text>
+  <text x="0" y="60" fill="#7d8c9c" font-size="11">0</text><text x="740" y="60" fill="#7d8c9c" font-size="11" text-anchor="end">29</text>
+</svg>
+</figure>
+
+<div class="tbl"><table>
+<tr><th>File<span class="ko">파일</span></th><th>Tests<span class="ko">수</span></th><th>Cause<span class="ko">원인</span></th></tr>
+<tr><td><code>PortalShell</code> tests (2 files)</td><td class="num">9</td><td>The component started calling the router (2026-05-22); the test's mock lacked it<span class="ko">컴포넌트가 라우터를 호출하기 시작했는데 목에 없었음</span></td></tr>
+<tr><td><code>PortalSidebarHeader.test.tsx</code></td><td class="num">1</td><td>"Open" became a CSS class instead of an inline style<span class="ko">"열림"이 인라인 스타일에서 CSS 클래스로 바뀜</span></td></tr>
+<tr><td><code>PostComposer.test.tsx</code></td><td class="num">1</td><td>The test set the Grid address after the module had read it<span class="ko">모듈이 Grid 주소를 읽은 뒤에 설정함</span></td></tr>
+<tr><td><code>heartbeat</code>, <code>firehose-row</code></td><td class="num">4</td><td>The 2026-05-20 editorial retheme changed colours and classes<span class="ko">5월 20일 리테마로 색과 클래스가 바뀜</span></td></tr>
+<tr><td><code>agency.spec.ts</code> (browser)</td><td class="num">1</td><td>Expected "Delete Nous" disabled; it went live in Phase 8<span class="ko">"Delete Nous"가 비활성이라 기대했으나 Phase 8에서 활성화</span></td></tr>
+<tr><td><code>portal-dashboard.test.ts</code> <span class="st neu">deleted</span></td><td class="num">12</td><td>Read the source text of a stat-card dashboard replaced by the landing page on 2026-05-26<span class="ko">5월 26일 랜딩 페이지로 대체된 대시보드의 소스를 읽던 테스트</span></td></tr>
+<tr><td><code>replay.spec.ts</code> <span class="st crit">product bug</span></td><td class="num">1</td><td><code>grid/replay/page.tsx</code> passes the operator tier as the constant <code>"H1"</code>, so replay never opens at any tier (since 2026-04-27)<span class="ko">운영자 등급을 상수 "H1"로 넘겨 어떤 등급에서도 리플레이가 열리지 않음 (4월 27일부터)</span></td></tr>
+</table></div>
+<p class="src">Proof the fixed tests still catch failures: the code was broken four ways on purpose (PostComposer posting to its own origin; deleted-row styling removed; every row styled as deleted; stale heartbeat not red) and the matching test failed each time; the code was then restored. / 고친 테스트가 여전히 실패를 잡는지 코드를 일부러 네 가지로 망가뜨려 확인했고, 매번 해당 테스트가 실패했습니다.</p>
+
+<h3>Four tests whose result depended on timing or the machine / 타이밍이나 기기에 따라 결과가 달라지던 테스트 4개</h3>
+<div class="cards">
+  <div class="card"><h4>Proof tamper that changed nothing</h4><div class="t">protocol · identity-proof.test.ts · fixed in #59</div>
+    <p>The test "tampered" a hex challenge by setting its first character to <code>f</code>. One challenge in 16 already starts with <code>f</code>:</p>
+    <span class="hex"><b>f</b>3a91c0e… → <b>f</b>3a91c0e… <s>(unchanged, still valid)</s></span>
+    <p>Over 400 proofs the old tamper changed nothing 31 times and the verifier accepted exactly those 31; with the fix it accepted 0. <strong>The verifier was right; the test was wrong.</strong></p>
+    <p class="ko">첫 글자를 <code>f</code>로 바꿔 "변조"했는데 16번 중 1번은 이미 <code>f</code>라 바뀌지 않았습니다. 400회 중 31회가 무변경이었고 검증기는 정확히 그 31개만 수락했습니다. 검증기는 옳고 테스트가 틀렸습니다.</p></div>
+  <div class="card"><h4>A price found inside a timestamp</h4><div class="t">grid · scene-route.test.ts · fixed in #57</div>
+    <p>The test checked that the response does not contain the price <code>900</code> by searching the whole JSON, which also holds a millisecond timestamp:</p>
+    <span class="hex">"at": 17953953<b>900</b>96</span>
+    <p>Reproduced by pinning the clock to that value, then fixed by leaving the timestamp out of the search.</p>
+    <p class="ko">가격 <code>900</code>이 없는지 JSON 전체에서 찾았는데, 밀리초 타임스탬프에 "900"이 들어 있었습니다. 시계를 그 값으로 고정해 재현한 뒤 타임스탬프를 검색에서 뺐습니다.</p></div>
+  <div class="card"><h4>Waiting one tick for a slow import</h4><div class="t">grid · health-watchdog-alert-sns.test.ts · fixed in #59</div>
+    <p>The alert is published in the background after a dynamic import of the AWS SDK. The test waited one <code>setTimeout(0)</code>; when the import was slower, the first test saw 0 alerts and the late alert landed in the next test. It turned <code>main</code> red after six green runs. Reproduced by delaying the mocked import 30 ms; fixed with <code>vi.waitFor</code>.</p>
+    <p class="ko">AWS SDK를 동적으로 불러온 뒤 알림을 보내는데, 테스트는 한 틱만 기다렸습니다. 불러오기가 느리면 알림이 다음 테스트로 새어 들어갔습니다. 6회 통과 후 <code>main</code>을 실패시켰고, 불러오기를 30ms 늦춰 재현한 뒤 고쳤습니다.</p></div>
+  <div class="card"><h4>A test that only worked on one machine</h4><div class="t">grid · operator-scope-typing.test.ts · fixed in #57</div>
+    <p>It hard-coded one developer machine's absolute repository path. Anywhere else it failed, and in a second checkout on that machine it silently tested the other checkout's copy of the gate. It now finds the repository root from its own location.</p>
+    <p class="ko">한 개발자 기기의 절대 경로를 하드코딩했습니다. 다른 곳에서는 실패했고, 같은 기기의 다른 체크아웃에서는 엉뚱한 사본을 조용히 테스트했습니다. 이제 자기 위치에서 저장소 루트를 찾습니다.</p></div>
+</div>
+
+<!-- ============================================================ 6 -->
+<h2 id="errors"><span class="n">06</span>Errors the analysis surfaced, and their status / 분석이 드러낸 오류와 현재 상태</h2>
+<div class="tbl"><table>
+<tr><th>Finding<span class="ko">발견</span></th><th>Status<span class="ko">상태</span></th></tr>
+<tr><td><code>CLAUDE.md</code> said the wiki gate is "CI-enforced"; no workflow ran it<span class="ko">CLAUDE.md는 위키 게이트가 "CI 강제"라 했지만 실행하는 워크플로가 없었음</span></td><td><span class="st good">✓ now true (#54)</span></td></tr>
+<tr><td>Two replay source comments called <code>check-replay-readonly</code> a "CI gate"; it was not<span class="ko">리플레이 주석 두 곳이 CI 게이트라 했지만 아니었음</span></td><td><span class="st good">✓ now true (#54)</span></td></tr>
+<tr><td>The Brain parity contract (Python ↔ Rust) was checked by neither suite in CI<span class="ko">Brain 패리티 계약을 CI가 어느 쪽에서도 검사하지 않았음</span></td><td><span class="st good">✓ both in CI (#57)</span></td></tr>
+<tr><td><code>check-admin-policy-isolation</code> passes while checking 0 routes; the 4 real admin routes are under <code>/api/v1/admin/</code> and listed <code>public</code> in the policy table (off by default, own operator check, not audited)<span class="ko">관리자 게이트가 경로 0개를 검사하고 통과함. 실제 관리자 경로 4개는 policy에 public으로 등록 (기본 꺼짐, 감사 안 함)</span></td><td><span class="st warn">▲ open</span></td></tr>
+<tr><td>No ESLint config file, so no lint rule applies<span class="ko">ESLint 설정 파일이 없어 어떤 린트 규칙도 적용 안 됨</span></td><td><span class="st warn">▲ open</span></td></tr>
+<tr><td>Replay page hard-codes tier <code>"H1"</code>; replay never opens (new, found by CI)<span class="ko">리플레이 페이지가 등급을 "H1"로 고정 — 열리지 않음 (CI가 새로 발견)</span></td><td><span class="st crit">✕ open, test skipped</span></td></tr>
+<tr><td>Protocol tests need Node 22 (a libp2p dependency uses <code>Promise.withResolvers</code>); the grid production image is Node 20 and imports protocol (new)<span class="ko">protocol 테스트는 Node 22 필요, grid 운영 이미지는 Node 20 (새 발견)</span></td><td><span class="st warn">▲ open, not checked in prod</span></td></tr>
+<tr><td>No git hooks installed<span class="ko">git 훅 미설치</span></td><td><span class="st neu">● CI now covers it</span></td></tr>
+</table></div>
+<div class="box warn"><p><strong>Two process mistakes during the work, both repaired.</strong> A scratch-clone command ran in the real repository after an earlier step failed, and a <code>git fetch --depth 1</code> made the shared repository shallow; full history was restored and checked (2,398 commits). And <code>main</code> was red for about 15 minutes between #58 and #59.</p>
+<p class="ko"><span class="lang">KO</span><strong>작업 중 절차상 실수 두 건, 모두 복구.</strong> 앞 단계 실패 후 임시 클론용 명령이 실제 저장소에서 실행되어 <code>git fetch --depth 1</code>이 저장소를 shallow로 만들었고, 전체 이력을 복구·확인했습니다(커밋 2,398개). 또 #58과 #59 사이 약 15분간 <code>main</code>이 실패 상태였습니다.</p></div>
+
+<!-- ============================================================ 7 -->
+<h2 id="important"><span class="n">07</span>What matters / 중요한 점</h2>
+<div class="bi">
+  <div>
+    <ol>
+      <li><strong>A check nobody runs is prose.</strong> 13 of our gates and nearly all tests were deterministic code that behaved like a rules file: correct, and not enforced. Wiring them in was the cheapest, largest step.</li>
+      <li><strong>Turning checks on finds rot first.</strong> 28 tests were stale and 4 more depended on timing or the machine, and nobody knew. The cost was paid once, today.</li>
+      <li><strong>A green check can mean nothing.</strong> One gate checks 0 routes; one tamper test sometimes changed nothing. Ask what a check would catch, then break the code to prove it.</li>
+      <li><strong>Fix the inner loop before automating it.</strong> Auto-merge without review stays off: the talk's claim rests on verification depth we only started building today.</li>
+      <li><strong>Don't copy everything.</strong> Her 99 % comment ban fits her codebase; ours carries decision IDs in comments (grid/src ≈ 27 % comment lines). Remove only comments that make claims nothing enforces.</li>
+    </ol>
+  </div>
+  <div class="ko">
+    <ol>
+      <li><span class="lang">KO</span><strong>아무도 실행하지 않는 검사는 산문입니다.</strong> 게이트 13개와 거의 모든 테스트가 결정적 코드인데도 규칙 파일처럼 작동했습니다. 옳지만 강제되지 않았습니다. 연결하는 것이 가장 싸고 큰 걸음이었습니다.</li>
+      <li><strong>검사를 켜면 썩은 곳부터 보입니다.</strong> 낡은 테스트 28개와 타이밍·기기에 좌우되는 테스트 4개가 있었고 아무도 몰랐습니다. 그 비용을 오늘 한 번에 치렀습니다.</li>
+      <li><strong>초록불이 아무 의미 없을 수 있습니다.</strong> 경로 0개를 검사하는 게이트, 가끔 아무것도 변조하지 않는 변조 테스트. 검사가 무엇을 잡는지 묻고, 코드를 망가뜨려 증명해야 합니다.</li>
+      <li><strong>자동화 전에 안쪽 루프부터.</strong> 리뷰 없는 자동 병합은 계속 끕니다. 발표의 주장은 우리가 오늘 막 쌓기 시작한 검증 깊이에 기대고 있습니다.</li>
+      <li><strong>전부 따라 하지 않습니다.</strong> 주석 99% 금지는 그 코드베이스에 맞습니다. 우리 주석에는 결정 ID가 담겨 있습니다(grid/src 약 27%가 주석 줄). 강제되지 않는 주장을 하는 주석만 지웁니다.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="tbl"><table>
+<tr><th>From the talk<span class="ko">발표의 방법</span></th><th>Decision<span class="ko">결정</span></th></tr>
+<tr><td>Every correction becomes a deterministic check<span class="ko">모든 교정을 결정적 검사로</span></td><td><span class="st good">adopted</span> 30 gates + 7,447 tests in CI; <code>check-gates-wired</code> keeps it so</td></tr>
+<tr><td>Agents verify their own work; humans review evidence<span class="ko">에이전트가 스스로 검증, 사람은 증거 검토</span></td><td><span class="st warn">started</span> full suites in CI; no feature map or recorded runtime evidence yet</td></tr>
+<tr><td>Lint rules with root-cause messages<span class="ko">근본 원인을 알려 주는 린트 규칙</span></td><td><span class="st warn">next</span> needs an ESLint config first, new code only</td></tr>
+<tr><td>Property-based and formal checks<span class="ko">속성 기반·형식 검증</span></td><td><span class="st warn">next</span> money paths first: IOU ledger, task board, civic dues (D-MONEY-10)</td></tr>
+<tr><td>Agents auto-merge their own PRs<span class="ko">에이전트 자동 병합</span></td><td><span class="st crit">not adopted</span> verification is not deep enough yet</td></tr>
+<tr><td>Ban 99 % of comments<span class="ko">주석 99% 금지</span></td><td><span class="st neu">not copied</span> remove only unenforced claims</td></tr>
+</table></div>
+
+<!-- ============================================================ 8 -->
+<h2 id="pstack"><span class="n">08</span>pstack / pstack 플러그인</h2>
+<div class="bi">
+  <p>The plugin cited in the talk (<code>cursor/plugins</code>, folder <code>pstack</code>, MIT) is installed for Claude Code as <code>pstack@cursor-plugins</code> v0.15.46. Its own <code>/correct</code> skill is the talk's rule 1 as a workflow. The standing rule is to <strong>use it only when a task needs one of its skills</strong>, not on every task: its full playbooks cost more than small changes are worth.</p>
+  <p class="ko"><span class="lang">KO</span>발표에 나온 플러그인(<code>cursor/plugins</code>의 <code>pstack</code> 폴더, MIT)을 Claude Code에 <code>pstack@cursor-plugins</code> v0.15.46으로 설치했습니다. <code>/correct</code> 스킬은 발표의 규칙 1을 작업 흐름으로 만든 것입니다. 상시 규칙은 <strong>작업에 그 스킬이 꼭 필요할 때만 사용</strong>하는 것입니다. 전체 플레이북은 작은 변경에는 비용이 더 큽니다.</p>
+</div>
+<div class="tbl"><table>
+<tr><th>pstack skill</th><th>Fits this Noēsis gap<span class="ko">대응하는 Noēsis 공백</span></th></tr>
+<tr><td><code>/pstack:correct</code></td><td>Turn repeated corrections into lint, CI or tests; mine the prose layer for rules that should be code<span class="ko">반복 교정을 린트·CI·테스트로, 산문 층의 규칙을 코드로</span></td></tr>
+<tr><td><code>/pstack:create-verification-skill</code></td><td>A feature map + scripted way to prove dashboard and Portal behaviour<span class="ko">대시보드·포털 동작을 증명하는 기능 지도와 스크립트</span></td></tr>
+<tr><td><code>/pstack:create-formal-verification-skill</code></td><td>Model the IOU ledger and civic-duty state machine before building more on them<span class="ko">IOU 원장과 시민 의무 상태 기계를 먼저 모델링</span></td></tr>
+<tr><td><code>/pstack:interrogate</code></td><td>High-risk reviews: money, governance, Civic-DID issuance<span class="ko">고위험 리뷰: 돈, 거버넌스, Civic-DID 발급</span></td></tr>
+</table></div>
+
+<!-- ============================================================ 9 -->
+<h2 id="next"><span class="n">09</span>What comes next / 다음 단계</h2>
+<div class="tbl"><table>
+<tr><th>#</th><th>Work<span class="ko">작업</span></th><th>Why<span class="ko">이유</span></th></tr>
+<tr><td class="num">1</td><td>Fix the replay page's tier, then un-skip its last browser test<span class="ko">리플레이 페이지 등급 수정 후 마지막 테스트 복귀</span></td><td>A real bug; fixing it switches on a dormant production feature, so it needs a decision<span class="ko">실제 버그. 고치면 잠든 기능이 켜지므로 결정 필요</span></td></tr>
+<tr><td class="num">2</td><td>Make <code>check-admin-policy-isolation</code> cover <code>/api/v1/admin/*</code><span class="ko">관리자 게이트가 실제 경로를 검사하도록</span></td><td>A gate that checks 0 routes gives false confidence<span class="ko">경로 0개 검사는 거짓 안심</span></td></tr>
+<tr><td class="num">3</td><td>Add an ESLint config, new code first; add lint to CI<span class="ko">ESLint 설정 추가, 새 코드부터, CI에 린트</span></td><td>The talk's main tool, and we have none<span class="ko">발표의 주 도구인데 우리는 없음</span></td></tr>
+<tr><td class="num">4</td><td>Property-based tests for money paths<span class="ko">돈 경로에 속성 기반 테스트</span></td><td>Ledgers break on inputs nobody wrote by hand<span class="ko">원장은 손으로 쓰지 않은 입력에서 깨짐</span></td></tr>
+<tr><td class="num">5</td><td>Resolve Node 20 vs 22 between grid production and protocol<span class="ko">grid 운영(Node 20)과 protocol(22) 불일치 해소</span></td><td>Unknown whether production reaches the code that needs 22<span class="ko">운영이 해당 코드에 도달하는지 미확인</span></td></tr>
+<tr><td class="num">6</td><td>Watch for more flaky tests; fix at the cause, never by retry<span class="ko">불안정 테스트 추가 감시, 재시도가 아닌 원인 수정</span></td><td>Three appeared in about a dozen runs<span class="ko">약 12회 실행에서 3개 발생</span></td></tr>
+</table></div>
+
+<!-- ============================================================ 10 -->
+<h2 id="evidence"><span class="n">10</span>Evidence / 근거</h2>
+<div class="tbl"><table>
+<tr><th>PR</th><th>Change<span class="ko">변경</span></th><th>Merge</th><th>Size</th></tr>
+<tr><td><a href="https://github.com/ASKKPOP/Noesis/pull/54">#54</a></td><td>Run all 30 check gates on every push and PR; add <code>check-gates-wired</code></td><td class="num">93f10e8a</td><td class="num">+94 / −6</td></tr>
+<tr><td><a href="https://github.com/ASKKPOP/Noesis/pull/57">#57</a></td><td>New <code>tests.yml</code> (6 jobs); fix a machine-path test and a timestamp-flaky test</td><td class="num">7c785631</td><td class="num">+202 / −5</td></tr>
+<tr><td><a href="https://github.com/ASKKPOP/Noesis/pull/58">#58</a></td><td>Fix 28 stale dashboard tests; remove the unit-test quarantine</td><td class="num">9d3cca65</td><td class="num">+32 / −161</td></tr>
+<tr><td><a href="https://github.com/ASKKPOP/Noesis/pull/59">#59</a></td><td>Fix the watchdog SNS wait and the proof-tamper test</td><td class="num">7aa4d85a</td><td class="num">+4 / −4</td></tr>
+</table></div>
+<ul>
+  <li>All three workflows green on <code>main</code> at <code>7aa4d85a</code>; tests workflow run 45095387985. / <code>main</code>에서 워크플로 3개 모두 통과.</li>
+  <li>Each PR's tests workflow passed twice (a full re-run) before merge. / 각 PR은 병합 전 두 번 통과.</li>
+  <li>Gate list and quarantine status: <code>.planning/implementation/ci-gates.md</code> (private planning tree). / 게이트 목록과 격리 상태는 비공개 계획 문서에 있음.</li>
+  <li>Video: <a href="https://www.youtube.com/watch?v=ueA116hO_ho">AgentOS walkthrough</a> · original talk: <a href="https://youtu.be/O_zcc6Xl12g">Lauren Tan, AI Engineer</a> · plugin: <a href="https://github.com/cursor/plugins/tree/main/pstack">cursor/plugins/pstack</a></li>
+</ul>
+
+<div class="foot">Noēsis · report generated 2026-11-22 from measurements in the repository and GitHub Actions. Talk figures are the speaker's own and were not verified. / 저장소와 GitHub Actions 측정값으로 작성. 발표의 숫자는 발표자 본인 값이며 검증하지 않았습니다.</div>
+</div>
+</body>
+</html>
