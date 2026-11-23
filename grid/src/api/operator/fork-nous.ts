@@ -29,8 +29,10 @@
  *   400 — invalid_operator_id
  *   401 — tier_missing
  *   403 — tier_too_low / cross_operator_forbidden
+ *   404 — unknown_nous (no Civic-DID in this Grid's registry)
  *   409 — brain_memory_in_memory_cannot_fork
  *   500 — archive_build_failed / audit_emit_failed
+ *   503 — civic_registry_unavailable
  *   200 — success, JSON response with download_url + hashes
  *
  * See: FORK-01, D-43-02, D-43-04, T-43-auth, T-43-token, T-43-order, T-43-secrets, T-43-referer.
@@ -80,21 +82,23 @@ export function registerForkNousRoute(app: FastifyInstance, services: GridServic
             return { error: 'cross_operator_forbidden' } satisfies ApiError;
         }
 
-        // ── Determine Nous existence-DID ─────────────────────────────────────────────────
-        // In production, fetch from civic_did_registry. For now, derive a placeholder.
-        // The existence-DID is stored in the manifest — tests can inject getExistenceDid.
-        const nousExistenceDid = services.getExistenceDid
-            ? await services.getExistenceDid(nousDid)
-            : `did:noesis:nous:unknown`;
+        if (!services.civicDidStore) {
+            reply.code(503);
+            return { error: 'civic_registry_unavailable' } satisfies ApiError;
+        }
+        const civicRecord = await services.civicDidStore.get(services.gridName, nousDid);
+        if (!civicRecord) {
+            reply.code(404);
+            return { error: 'unknown_nous' } satisfies ApiError;
+        }
+        const nousExistenceDid = civicRecord.existenceDid;
+        const civicVcJson = JSON.stringify(civicRecord.credentialJson);
 
         // ── Build archive ────────────────────────────────────────────────────────────────
         const gridId = services.gridName ?? (process.env['GRID_ID'] ?? 'genesis');
         const dataDir = process.env['BRAIN_DATA_DIR'] ?? '';
         const exportedAt = new Date().toISOString();
         const exportedAtTick = services.currentTick ? services.currentTick() : 0;
-
-        // Civic VC JSON — placeholder stub (Phase 49 will wire real VC fetch from civicDidStore)
-        const civicVcJson = '{"@context":["https://www.w3.org/2018/credentials/v1"],"type":"VerifiableCredential"}';
 
         let archiveResult;
         try {

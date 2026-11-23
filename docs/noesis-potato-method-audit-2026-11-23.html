@@ -147,7 +147,7 @@
       <tr><td>Portal-gating (D-V3-33), VOTE-05, Ledger-B retired</td><td><span class="pill yes">yes</span></td><td>—</td></tr>
       <tr><td>Zone code keys on <code>kind</code>, never name (D-V3-40)</td><td><span class="pill no">prose</span></td><td>A gate on zone-name literals compared outside the template</td></tr>
       <tr><td>Polis naming (D-V3-31)</td><td><span class="pill no">prose</span></td><td>A gate on "Genesis Government/Council/Senate"</td></tr>
-      <tr><td>No mock or hardcode in product</td><td><span class="pill no">prose, and violated</span></td><td><code>fork-nous.ts</code> records <code>did:noesis:nous:unknown</code> in production because <code>getExistenceDid</code> is never wired. Wire it, then ban placeholder DIDs</td></tr>
+      <tr><td>No mock or hardcode in product</td><td><span class="pill no">prose</span></td><td><code>fork-nous.ts</code> had a placeholder existence DID and a stub credential (<span class="pill yes">fixed</span>: both now come from the registry). Correction to the first version of this report: no production manifest carried them, because the route's ownership check is also unwired, so production refuses every fork. Next: enable forks, then ban placeholder DIDs</td></tr>
       <tr><td>Re-pin allowlist baselines</td><td><span class="pill partly">gate on line count</span></td><td>A member-set snapshot. Today editing a comment fails CI (<code>fix(audit): keep the frozen allowlist at its baseline line count</code>)</td></tr>
       <tr><td>Force-recreate nginx after deploy; never deploy nous-*</td><td><span class="pill no">prose</span></td><td>Make <code>deploy.sh</code> do the first and refuse the second</td></tr>
       <tr><td>Wiki updated with every task</td><td><span class="pill partly">integrity only</span></td><td>A gate: a changed <code>src/</code> subsystem must touch its wiki page</td></tr>
@@ -173,7 +173,7 @@
   <div class="sec-head"><div class="eyebrow">Next</div><h2>Recommended order</h2></div>
   <ol>
     <li><span class="pill yes">done</span> <b>Fold the 193 regexes into <code>id-patterns.ts</code>.</b> The operator chose to accept both cases (D-ID-01). 162 grid files now import named patterns, and the ratchet went 201 → 4 (the 4 left are in dashboard and steward, which cannot import grid).</li>
-    <li><b>Wire <code>getExistenceDid</code></b> in production so fork manifests stop recording a placeholder.</li>
+    <li><span class="pill yes">done</span> <b>Fork placeholders removed.</b> The archive's existence DID and credential come from the civic registry. Still open: production refuses every fork until the operator-ownership check is wired.</li>
     <li><b>ESLint flat config</b> with <code>@typescript-eslint</code>: move the ratchet rules into real lint rules with the same messages, and run it in CI.</li>
     <li><b>Replace the allowlist line-count gate</b> with a member-set snapshot.</li>
     <li><b>A feature map</b> of every dashboard and steward route, a gate that keeps it complete, and a Playwright screenshot per route as PR evidence.</li>

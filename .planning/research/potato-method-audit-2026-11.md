@@ -48,7 +48,7 @@ one exists.
 | Mock-Pool SQL gap (memory) | ✅ `real-mysql-migrations.yml` | Extend to every new store |
 | Zone code keys on `kind`, never name (D-V3-40, CLAUDE.md) | ❌ prose | Gate: zone-name string literals compared outside the template file |
 | Polis naming (D-V3-31, CLAUDE.md) | ❌ prose | Gate: "Genesis Government/Council/Senate" in src + wiki |
-| No mock/hardcode in product (memory) | ❌ prose. **Violated**: `fork-nous.ts` falls back to `did:noesis:nous:unknown`, and `getExistenceDid` is never wired in production | Wire it, then ban placeholder DIDs in src |
+| No mock/hardcode in product (memory) | ❌ prose. `fork-nous.ts` had a placeholder existence-DID and a stub credential. **Correction:** no production manifest ever carried them, because the fork route's ownership check is also unwired, so production refuses every fork (403). **Fixed 2026-11-23**: both values now come from the civic registry record | Enable forks in production (wire ownership), then ban placeholder DIDs in src |
 | Allowlist baseline re-pin (memory) | ⚠️ gate measures line count | Replace the line count with a member-set snapshot |
 | nginx force-recreate after deploy (memory) | ❌ prose | Make `deploy.sh` do it, so the wrong thing can't happen |
 | Deploy never includes nous-* (memory) | ❌ prose | `deploy.sh` refuses nous-* when `BRAIN_HTTP_SECRET` is unset |
@@ -76,7 +76,7 @@ one exists.
    201 → 4 (the 4 left are in dashboard/steward, which cannot import grid). DID shapes were kept per
    producer, and two copies that let a backslash through were tightened. 7 tests that pinned
    lowercase-only were flipped. Grid 4519 pass.
-2. **Wire `getExistenceDid`** in production and drop the placeholder.
+2. ~~Drop the fork placeholders.~~ **Done 2026-11-23**: the identity and credential come from `civicDidStore.get`; an unknown Civic-DID gets 404 and a missing registry gets 503. **Still open:** production refuses every fork because `checkOperatorOwnsNous` is not wired. The wiki now says so on `civic-architecture.md`.
 3. **ESLint flat config** with `@typescript-eslint` (already installed), carrying the ratchet rules
    as real lint rules.
 4. **Replace the allowlist line-count gate** with a member-set snapshot.

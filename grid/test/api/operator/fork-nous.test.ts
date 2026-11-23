@@ -25,6 +25,8 @@ import { forkTokenStore } from '../../../src/api/operator/fork-token-store.js';
 import { withOperatorContext } from '../../helpers/operator-session.js';
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../../../src/api/server.js';
+import { buildForkArchive } from '../../../src/export/fork-archive-builder.js';
+import type { CivicDidRecord } from '../../../src/civic-registry/types.js';
 
 // ── Mock buildForkArchive to avoid needing real .db files ────────────────────
 vi.mock('../../../src/export/fork-archive-builder.js', () => {
@@ -49,12 +51,27 @@ const FAKE_EXPORT_HASH = 'a'.repeat(64);
 const OPERATOR_ID = 'op:11111111-1111-4111-8111-111111111111';
 const OPERATOR_B_ID = 'op:22222222-2222-4222-8222-222222222222';
 const NOUS_DID = 'did:civic:noesis:test-nous-abc';
+const NOUS_EXISTENCE_DID = 'did:noesis:nous:test-nous-abc';
+const NOUS_CREDENTIAL = { type: ['VerifiableCredential', 'CivicCredential'], credentialSubject: { id: NOUS_DID } };
+
+type CivicLookup = Pick<NonNullable<GridServices['civicDidStore']>, 'get'>;
+
+function civicStoreWith(record: Partial<CivicDidRecord> | null): CivicLookup {
+    return {
+        get: async (gridName: string, civicDid: string) =>
+            record && civicDid === NOUS_DID
+                ? ({ gridName, civicDid, existenceDid: NOUS_EXISTENCE_DID, credentialJson: NOUS_CREDENTIAL,
+                     status: 'active', issuedAtTick: 1, ...record } as CivicDidRecord)
+                : null,
+    };
+}
 
 function buildTestApp(opts: {
     ownsNous?: (operatorId: string, nousDid: string) => Promise<boolean>;
     auditChain?: AuditChain;
     operatorTier?: number;
     operatorId?: string;
+    civicDidStore?: CivicLookup | null;
 } = {}): { app: FastifyInstance; audit: AuditChain } {
     const audit = opts.auditChain ?? new AuditChain();
 
@@ -63,6 +80,9 @@ function buildTestApp(opts: {
         gridName: 'test-grid',
         currentTick: () => 42,
         checkOperatorOwnsNous: opts.ownsNous ?? (async () => true),
+        ...(opts.civicDidStore === null
+            ? {}
+            : { civicDidStore: (opts.civicDidStore ?? civicStoreWith({})) as GridServices['civicDidStore'] }),
     };
 
     const app = Fastify({ logger: false });
@@ -324,5 +344,52 @@ describe('GET /api/v1/operator/fork/:nousDid/download — one-time token (Plan 0
 
         expect(res.statusCode).toBe(404);
         expect(res.json()).toMatchObject({ error: 'token_invalid_or_consumed' });
+    });
+});
+
+describe('POST /api/v1/operator/fork/:nousDid — identity comes from the civic registry', () => {
+    let app: FastifyInstance;
+
+    beforeEach(() => {
+        forkTokenStore._clear();
+        vi.mocked(buildForkArchive).mockClear();
+    });
+
+    afterEach(async () => {
+        if (app) await app.close();
+    });
+
+    it('records the registry existence-DID and credential in the archive, never a placeholder', async () => {
+        ({ app } = buildTestApp());
+        await app.ready();
+
+        const res = await app.inject({ method: 'POST', url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}` });
+
+        expect(res.statusCode).toBe(200);
+        const input = vi.mocked(buildForkArchive).mock.calls[0]![0];
+        expect(input.nousExistenceDid).toBe(NOUS_EXISTENCE_DID);
+        expect(JSON.parse(input.civicVcJson)).toEqual(NOUS_CREDENTIAL);
+    });
+
+    it('returns 404 unknown_nous when the Civic-DID is not in this Grid registry', async () => {
+        ({ app } = buildTestApp({ civicDidStore: civicStoreWith(null) }));
+        await app.ready();
+
+        const res = await app.inject({ method: 'POST', url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}` });
+
+        expect(res.statusCode).toBe(404);
+        expect(res.json()).toMatchObject({ error: 'unknown_nous' });
+        expect(buildForkArchive).not.toHaveBeenCalled();
+    });
+
+    it('returns 503 civic_registry_unavailable when no registry is wired', async () => {
+        ({ app } = buildTestApp({ civicDidStore: null }));
+        await app.ready();
+
+        const res = await app.inject({ method: 'POST', url: `/api/v1/operator/fork/${encodeURIComponent(NOUS_DID)}` });
+
+        expect(res.statusCode).toBe(503);
+        expect(res.json()).toMatchObject({ error: 'civic_registry_unavailable' });
+        expect(buildForkArchive).not.toHaveBeenCalled();
     });
 });

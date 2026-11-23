@@ -796,3 +796,10 @@ named imports from `grid/src/util/id-patterns.ts` (`HEX64_RE` is now `/i`). DID 
 two `[a-z0-9_:\\-]` copies that let a backslash through were tightened. 8 orphaned regex doc-comments
 removed. Ratchet inline-id-regex 201 → 4. 7 tests that pinned lowercase-only were flipped. Grid 4519 pass,
 tsc clean, all gates pass. Decision log: `wiki/1-design/decisions.md` D-ID-01. See [[potato-method-audit-2026-11]].
+
+## [2026-11-23] fix | Fork archive identity from the civic registry; correction
+Operator: "Yes, wire it". `fork-nous.ts` existence-DID + civic credential now come from `civicDidStore.get`
+(404 unknown_nous / 503 civic_registry_unavailable); dead `getExistenceDid` hook removed; 3 tests; grid 4522.
+CORRECTION to [[potato-method-audit-2026-11]]: no production manifest carried the placeholder. The
+route's `checkOperatorOwnsNous` is unwired in production too, so every fork is refused 403. Right-to-fork is
+therefore not usable in production today; wiki `civic-architecture.md` now says so.

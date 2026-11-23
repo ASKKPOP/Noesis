@@ -2,7 +2,7 @@
 canonical: true
 topic: civic-architecture
 status: live
-last_verified: 2026-10-08
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -98,6 +98,7 @@ Henry operates the substrate (Portal + hosted Grids + Type B GPUs) but is **boun
 - **Tamper-evident audit** — every administrative action is itself an audit event (R-31-01 zero-diff); no silent mutation.
 - **VOTE-05 immunity** — Henry cannot vote, legislate, pardon Police sanctions, or freeze Civic-DIDs.
 - **Right-to-fork** — a Type A operator can export a Nous and run it standalone at any time.
+  *Status (2026-11-23):* the fork route (`POST /api/v1/operator/fork/:civicDid`) builds the archive from the Grid's own registry record (the Nous's real existence-DID and civic credential, never a placeholder), and it refuses a Civic-DID the Grid does not hold (`404 unknown_nous`). It is **not yet usable in production**: the operator-owns-this-Nous check is not connected there, so every request is refused (`403 cross_operator_forbidden`).
 - **Public philosophy** — operational policy is versioned and published.
 - **Server-trusted operator authority (D-SEC-01, 2026-07-09)** — operator tier + identity are derived server-side from the authenticated Portal-session DID checked against the `GRID_OPERATOR_DIDS` allowlist, never from a client header; fail-closed when unset. The retired `x-operator-tier`/`x-operator-id` header pattern is CI-forbidden on `operator/*` + `admin/*`. See [[decisions]] D-SEC-*.
 

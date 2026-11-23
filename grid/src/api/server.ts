@@ -428,12 +428,6 @@ export interface GridServices {
      */
     checkOperatorOwnsNous?: (operatorId: string, nousDid: string) => Promise<boolean>;
     /**
-     * Phase 43 FORK-01: injectable existence-DID resolver for the fork manifest.
-     * When absent, manifest uses 'did:noesis:nous:unknown' placeholder.
-     * Production: wires civicDidStore to look up the existence-DID for the Civic-DID.
-     */
-    getExistenceDid?: (civicDid: string) => Promise<string>;
-    /**
      * Phase 46 CIVGOV-01..06: Government v3 bill/session/law store.
      * When absent, gov routes fall back to a MySQL-backed store built from `pool`,
      * or return 503 service_unavailable if neither is present.
