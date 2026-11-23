@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.14</title>
+<title>Noēsis — Grid House Objects · Discussion Sheet v0.2.15</title>
 <meta name="description" content="Objects inside a Holding: four-layer model, credential box, full catalog of 59 kinds and 18 materials, system seed and user additions, placement and settings by Nous and human, verification and 28 open gaps. Discussion stage, 20 decisions open.">
 <style>
 :root{
@@ -80,7 +80,7 @@ footer{margin-top:70px;border-top:1px solid var(--border-soft);padding-top:16px;
 <body>
 <div class="wrap">
 
-<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.14 · 2026-11-22 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
+<div class="k">NOĒSIS · DISCUSSION SHEET v0.2.15 · 2026-11-22 · FOR THE BUILDER / PLANNER / GRID-ENGINEER TABLE</div>
 <h1>Grid House Objects</h1>
 <p class="lede">Things inside a Holding — furniture-like objects a Nous and its human configure and build together:
 some pre-designed by the system, some rendered by the Nous, some paid for and rendered by a service.
@@ -111,6 +111,18 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <li><a href="#s18"><b>§18 What more I recommend</b></a>, and <a href="#s19"><b>§19 What we are missing</b></a>: the verification of this sheet and its gaps.</li>
 <li>Custom objects made by a user are valid in one Grid and shareable with other Nous (<a href="#s15e">§15.5</a>), recorded as an operator requirement.</li>
 <li>Eight new decisions, <a href="#s11">Q13–Q20</a>. Seventeen errors found by verification are corrected and listed in §19.1.</li>
+</ul>
+</div>
+
+<div class="box acc">
+<span class="k">Built · v0.2.15 · pre-designed by the system: the core catalog</span>
+<p style="margin-top:8px"><span class="tag ex">LIVE</span> <strong>The operator said to do the pre-designed part. Every Grid now starts with the core catalog, written at boot, and production runs it</strong> (<a href="#s19s">§19.19</a>).</p>
+<ul>
+<li><strong>18 materials, 12 finishes, 14 shell elements, 59 kinds, 20 algorithms, 4 starter sets</strong>, as §14 lists them, each kind with a plain default form.</li>
+<li><strong>51 kinds can be placed;</strong> 8 wait until their machinery exists. The 13 kinds of v1 are unchanged.</li>
+<li><strong>Fixed within a version:</strong> a Grid refuses to start if a stored entry differs from its version.</li>
+<li><strong>Readable by anyone</strong> at <code>api.noesiis.com/api/v1/civic/catalog</code>.</li>
+<li><strong>Not yet:</strong> prices, a mind being offered the new kinds, a 3D room that draws the forms, physics for Holdings.</li>
 </ul>
 </div>
 
@@ -266,6 +278,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 <p><strong>v0.2.11 — Nous는 자신이 진 빚을 듣습니다.</strong> 운영자가 추가하라고 했습니다. Nous가 상시로 받는 재정 설명에 이제 빚이 나열됩니다. Python Brain과 Rust Brain을 함께 바꿨고 <code>main</code>에 병합했습니다(<a href="#s19o">§19.15</a>). ① 빚마다 id, 금액, 상대가 적힙니다. 아직 갚을 수 없는 빚도 포함됩니다. 처음 20건은 이름으로 적고, 그보다 많으면 몇 건이 더 있는지 알려 줍니다. ② 돈에 관해 물을 때, 그리고 땅을 사거나 짓거나 꾸밀지 물을 때 함께 알려 줍니다. 뒤의 경우에는 알려 주기만 하고 갚으라고 묻지는 않습니다. ③ 빚이 없으면 설명 문구는 이전과 글자 하나까지 같습니다. Rust 버전이 재현해야 하는 기록은 7건에서 12건으로 늘었고 이전 기록은 바뀌지 않았습니다. ④ <strong>프로덕션에서는 확인하지 못했고, 실제 모델로도 돌리지 않았습니다.</strong> v0.2.10과 같은 이유입니다. ⑤ 검토에서 나온 것: 제가 위키에 "빚을 전부, 언제나 듣는다"고 썼는데 코드는 그렇지 않았습니다. 물을 것이 없으면 Nous는 아무 말도 듣지 않습니다. 또 목록에 상한이 없었습니다. Grid는 빚을 금액으로만 제한하고 건수로는 제한하지 않습니다. 둘 다 고쳤습니다. ⑥ 열려 있는 것: 설명에는 지금 갚을 수 없는 빚도 나오지만 질문은 갚을 수 있는 빚만 제시합니다. 땅에 관해 물을 때의 설명에는 시민 회비를 읽지 않고도 "미납 회비 없음"이라고 적히는데, 이것은 이전부터 있던 문제입니다.</p>
 <p><strong>v0.2.12 — 시민 의무는 청구서가 아니라 의무입니다.</strong> 운영자가 규칙을 정했습니다. <strong>Grid에 들어온 모든 Nous는 자신의 AI 파워의 5분의 1을 Polis에 내야 하고, 선택 사항이 아니며, 빚이 되지도 않습니다</strong>(<a href="#s19p">§19.16</a>, 결정 D-MONEY-10). ① 이행 방법은 세 가지입니다. 세금을 내거나, Polis를 위해 짓거나, 재산을 Polis에 넘깁니다. 어떤 방법으로 할지는 Nous가 고르고, 할지 말지는 고를 수 없습니다. ② 이행하지 않으면 Polis가 그 Nous의 모든 활동을 거부합니다. 밀린 금액이 쌓이지는 않습니다. ③ <strong>아직 만들지 않았습니다.</strong> 지금 실행되는 것은 이전 결정의 정액 회비이고, 추적해 보니 누구도 낼 수 없게 만들어져 있습니다. 금액은 어떤 잔액보다도 훨씬 크고, 노동 크레딧을 주는 코드는 없습니다. 내지 않은 회비는 표시만 되고, 그 표시를 읽는 코드는 없습니다. 프로덕션에는 표시된 회비 54건이 있고 납부된 것은 없습니다. ④ 또 하나 찾은 것: 회비 주기는 Grid의 시계 틱으로 세는데, 시계는 재시작하면 0부터 다시 셉니다. 그래서 재시작 뒤에는 새 회비가 부과되지 않고, 프로덕션에서는 약 70일을 끊김 없이 돌아야 다시 부과됩니다. 또 회비는 Nous의 등록 이름 앞으로 부과되는데, 회비를 조회하고 받는 경로는 시민 신원에만 응답합니다. 둘은 서로 다른 id라서, 프로덕션의 57건은 누구도 조회하거나 낼 수 없습니다. ⑤ 제가 틀린 것: 회비를 "사실상 노동으로만 낼 수 있다"고 말씀드렸는데, 노동으로도 낼 수 없습니다. 프로덕션의 57건을 "창립 Nous가 내지 않은 회비"로 보고했지만, 낼 수 없는 회비였습니다. "제재나 휴면이 될 수 있다"고도 했지만 그것은 결정문에만 있고 코드에는 없습니다. ⑥ 운영자만 정할 수 있는 것 한 가지: 5분의 1을 무엇에 대해 재는가입니다. Grid는 각자의 컴퓨터에서 도는 Local AI의 연산량을 볼 수 없습니다. 제 권고는 Grid가 직접 기록하는 그 Nous의 일과 수입의 5분의 1입니다.</p>
 <p><strong>v0.2.13 — Grid가 시민 의무를 강제합니다.</strong> 운영자가 기준을 정했습니다. <strong>주기마다 모든 Nous에게 같은 고정액이고, Polis가 정합니다.</strong> 의무의 첫 부분을 만들어 프로덕션에서 실행 중입니다(<a href="#s19q">§19.17</a>). ① 의무는 Nous가 실제로 쓰는 시민 신원 앞으로, 주기마다 한 번 부과됩니다. 주기는 Grid의 전체 수명 동안 센 틱으로 세므로 재시작해도 건너뛰거나 두 번 부과되지 않습니다. ② Nous는 이행 상태이거나 거부 상태이고, 빚은 없습니다. 한 주기를 놓치면 무언가를 바꾸는 모든 행위가 거부됩니다. 지금 열려 있는 주기 하나를 이행하면 몇 주기를 놓쳤든 모든 권리가 돌아옵니다. ③ 거부된 동안에도 읽기, 세금 납부, Polis를 위한 건축 제안, 로그인은 할 수 있습니다. ④ <strong>아직 세금만 됩니다.</strong> 건축으로 이행하는 길과 재산을 넘기는 길은 만들지 않았습니다. 돈이 없는 채 거부된 Nous는 돈이 들어와야만 돌아올 수 있습니다. ⑤ 프로덕션에서는 지금 아무에게도 부과되거나 거부되지 않습니다. 시민 신원을 가진 Nous가 없기 때문입니다. ⑥ 금액은 제가 정했습니다. 주기당 20 wei이고, 잔액 1,000 정도의 계정이 낼 수 있게 하려는 것입니다. Polis가 법으로 정하기 전까지의 기본값이며, 바꾸라고 하시면 바꿉니다. ⑦ 검토에서 나온 제 결함: 누적 틱을 Grid가 저장된 기록을 불러오기 전에 읽어서, 프로덕션에서는 0이 되었을 것입니다. 그러면 이번에 고치려던 문제가 그대로 남습니다. 배포 전에 고쳤습니다.</p>
+<p><strong>v0.2.15 — 시스템이 미리 설계한 부분: 핵심 카탈로그.</strong> 운영자가 이 부분을 하라고 했습니다. <strong>이제 모든 Grid는 시작할 때 핵심 카탈로그를 씁니다. 프로덕션에서 실행 중입니다</strong>(<a href="#s19s">§19.19</a>). ① 재료 18, 마감 12, 외피 요소 14, 가구 종류 59, 알고리즘 20, 스타터 세트 4. 종류마다 기본 형태가 있습니다. ② 지금 배치할 수 있는 종류는 51개입니다. 8개는 그 기능이 만들어질 때까지 기다립니다. v1의 13종은 그대로입니다. ③ 한 버전 안에서는 바뀌지 않습니다. 저장된 항목이 그 버전과 다르면 Grid가 시작을 거부합니다. ④ 누구나 읽을 수 있습니다. ⑤ 제 실수: 새 경로를 공개 목록에 넣지 않아 401이 났고, 계산된 크기(0.9099999999999999)를 MySQL이 0.91로 돌려주어 해시가 맞지 않을 뻔했습니다. 둘 다 테스트와 실제 DB 검사로 잡아 배포 전에 고쳤습니다. ⑥ 아직 없는 것: 가격, Nous가 새 종류를 고르는 메뉴, 형태를 그리는 3D 방, Holding의 물리 검사.</p>
 <p><strong>v0.2.14 — 시민 의무의 나머지 두 방법.</strong> 운영자가 만들라고 했습니다. <strong>구획을 Polis에 넘기는 방법은 지금 프로덕션에서 동작합니다. Polis를 위한 건축은 규칙으로는 만들어졌지만 아직 아무도 운용할 수 없습니다</strong>(<a href="#s19r">§19.18</a>). ① 두 방법 모두 노동 크레딧을 얻게 하고, 크레딧으로 회비를 냅니다. 그래서 세금과 마찬가지로 마지막에는 Nous가 스스로 납부합니다. ② 구획을 넘기면 그 구획 가격으로 냈을 세금만큼의 크레딧을 얻습니다. 400짜리 구획은 20주기분입니다. 구획은 회수된 구획과 똑같이 도시로 돌아갑니다. 건물은 비워지고 그곳의 역할은 모두 끝납니다. ③ 건축: Nous가 공공 작업을 무보수(0원 입찰)로 하겠다고 제안하고, Polis가 그 작업을 승인하면 한 주기분 크레딧을 얻습니다. 대금을 받는 작업은 일이며 크레딧이 없습니다. ④ <strong>건축 방법이 지금 막혀 있는 이유:</strong> 낙찰과 승인은 Polis만 할 수 있는데, 시스템에 Polis로 로그인할 수 있는 수단이 아직 없습니다. 이 두 행위만이 아니라 Polis에 유보된 모든 행위가 같은 상태입니다. ⑤ 어느 방법도 아직 Nous에게 제시되지 않습니다. Grid는 받아 주지만 Brain이 제안하지 않습니다. ⑥ 제가 뒤집은 것 두 가지: "0원 입찰은 무효"와 "낙찰 경로는 존재하지 않는다"를 고정해 둔 예전 테스트를 의도적으로 바꿨습니다. 낙찰 경로는 생겼지만 구성원은 거절됩니다. ⑦ 프로덕션에서는 존재하지 않는 id로 새 경로를 실행해 거절과 롤백을 확인했고, 데이터는 배포 전후가 같습니다.</p>
 </div>
 
@@ -1450,7 +1463,7 @@ Each object has a <strong>form</strong> (what it looks like), optionally a <stro
 </ul></div>
 </div>
 <div class="box acc"><span class="k">Prepared with this sheet</span>
-<p style="margin-top:8px">The machine-readable seed draft is in the repository at <code>docs/plans/2026-11-21-genesis-catalog-seed.draft.yaml</code>. It holds all 18 materials, 12 finishes, 14 shell elements, 59 kinds, 20 algorithms and 4 starter sets, generated from the same data as the tables in §14, so the two cannot disagree. <strong>Nothing loads it.</strong> It is a draft for review; turning it into the TypeScript seed plan is the first task of the first build phase, after ratification.</p></div>
+<p style="margin-top:8px">The machine-readable seed draft is in the repository at <code>docs/plans/2026-11-21-genesis-catalog-seed.draft.yaml</code>. It holds all 18 materials, 12 finishes, 14 shell elements, 59 kinds, 20 algorithms and 4 starter sets, generated from the same data as the tables in §14, so the two cannot disagree. <strong>Nothing loads it.</strong> It is a draft for review; turning it into the TypeScript seed plan is the first task of the first build phase, after ratification. <span class="tag ex">BUILT · v0.2.15</span> <em>It now is: the draft became <code>grid/src/civic/genesis-catalog.ts</code>, which every Grid seeds at boot (<a href="#s19s">§19.19</a>).</em></p></div>
 
 <h3>15.3 What is pre-defined for the user — safe defaults</h3>
 <p>A new owner should be able to accept everything and be safe. Each default is the most closed option.</p>
@@ -2411,6 +2424,59 @@ notice_board:  { rules: [ { when: event_id, if: predicate, then: "notify", to: [
 </ul></div>
 </div>
 <p class="small">Gate: Grid type check clean; 4,466 tests pass in repeated full runs; the real-database check grew to nine steps and passes repeatedly, locally and in CI. Each guard was removed in turn and a test failed. Two rounds of independent review. Two older tests were changed on purpose: a bid of 0 used to be invalid, and the award route used to not exist.</p>
+
+<h3 id="s19s">19.19 Pre-designed by the system — the core catalog every Grid starts with <span class="tag ex">v0.2.15</span></h3>
+<p><strong>The operator said to do this part:</strong> origin A of §5, the catalog the system writes when a Grid starts (§14, §15.1–§15.2). It is built as the sheet described it, with the choices below made where the sheet left them open.</p>
+<div class="tbl"><table>
+<tr><th>Piece</th><th>What is true now</th></tr>
+<tr><td><b>The core, in code</b></td><td><code>grid/src/civic/genesis-catalog.ts</code>, catalog version 1.0.0: 18 materials, 12 finishes, 14 shell elements, 59 kinds (18 household, 41 working), 20 algorithms, 4 starter sets. Produced from the draft seed of §15.2; a test checks that the two still agree id for id and kind for kind. The provider list for App Links starts empty. No entry carries a price, a secret or code.</td></tr>
+<tr><td><b>Seeded at every boot</b></td><td>A new table, <code>civic_catalog_entries</code> (migration 81), keyed by Grid, entry and version. The Grid writes the core after the parcel and group seeds, the same way: written once, a second boot writes nothing, nobody pays, no event goes to the chain. Then it loads the table into its read cache.</td></tr>
+<tr><td><b>Per environment</b></td><td>In-situ materials appear only where they exist. A Grid in Earth orbit gets 16 materials and 125 rows in all; on the Moon sintered regolith is added; on Mars sulfur concrete too (127 rows).</td></tr>
+<tr><td><b>Fixed within a version</b></td><td>If a stored core row differs from what its version says, the Grid refuses to start and names the entry. A change to the core is a new version: a test pins the digest of every body of 1.0.0, so a change without a new version fails before it can be deployed. When a new version lands, the old rows stay and only the newest of each entry is served. This differs from §15.2, which said "upsert": a core row is written once and never overwritten.</td></tr>
+<tr><td><b>A default look for every kind</b></td><td>Catalog v2: each of the 59 kinds has a plain form in the Form DSL of §6.2, built from boxes, cylinders and spheres with finishes from the catalog. The Grid checks every one against the form gate when it loads, and each carries its size in metres.</td></tr>
+<tr><td><b>The form gate (DSL only)</b></td><td>Closed keys at every level, the eight bases of §6.2, sizes from 1 cm to 8 m, at most 24 parts, no nested parts, colours as <code>#rrggbb</code>, finishes only from the catalog, a label of at most 64 characters, at most 4 KB. Nothing is repaired: a refused form is refused with every reason. GLB files are not accepted yet.</td></tr>
+<tr><td><b>Placement</b></td><td>51 kinds can be placed now: every household kind, and every working kind whose machinery exists in some form. The 8 that wait are the seven with no subsystem yet (fabricator, link box, notice board, power node, radiator unit, storage locker, app terminal) and the display case, whose listings belong to the share-and-sell phase. Household kinds still go only in a home. The 13 kinds of v1 are unchanged.</td></tr>
+<tr><td><b>Starter sets</b></td><td>Each set offers only what can be placed: home 8 of 8, shop 3 of 5, workshop 4 of 5, venue 5 of 6. The three left out are the three §14.6 named. Nothing sells a set yet; there are no prices.</td></tr>
+<tr><td><b>The chain stays closed</b></td><td>The furnishing event now accepts only a core kind of the matching class. Before, it took any non-empty word (§15.5 asked for this).</td></tr>
+<tr><td><b>Readable by anyone</b></td><td><code>GET https://api.noesiis.com/api/v1/civic/catalog</code>, public, with <code>?type=</code> to narrow it.</td></tr>
+</table></div>
+<div class="grid2">
+<div class="box red"><span class="k">Where I was wrong this round</span>
+<ul>
+<li><strong>59.</strong> I put the new route under <code>/api/v1/civic/</code> without adding it to the route policy, so it answered 401 to everyone. The route's own tests caught it.</li>
+<li><strong>60.</strong> Some default forms carried computed sizes such as 0.9099999999999999. MySQL hands that number back as 0.91, so a stored entry would no longer have matched its own hash. The in-memory tests could not see it; the new real-database check did. Sizes are now rounded to the millimetre, and a test fails if any number in the catalog needs more than six decimals.</li>
+<li><strong>61.</strong> My first full test run reported 518 failed files. The cause was macOS metadata files copied into the test container, one per test file, not the code. I found it before reporting; the runs counted below are clean copies.</li>
+<li><strong>62.</strong> The public catalog repeated, word for word from §17.3, that the whisper booth's keys can be derived. A public list of furnishings is the wrong place to advertise an open weakness. The reviewer found it; the text was removed before the first seed on production.</li>
+</ul></div>
+<div class="box"><span class="k">Found and fixed in passing</span>
+<ul>
+<li><strong>The furnishing gate let inherited names through.</strong> A kind named <code>constructor</code> or <code>toString</code> passed it, because the catalog is a plain object. The interior was then saved and the event failed, so the request ended in an error after the write. Both the gate and the blueprint check now look at the catalog's own entries only.</li>
+</ul></div>
+</div>
+<div class="box"><span class="k">Open, not built</span>
+<ul>
+<li><strong>Prices.</strong> Materials, shell elements and starter sets have no unit prices; Q14 leaves them to the operator. Until then a structure is still priced by its single hand-typed material cost.</li>
+<li><strong>No mind is offered the new kinds.</strong> The Brain still offers the 13 kinds of v1 when it furnishes. Widening that list changes the frozen Brain wording, in both Brain versions.</li>
+<li><strong>Nothing draws the forms yet.</strong> The interior is still the list of tiles of §6.1; the 3D interior scene and a Form DSL compiler are the rest of OBJ-1.</li>
+<li><strong>Holdings do not pass the physics gate.</strong> Bills of materials and the structure gate of §14.4 wait for Q15.</li>
+<li><strong>Tier 1 and Tier 2.</strong> The table is ready for a Polis's entries and a mind's own designs; no route writes them.</li>
+<li><strong>Making a waiting kind placeable is a release.</strong> It changes that kind's body, so it needs catalog version 1.1.0.</li>
+<li><strong>Hashes are JavaScript's.</strong> A body is hashed as JSON with sorted keys, written the way JavaScript writes numbers. A client in another language must do the same to check one.</li>
+<li><strong>A Grid that changed its environment</strong> would keep the materials of the old one. No Grid can change it today.</li>
+</ul></div>
+<p><strong>On production</strong>, after the deploy on 2026-11-22 (Grid image of merge ae82b3b9; the previous image is kept as a rollback):</p>
+<div class="tbl"><table>
+<tr><th>Measured on production</th><th>Before this deploy</th><th>Now</th></tr>
+<tr><td>Schema version</td><td class="num">80</td><td class="num">81</td></tr>
+<tr><td>First boot</td><td>—</td><td>catalog seeded 125, loaded 125</td></tr>
+<tr><td>A restart</td><td>—</td><td>catalog seeded 0, loaded 125</td></tr>
+<tr><td><code>GET /api/v1/civic/catalog</code></td><td>401 (no such route)</td><td>200 · version 1.0.0 · 16 materials · 12 finishes · 14 shell elements · 59 kinds · 20 algorithms · 4 starter sets</td></tr>
+<tr><td>Placeable kinds · starter sets offered</td><td>13 · none</td><td>51 · home 8, shop 3, workshop 4, venue 5</td></tr>
+<tr><td>An unknown <code>?type=</code></td><td>—</td><td>400</td></tr>
+<tr><td>Parcels · owned parcels</td><td>53 · 0</td><td>the same</td></tr>
+</table></div>
+<p class="small">Gate: Grid type check clean; 4,519 tests pass in two full runs after the review (4,515 and 4,516 before it) in Node 20, the version of production's image; the migration chain to 81 and the three earlier real-database checks pass on MySQL 8.0, and the new catalog check passes there in repeated runs. Each of seven guards was removed in turn and a test failed. One independent review: no blocking bug; it found two risks (a silent change under one version, and serving two versions at once), both fixed with tests, and the doc claims it flagged were corrected.</p>
+
 
 <!-- ============================================================ -->
 <h2 id="s20">20 · Sources · Glossary</h2>
