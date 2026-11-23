@@ -10,6 +10,7 @@
  */
 import * as THREE from 'three';
 import { FLOOR_RADIUS as R, ROW_OFFSET, districtSpan, type DistrictLot } from './district-layout';
+import { drawLabel } from './neon-sign';
 
 /** A Nous standing in this district. */
 export interface DistrictNous { did: string; name: string; color: number; asleep: boolean }
@@ -153,11 +154,7 @@ export function mountDistrict(canvas: HTMLCanvasElement, accent: number): Distri
     interface Figure { g: THREE.Group; body: THREE.MeshStandardMaterial; angle: number; z: number; toAngle: number; toZ: number; leaving: boolean; asleep: boolean; sign: THREE.Sprite | null; signBorn: number }
     const figures = new Map<string, Figure>();
     function label(text: string, size: number, color: string): THREE.Sprite {
-        const c = document.createElement('canvas'); const ctx = c.getContext('2d')!;
-        ctx.font = `600 ${size}px sans-serif`; c.width = Math.ceil(ctx.measureText(text).width) + 24; c.height = size + 20;
-        ctx.font = `600 ${size}px sans-serif`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(2,6,16,.72)'; ctx.fillRect(0, 0, c.width, c.height);
-        ctx.fillStyle = color; ctx.fillText(text, c.width / 2, c.height / 2 + 1);
+        const c = drawLabel(text, size, color);
         const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false, fog: false }));
         sprite.scale.set((c.width / c.height) * 2.6, 2.6, 1);
         return sprite;

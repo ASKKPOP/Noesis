@@ -1,13 +1,14 @@
 # viz-rs — the Grid Station View in Bevy (option C, D-V3-45)
 
-The orbital (outside) level of the Grid Station View, drawn by [Bevy](https://bevy.org) and
-compiled to WebAssembly for the dashboard. The three.js scene
-(`dashboard/src/components/worldmap/orbital-station-scene.ts`) stays as the fallback.
+Both levels of the Grid Station View — the station in orbit and a district along the inside
+of a ring — drawn by [Bevy](https://bevy.org) and compiled to WebAssembly for the dashboard.
+The three.js scenes (`orbital-station-scene.ts`, `district-scene.ts`) stay as the fallback.
 
 | File | What it is |
 |------|------------|
 | `src/layout.rs` | Pure layout: parcel positions, render status, zone colours and signs, camera fit, picking geometry. A port of `orbital-layout.ts`, `zone-view.ts`, `grid-focus.ts`. |
 | `src/scene.rs` | The Bevy scene: station, rings, modules, Moon & Mars, objects, pulses, camera, picking. Talks to the page through a command queue and a `Host`. |
+| `src/district.rs` | The district level: same app, its own camera on render layer 1; lots arrive already laid out by `district-layout.ts`. |
 | `src/web.rs` | wasm-bindgen exports used by `dashboard/src/components/worldmap/orbital-bevy.ts`. |
 | `fixtures/layout-parity.json` | Recorded from the TypeScript; `tests/parity.rs` replays it. |
 | `tests/scene_smoke.rs` | Runs the real scene systems headless (no window, no GPU). |

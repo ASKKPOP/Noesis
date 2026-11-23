@@ -15,6 +15,7 @@ use bevy::light::GlobalAmbientLight;
 use bevy::mesh::{Indices, PrimitiveTopology, TorusMeshBuilder};
 use bevy::prelude::*;
 use bevy::render::render_resource::{Extent3d, Face, TextureDimension, TextureFormat};
+use bevy::camera::visibility::RenderLayers;
 use bevy::window::{PrimaryWindow, WindowResolution};
 use bevy::winit::{EventLoopProxyWrapper, UpdateMode, WinitSettings, WinitUserEvent};
 use std::cell::RefCell;
@@ -32,6 +33,8 @@ pub trait Host: 'static {
     fn focus_grid(&self, name: &str);
     /// Draw a neon sign: (width, height, RGBA8 bytes).
     fn sign(&self, text: &str, hex: u32) -> (u32, u32, Vec<u8>);
+    /// Draw a name label or an act sign (district level): (width, height, RGBA8 bytes).
+    fn label(&self, text: &str, size: u32, css_color: &str) -> (u32, u32, Vec<u8>);
     /// The first frames have rendered (the page may now hide its fallback).
     fn ready(&self);
 }
@@ -46,6 +49,16 @@ pub enum Cmd {
     /// Earth's texture as RGBA8 pixels (the browser decodes the JPEG).
     Earth(u32, u32, Vec<u8>),
     Paused(bool),
+    /// Open the district level for a zone drawn in `accent` (0xRRGGBB).
+    DistrictOpen(u32),
+    DistrictClose,
+    /// The district's lots, as laid out by district-layout.ts (JSON array).
+    DistrictLots(String),
+    /// The Nous standing in the district (JSON array of { did, name, color, asleep }).
+    DistrictNous(String),
+    /// (did, sign): show a sign above that Nous for a moment.
+    DistrictAct(String, String),
+    DistrictPulse(Option<String>),
 }
 
 thread_local! {
@@ -65,7 +78,7 @@ pub fn push(cmd: Cmd) {
     });
 }
 
-struct HostRes(Box<dyn Host>);
+pub(crate) struct HostRes(pub(crate) Box<dyn Host>);
 
 // ── components & state ────────────────────────────────────────────────────────
 
@@ -103,8 +116,8 @@ struct ObjectTag;
 
 /// A sign quad kept facing the camera, placed at its anchor's world position.
 #[derive(Component)]
-struct Billboard {
-    anchor: Entity,
+pub(crate) struct Billboard {
+    pub(crate) anchor: Entity,
 }
 
 #[derive(Component)]
@@ -122,7 +135,7 @@ struct CoreLight;
 #[derive(Component)]
 struct Planet;
 #[derive(Component)]
-struct MainCam;
+pub(crate) struct MainCam;
 
 struct ZoneSign {
     anchor: Entity,
@@ -198,8 +211,9 @@ pub fn install(app: &mut App, host: Box<dyn Host>) {
         .insert_resource(GlobalAmbientLight { color: hex(0x2a3a52), brightness: 0.85 / PI, affects_lightmapped_meshes: true })
         .insert_resource(WinitSettings::continuous())
         .insert_non_send(HostRes(host))
+        .add_plugins(crate::district::install)
         .add_systems(Startup, (setup, capture_wake))
-        .add_systems(Update, ((drain_commands, animate, camera_input, pulses).chain(), report_ready))
+        .add_systems(Update, ((drain_commands, animate, camera_input, pulses).chain(), report_ready, crate::district::systems().after(drain_commands)))
         .add_systems(PostUpdate, billboards.after(bevy::transform::TransformSystems::Propagate));
 }
 
@@ -238,16 +252,16 @@ fn capture_wake(proxy: Option<Res<EventLoopProxyWrapper>>) {
 
 // ── colour & material helpers ─────────────────────────────────────────────────
 
-fn hex(h: u32) -> Color {
+pub(crate) fn hex(h: u32) -> Color {
     Color::srgb_u8((h >> 16) as u8, (h >> 8) as u8, h as u8)
 }
-fn lin(h: u32, k: f32) -> LinearRgba {
+pub(crate) fn lin(h: u32, k: f32) -> LinearRgba {
     let c = hex(h).to_linear();
     LinearRgba::rgb(c.red * k, c.green * k, c.blue * k)
 }
 
 /// three's MeshStandardMaterial.
-fn std_mat(color: u32, emissive: u32, ei: f32, metal: f32, rough: f32, opacity: f32) -> StandardMaterial {
+pub(crate) fn std_mat(color: u32, emissive: u32, ei: f32, metal: f32, rough: f32, opacity: f32) -> StandardMaterial {
     StandardMaterial {
         base_color: hex(color).with_alpha(opacity),
         emissive: lin(emissive, ei),
@@ -259,13 +273,13 @@ fn std_mat(color: u32, emissive: u32, ei: f32, metal: f32, rough: f32, opacity: 
 }
 
 #[derive(Clone, Copy, PartialEq)]
-enum Blend {
+pub(crate) enum Blend {
     Normal,
     Add,
 }
 
 /// three's MeshBasicMaterial (unlit).
-fn basic(color: u32, opacity: f32, blend: Blend, cull: Option<Face>) -> StandardMaterial {
+pub(crate) fn basic(color: u32, opacity: f32, blend: Blend, cull: Option<Face>) -> StandardMaterial {
     StandardMaterial {
         base_color: hex(color).with_alpha(opacity),
         unlit: true,
@@ -299,7 +313,7 @@ fn torus(radius: f32, tube: f32, radial: usize, tubular: usize, arc: f32) -> Mes
 }
 
 /// The unique edges of a triangle mesh, as a line list (WebGL2 has no wireframe mode).
-fn wire(mesh: &Mesh) -> Mesh {
+pub(crate) fn wire(mesh: &Mesh) -> Mesh {
     let pos: Vec<[f32; 3]> = mesh.attribute(Mesh::ATTRIBUTE_POSITION).and_then(|a| a.as_float3()).map(|p| p.to_vec()).unwrap_or_default();
     let idx: Vec<u32> = match mesh.indices() {
         Some(Indices::U16(i)) => i.iter().map(|&x| x as u32).collect(),
@@ -327,10 +341,10 @@ fn wire(mesh: &Mesh) -> Mesh {
     lines(out)
 }
 
-fn lines(pts: Vec<[f32; 3]>) -> Mesh {
+pub(crate) fn lines(pts: Vec<[f32; 3]>) -> Mesh {
     Mesh::new(PrimitiveTopology::LineList, RenderAssetUsages::default()).with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, pts)
 }
-fn points(pts: Vec<[f32; 3]>) -> Mesh {
+pub(crate) fn points(pts: Vec<[f32; 3]>) -> Mesh {
     Mesh::new(PrimitiveTopology::PointList, RenderAssetUsages::default()).with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, pts)
 }
 
@@ -385,25 +399,27 @@ fn y_to(dir: Vec3) -> Quat {
 }
 
 /// Spawn helpers bundle the asset stores.
-struct Kit<'a, 'w, 's> {
-    cmd: &'a mut Commands<'w, 's>,
-    meshes: &'a mut Assets<Mesh>,
-    mats: &'a mut Assets<StandardMaterial>,
-    images: &'a mut Assets<Image>,
+pub(crate) struct Kit<'a, 'w, 's> {
+    pub(crate) cmd: &'a mut Commands<'w, 's>,
+    pub(crate) meshes: &'a mut Assets<Mesh>,
+    pub(crate) mats: &'a mut Assets<StandardMaterial>,
+    pub(crate) images: &'a mut Assets<Image>,
+    /// The scene everything spawned belongs to: layer 0 the station, layer 1 the district.
+    pub(crate) layers: RenderLayers,
 }
 
 impl Kit<'_, '_, '_> {
-    fn mesh(&mut self, parent: Option<Entity>, mesh: Mesh, mat: StandardMaterial, tf: Transform) -> Entity {
+    pub(crate) fn mesh(&mut self, parent: Option<Entity>, mesh: Mesh, mat: StandardMaterial, tf: Transform) -> Entity {
         let m = self.meshes.add(mesh);
         let mt = self.mats.add(mat);
-        let e = self.cmd.spawn((Mesh3d(m), MeshMaterial3d(mt), tf)).id();
+        let e = self.cmd.spawn((Mesh3d(m), MeshMaterial3d(mt), tf, self.layers.clone())).id();
         if let Some(p) = parent {
             self.cmd.entity(p).add_child(e);
         }
         e
     }
-    fn group(&mut self, parent: Option<Entity>, tf: Transform) -> Entity {
-        let e = self.cmd.spawn((tf, Visibility::default())).id();
+    pub(crate) fn group(&mut self, parent: Option<Entity>, tf: Transform) -> Entity {
+        let e = self.cmd.spawn((tf, Visibility::default(), self.layers.clone())).id();
         if let Some(p) = parent {
             self.cmd.entity(p).add_child(e);
         }
@@ -425,7 +441,7 @@ impl Kit<'_, '_, '_> {
         let tex = self.images.add(img);
         let mat = self.mats.add(StandardMaterial { base_color_texture: Some(tex), unlit: true, alpha_mode: AlphaMode::Blend, cull_mode: None, ..default() });
         let quad = self.meshes.add(Rectangle::new(1.0, 1.0));
-        let sign = self.cmd.spawn((Mesh3d(quad), MeshMaterial3d(mat), Transform::from_scale(scale.extend(1.0)), Billboard { anchor }, extra)).id();
+        let sign = self.cmd.spawn((Mesh3d(quad), MeshMaterial3d(mat), Transform::from_scale(scale.extend(1.0)), Billboard { anchor }, self.layers.clone(), extra)).id();
         (anchor, sign)
     }
 }
@@ -435,7 +451,7 @@ impl Kit<'_, '_, '_> {
 #[allow(clippy::too_many_arguments)]
 fn setup(mut cmd: Commands, mut meshes: ResMut<Assets<Mesh>>, mut mats: ResMut<Assets<StandardMaterial>>, mut images: ResMut<Assets<Image>>, host: NonSend<HostRes>) {
     let host = host.0.as_ref();
-    let mut k = Kit { cmd: &mut cmd, meshes: &mut meshes, mats: &mut mats, images: &mut images };
+    let mut k = Kit { cmd: &mut cmd, meshes: &mut meshes, mats: &mut mats, images: &mut images, layers: RenderLayers::layer(0) };
 
     // camera — exposure 1 and no tonemapping, like three's default renderer; lights below use
     // three's physical values (ambient ÷ π for its Lambert term, point lights in lumens = cd · 4π).
@@ -447,6 +463,7 @@ fn setup(mut cmd: Commands, mut meshes: ResMut<Assets<Mesh>>, mut mats: ResMut<A
         Exposure { ev100: -(1.2f32).log2() },
         Transform::from_xyz(0.0, 100.0, 235.0).looking_at(Vec3::new(0.0, 2.0, 0.0), Vec3::Y),
         MainCam,
+        RenderLayers::layer(0),
     ));
 
     // stars (deterministic)
@@ -811,13 +828,14 @@ fn drain_commands(
     objects: Query<Entity, With<ObjectTag>>,
     picks: Query<(&Pickable, &GlobalTransform)>,
     window: Query<&Window, With<PrimaryWindow>>,
+    mut inbox: ResMut<crate::district::DistrictInbox>,
 ) {
     let queued: Vec<Cmd> = QUEUE.with(|q| std::mem::take(&mut *q.borrow_mut()));
     if queued.is_empty() {
         return;
     }
     let host = host.0.as_ref();
-    let mut k = Kit { cmd: &mut cmd, meshes: &mut meshes, mats: &mut mats, images: &mut images };
+    let mut k = Kit { cmd: &mut cmd, meshes: &mut meshes, mats: &mut mats, images: &mut images, layers: RenderLayers::layer(0) };
     let mut rebuild = false;
     for c in queued {
         match c {
@@ -873,6 +891,7 @@ fn drain_commands(
                     }
                 }
             }
+            c @ (Cmd::DistrictOpen(_) | Cmd::DistrictClose | Cmd::DistrictLots(_) | Cmd::DistrictNous(_) | Cmd::DistrictAct(_, _) | Cmd::DistrictPulse(_)) => inbox.0.push(c),
             Cmd::Paused(p) => {
                 *winit = if p { WinitSettings { focused_mode: UpdateMode::reactive_low_power(Duration::from_secs(3600)), unfocused_mode: UpdateMode::reactive_low_power(Duration::from_secs(3600)) } } else { WinitSettings::continuous() };
             }
@@ -934,6 +953,10 @@ fn camera_input(
     host: NonSend<HostRes>,
 ) {
     let Ok(win) = window.single() else { return };
+    // The district level is open: its own system handles input.
+    if cams.single().is_ok_and(|(c, _, _)| !c.is_active) {
+        return;
+    }
     let aspect = win.width() / win.height().max(1.0);
     // one pointer: the mouse, or the first finger
     let touches = touches.as_deref();
@@ -1042,8 +1065,9 @@ fn pulses(mut cmd: Commands, w: Res<World3>, mut q: Query<(Entity, &PulseFx, &mu
 }
 
 /// Signs face the camera, at their anchor's world position.
-fn billboards(cams: Query<&GlobalTransform, (With<MainCam>, Without<Billboard>)>, anchors: Query<&GlobalTransform, Without<Billboard>>, mut signs: Query<(&Billboard, &mut Transform, &mut GlobalTransform)>) {
-    let Ok(cam) = cams.single() else { return };
+fn billboards(cams: Query<(&Camera, &GlobalTransform), Without<Billboard>>, anchors: Query<&GlobalTransform, Without<Billboard>>, mut signs: Query<(&Billboard, &mut Transform, &mut GlobalTransform)>) {
+    // Signs face whichever camera is showing (the station's or the district's).
+    let Some((_, cam)) = cams.iter().find(|(c, _)| c.is_active) else { return };
     let rot = cam.rotation();
     for (b, mut tf, mut gt) in signs.iter_mut() {
         let Ok(a) = anchors.get(b.anchor) else { continue };

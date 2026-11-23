@@ -758,6 +758,61 @@
    "status": "available",
    "owner_civic_did_hash": null,
    "occupant_count": 0
+  },
+  {
+   "id": "x:home",
+   "zone": "harbor",
+   "zone_kind": "business",
+   "zone_label": null,
+   "ring": 4,
+   "sector": 40,
+   "status": "owned",
+   "owner_civic_did_hash": null,
+   "occupant_count": 2
+  },
+  {
+   "id": "x:shop",
+   "zone": "harbor",
+   "zone_kind": "business",
+   "zone_label": null,
+   "ring": 4,
+   "sector": 70,
+   "status": "owned",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:workshop",
+   "zone": "harbor",
+   "zone_kind": "business",
+   "zone_label": null,
+   "ring": 4,
+   "sector": 130,
+   "status": "owned",
+   "owner_civic_did_hash": null,
+   "occupant_count": 1
+  },
+  {
+   "id": "x:venue",
+   "zone": "harbor",
+   "zone_kind": "business",
+   "zone_label": null,
+   "ring": 4,
+   "sector": 160,
+   "status": "owned",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:tower",
+   "zone": "harbor",
+   "zone_kind": "business",
+   "zone_label": null,
+   "ring": 4,
+   "sector": 220,
+   "status": "owned",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
   }
  ],
  "layout": [
@@ -1486,6 +1541,61 @@
     -6,
     48.49742261192856
    ]
+  },
+  {
+   "id": "x:home",
+   "parent": "shell",
+   "ring": 4,
+   "size": 3,
+   "pos": [
+    82.73279985684962,
+    4,
+    69.42106184614624
+   ]
+  },
+  {
+   "id": "x:shop",
+   "parent": "shell",
+   "ring": 4,
+   "size": 3,
+   "pos": [
+    36.93817547917223,
+    -4,
+    101.4868030448781
+   ]
+  },
+  {
+   "id": "x:workshop",
+   "parent": "shell",
+   "ring": 4,
+   "size": 3,
+   "pos": [
+    -69.42106184614624,
+    4,
+    82.73279985684962
+   ]
+  },
+  {
+   "id": "x:venue",
+   "parent": "shell",
+   "ring": 4,
+   "size": 3,
+   "pos": [
+    -101.4868030448781,
+    -4,
+    36.93817547917224
+   ]
+  },
+  {
+   "id": "x:tower",
+   "parent": "shell",
+   "ring": 4,
+   "size": 3,
+   "pos": [
+    -82.73279985684964,
+    4,
+    -69.42106184614624
+   ]
   }
  ],
  "status_template": [
@@ -1557,7 +1667,12 @@
   "civic",
   "unsold",
   "unsold",
-  "commons"
+  "commons",
+  "owned",
+  "owned",
+  "owned",
+  "owned",
+  "owned"
  ],
  "status_custom": [
   "civic",
@@ -1628,7 +1743,12 @@
   "civic",
   "unsold",
   "unsold",
-  "commons"
+  "commons",
+  "owned",
+  "owned",
+  "owned",
+  "owned",
+  "owned"
  ],
  "custom_zones": [
   {
@@ -1736,6 +1856,672 @@
   "QUIET HOMES",
   "ÜNÏCODE COMMONS"
  ],
+ "district": {
+  "constants": {
+   "floor_radius": 170,
+   "lot_pitch": 17,
+   "row_offset": 17
+  },
+  "zones": [
+   {
+    "zone": "government_quarter",
+    "lots": [
+     {
+      "id": "genesis:government_quarter:0001",
+      "angle": 0,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:r0",
+      "angle": 0,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     }
+    ],
+    "span": 0.1
+   },
+   {
+    "zone": "infrastructure",
+    "lots": [
+     {
+      "id": "genesis:infrastructure:0001",
+      "angle": -0.1,
+      "side": -1,
+      "kind": "venue",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:infrastructure:0002",
+      "angle": -0.1,
+      "side": 1,
+      "kind": "venue",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:infrastructure:0003",
+      "angle": 0,
+      "side": -1,
+      "kind": "venue",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:infrastructure:0004",
+      "angle": 0,
+      "side": 1,
+      "kind": "venue",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:r1frac",
+      "angle": 0.1,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:r1odd",
+      "angle": 0.1,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     }
+    ],
+    "span": 0.30000000000000004
+   },
+   {
+    "zone": "business",
+    "lots": [
+     {
+      "id": "genesis:business:0001",
+      "angle": -0.2,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:business:0002",
+      "angle": -0.2,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:business:0003",
+      "angle": -0.1,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:business:0004",
+      "angle": -0.1,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:business:0005",
+      "angle": 0,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:business:0006",
+      "angle": 0,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:business:0007",
+      "angle": 0.1,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:business:0008",
+      "angle": 0.1,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:emptyhash",
+      "angle": 0.2,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:r2half",
+      "angle": 0.2,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     }
+    ],
+    "span": 0.5
+   },
+   {
+    "zone": "shopping",
+    "lots": [
+     {
+      "id": "genesis:shopping:0001",
+      "angle": -0.2,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:shopping:0002",
+      "angle": -0.2,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:shopping:0003",
+      "angle": -0.1,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:shopping:0004",
+      "angle": -0.1,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:shopping:0005",
+      "angle": 0,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:shopping:0006",
+      "angle": 0,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:shopping:0007",
+      "angle": 0.1,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:shopping:0008",
+      "angle": 0.1,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:r2neg",
+      "angle": 0.2,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     }
+    ],
+    "span": 0.5
+   },
+   {
+    "zone": "manufacture",
+    "lots": [
+     {
+      "id": "genesis:manufacture:0001",
+      "angle": -0.15,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:manufacture:0002",
+      "angle": -0.15,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:manufacture:0003",
+      "angle": -0.05,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:manufacture:0004",
+      "angle": -0.05,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:manufacture:0005",
+      "angle": 0.05,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:manufacture:0006",
+      "angle": 0.05,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:manufacture:0007",
+      "angle": 0.15,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:manufacture:0008",
+      "angle": 0.15,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     }
+    ],
+    "span": 0.4
+   },
+   {
+    "zone": "residential",
+    "lots": [
+     {
+      "id": "genesis:residential:0001",
+      "angle": -0.6,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0002",
+      "angle": -0.6,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0003",
+      "angle": -0.5,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0004",
+      "angle": -0.5,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0005",
+      "angle": -0.4,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0006",
+      "angle": -0.4,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0007",
+      "angle": -0.3,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0008",
+      "angle": -0.3,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0009",
+      "angle": -0.2,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0010",
+      "angle": -0.2,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0011",
+      "angle": -0.1,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0012",
+      "angle": -0.1,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0013",
+      "angle": 0,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0014",
+      "angle": 0,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0015",
+      "angle": 0.1,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0016",
+      "angle": 0.1,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0017",
+      "angle": 0.2,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0018",
+      "angle": 0.2,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0019",
+      "angle": 0.3,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0020",
+      "angle": 0.3,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0021",
+      "angle": 0.4,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0022",
+      "angle": 0.4,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0023",
+      "angle": 0.5,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "genesis:residential:0024",
+      "angle": 0.5,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:r3half",
+      "angle": 0.6,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:r3neg",
+      "angle": 0.6,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     }
+    ],
+    "span": 1.3
+   },
+   {
+    "zone": "harbor",
+    "lots": [
+     {
+      "id": "x:home",
+      "angle": -0.2,
+      "side": -1,
+      "kind": "home",
+      "condition": "maintained",
+      "occupied": true
+     },
+     {
+      "id": "x:r35",
+      "angle": -0.2,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:r4a",
+      "angle": -0.1,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:r4b",
+      "angle": -0.1,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:r4c",
+      "angle": 0,
+      "side": -1,
+      "kind": "owned",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:rneg",
+      "angle": 0,
+      "side": 1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:shop",
+      "angle": 0.1,
+      "side": -1,
+      "kind": "shop",
+      "condition": "worn",
+      "occupied": false
+     },
+     {
+      "id": "x:tower",
+      "angle": 0.1,
+      "side": 1,
+      "kind": "building",
+      "condition": "maintained",
+      "occupied": false
+     },
+     {
+      "id": "x:venue",
+      "angle": 0.2,
+      "side": -1,
+      "kind": "venue",
+      "condition": "derelict",
+      "occupied": false
+     },
+     {
+      "id": "x:workshop",
+      "angle": 0.2,
+      "side": 1,
+      "kind": "workshop",
+      "condition": "maintained",
+      "occupied": true
+     }
+    ],
+    "span": 0.5
+   },
+   {
+    "zone": "research_lab",
+    "lots": [
+     {
+      "id": "x:r5a",
+      "angle": 0,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     }
+    ],
+    "span": 0.1
+   },
+   {
+    "zone": "quiet_homes",
+    "lots": [
+     {
+      "id": "x:r6",
+      "angle": 0,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     }
+    ],
+    "span": 0.1
+   },
+   {
+    "zone": "mystery",
+    "lots": [
+     {
+      "id": "x:feedkind",
+      "angle": 0,
+      "side": -1,
+      "kind": "empty",
+      "condition": "maintained",
+      "occupied": false
+     }
+    ],
+    "span": 0.1
+   },
+   {
+    "zone": "nowhere",
+    "lots": [],
+    "span": 0.1
+   }
+  ]
+ },
  "fit": [
   {
    "radius": 94,

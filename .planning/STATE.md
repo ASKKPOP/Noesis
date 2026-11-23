@@ -327,7 +327,8 @@ Next action: operator's choice — remaining v3.0 work includes the Wave-1 Type 
 - Code: `viz-rs/` (layout port + Bevy scene + wasm-bindgen entry), `dashboard/src/components/worldmap/orbital-layout.ts` (shared layout), `orbital-bevy.ts` (loader + fallback), WASM stage 0 in `docker/Dockerfile.dashboard`, `/viz/` gzip in nginx, CI job `viz-rs`.
 - Contract: `viz-rs/fixtures/layout-parity.json` is recorded from the TypeScript (`dashboard/test/orbital-layout-parity.test.ts`, `UPDATE_VIZ_PARITY=1`) and replayed by `cargo test`; a layout change re-records it and changes `viz-rs/src/layout.rs` in the same PR.
 - Known costs: ~12.8 MB WASM (~4.6 MB gzip) vs ~150 KB three.js; Bevy 0.20 is pre-1.0. Bevy needs Rust >= 1.97.1 — built in Docker (rust:1.100), not with the runner's toolchain.
-- Not built: district level in Bevy; content-hashed `/viz/` file names (the bundle is revalidated, not cached immutably).
+- District level ported 2026-11-23 (`viz-rs/src/district.rs`): same Bevy app, second camera on render layer 1, world at z = -30000; lots still laid out by `district-layout.ts` (fixture now records them per zone + span); `mountBevyDistrict` in `orbital-bevy.ts` borrows the station canvas and returns it on close.
+- Not built: content-hashed `/viz/` file names (the bundle is revalidated, not cached immutably).
 
 ## Surfaces re-plan — Portal P1+P2 BUILT 2026-11-17 (deployed 2026-11-19 with the Grid, from research/atlas-simulator)
 
