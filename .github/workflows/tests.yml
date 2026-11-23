@@ -151,3 +151,22 @@ jobs:
       - name: Brain-rs tests
         working-directory: brain-rs
         run: cargo test --locked
+
+  viz-rs:
+    name: viz-rs (Bevy world map — cargo test + WASM build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # Through Docker: Bevy 0.20 needs Rust >= 1.97.1 and the WASM build needs
+      # wasm-bindgen-cli + binaryen, all pinned in docker/Dockerfile.dashboard (stage 0).
+      - name: Rust tests (layout parity fixture, headless scene smoke test)
+        run: docker build -f docker/Dockerfile.dashboard --target viz-test .
+
+      - name: WASM bundle builds
+        run: |
+          docker build -f docker/Dockerfile.dashboard --target viz-out -o viz-out .
+          ls -la viz-out
+          test -s viz-out/noesis_viz.js
+          test -s viz-out/noesis_viz_bg.wasm

@@ -13,6 +13,8 @@ import * as THREE from 'three';
 import type { ParcelFeedEntry } from './OrbitalGenesisMap';
 import { TEMPLATE_ZONES, parcelZoneKind, zoneColor, zoneSign, type GridZoneView } from './zone-view';
 import { fitDistance } from './grid-focus';
+import { drawNeonSign } from './neon-sign';
+import { INCL, RING_R, layoutParcels, outerRadius, renderStatus } from './orbital-layout';
 
 /** An economy-built orbital object (L4 feed: GET /api/v1/orbital/objects). The same
  * built world the Nous now perceives — rendered so the map shows it too. */
@@ -43,17 +45,7 @@ export interface MountOpts {
     onFocusGrid?(name: string): void;
 }
 
-const R: Record<number, number> = { 1: 30, 2: 56, 3: 84 };
-const INCL = 0.42;
-
-/** Radius of a ring a Polis opened beyond the Genesis Core (ring 4+). */
-const outerRadius = (ring: number): number => R[3] + 24 * (ring - 3);
-
-/** Map a live feed parcel to the canonical render status (zone KIND + ownership — never the zone's name). */
-function renderStatus(p: ParcelFeedEntry, zones: readonly GridZoneView[]): string {
-    if (parcelZoneKind(p, zones) === 'civic') return p.ring === 0 ? 'civic' : 'commons';
-    return p.status === 'owned' || p.owner_civic_did_hash ? 'owned' : 'unsold';
-}
+const R = RING_R;
 
 export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts): OrbitalHandle {
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -104,13 +96,7 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
     const meshes: THREE.Object3D[] = [];
 
     function neonSign(text: string, hex: number): THREE.Sprite {
-        const c = document.createElement('canvas'); c.width = 512; c.height = 128;
-        const x = c.getContext('2d')!; const col = '#' + hex.toString(16).padStart(6, '0');
-        x.shadowColor = col; x.shadowBlur = 26; x.strokeStyle = col; x.lineWidth = 5;
-        x.beginPath(); (x as CanvasRenderingContext2D).roundRect(14, 18, 484, 92, 18); x.stroke();
-        x.font = 'bold 52px "JetBrains Mono",Menlo,monospace'; x.textAlign = 'center'; x.textBaseline = 'middle';
-        x.fillStyle = col; x.fillText(text, 256, 66);
-        const t = new THREE.CanvasTexture(c);
+        const t = new THREE.CanvasTexture(drawNeonSign(text, hex));
         const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false }));
         s.scale.set(30, 7.5, 1); return s;
     }
@@ -272,31 +258,21 @@ export function mountOrbitalStation(canvas: HTMLCanvasElement, opts: MountOpts):
     }
     function renderParcelModules(parcels: ParcelFeedEntry[]): void {
         clearModules();
-        for (const p of parcels.filter((p) => p.ring === 1)) {
-            const th = p.sector * Math.PI / 180;
-            parcelBodies.push(modMesh(p, 4.2, station, new THREE.Vector3(Math.cos(th) * R[1], ((p.sector / 90) % 2 ? 5 : -5), Math.sin(th) * R[1])));
-        }
-        for (const p of parcels.filter((p) => p.ring === 2)) {
-            const th = p.sector * Math.PI / 180; const lift = Math.round(p.sector) % 2 ? 6 : -6;
-            parcelBodies.push(modMesh(p, 3.6, station, new THREE.Vector3(Math.cos(th) * R[2], lift, Math.sin(th) * R[2])));
-        }
-        for (const p of parcels.filter((p) => p.ring === 3)) {
-            const th = p.sector * Math.PI / 180; const lift = Math.round(p.sector * 24 / 360) % 2 ? 4 : -4;
-            parcelBodies.push(modMesh(p, 3.0, r3spin, new THREE.Vector3(Math.cos(th) * R[3], lift, Math.sin(th) * R[3])));
+        const placed = layoutParcels(parcels);
+        for (const { parcel: p, place } of placed) {
+            if (place.parent === 'shell') continue;
+            parcelBodies.push(modMesh(p, place.size, place.parent === 'r3spin' ? r3spin : station, new THREE.Vector3(...place.pos)));
         }
         // Rings a Polis opened by law (ring 4+): each is its own shell, tilted the other way
         // from its neighbour (the gyroscope look), in the colour of the zone it was opened in.
-        const outer = new Map<number, ParcelFeedEntry[]>();
-        for (const p of parcels) { if (p.ring > 3) outer.set(p.ring, [...(outer.get(p.ring) ?? []), p]); }
-        for (const [ring, land] of outer) {
-            const rad = outerRadius(ring); const first = land[0];
+        const outer = new Map<number, { parcel: ParcelFeedEntry; pos: [number, number, number] }[]>();
+        for (const { parcel, place } of placed) { if (place.parent === 'shell') outer.set(place.ring, [...(outer.get(place.ring) ?? []), { parcel, pos: place.pos }]); }
+        for (const [ring, mods] of outer) {
+            const rad = outerRadius(ring); const land = mods.map((m) => m.parcel); const first = land[0];
             const shell = new THREE.Group(); shell.rotation.x = (ring % 2 ? 1 : -1) * INCL * 0.6; station.add(shell); outerExtras.push(shell);
             const t = new THREE.Mesh(new THREE.TorusGeometry(rad, 0.45, 10, 220), new THREE.MeshBasicMaterial({ color: zoneColor(first.zone), transparent: true, opacity: 0.28 }));
             t.rotation.x = Math.PI / 2; shell.add(t);
-            for (const [i, p] of land.entries()) {
-                const th = p.sector * Math.PI / 180;
-                parcelBodies.push(modMesh(p, 3.0, shell, new THREE.Vector3(Math.cos(th) * rad, i % 2 ? 4 : -4, Math.sin(th) * rad)));
-            }
+            for (const m of mods) parcelBodies.push(modMesh(m.parcel, 3.0, shell, new THREE.Vector3(...m.pos)));
             const signed = new Set<string>();
             for (const p of land) {
                 if (signed.has(p.zone)) continue; signed.add(p.zone);

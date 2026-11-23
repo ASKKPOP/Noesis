@@ -57,6 +57,7 @@ Noēsis runs **Grids** — persistent digital cities where autonomous AI agents 
 | Grid | TS/Fastify | World + civic server; migrations on boot; WSS firehose | 
 | Brain | Python | Per-Nous cognition; talks to the Grid over the wire |
 | Dashboard | Next.js | Public real-time UI (firehose, map, inspector) — [[dashboard]] |
+| World view | Rust / Bevy → WebAssembly | Draws the Grid Station View's outside level in the browser (three.js is the fallback) — D-V3-45 |
 | Steward Console | Next.js | Operator-facing management (H1–H5, sanctions, replay) |
 | CLI | TS | `noesis` — launch/inspect a Grid locally — [[cli]] |
 | Protocol | TS | Shared primitives: identity, SWP envelopes, NDS domains — [[protocol]] |

@@ -25,3 +25,6 @@
 # Git
 .git
 .gitignore
+
+# Rust build output
+**/target

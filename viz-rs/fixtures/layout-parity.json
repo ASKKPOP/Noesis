@@ -1,0 +1,1771 @@
+{
+ "parcels": [
+  {
+   "id": "genesis:government_quarter:0001",
+   "zone": "government_quarter",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 0,
+   "sector": 180,
+   "status": "civic",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:infrastructure:0001",
+   "zone": "infrastructure",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 1,
+   "sector": 45,
+   "status": "civic",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:infrastructure:0002",
+   "zone": "infrastructure",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 1,
+   "sector": 135,
+   "status": "civic",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:infrastructure:0003",
+   "zone": "infrastructure",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 1,
+   "sector": 225,
+   "status": "civic",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:infrastructure:0004",
+   "zone": "infrastructure",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 1,
+   "sector": 315,
+   "status": "civic",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:business:0001",
+   "zone": "business",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 7.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:business:0002",
+   "zone": "business",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 22.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:business:0003",
+   "zone": "business",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 37.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:business:0004",
+   "zone": "business",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 52.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:business:0005",
+   "zone": "business",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 67.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:business:0006",
+   "zone": "business",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 82.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:business:0007",
+   "zone": "business",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 97.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:business:0008",
+   "zone": "business",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 112.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:shopping:0001",
+   "zone": "shopping",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 127.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:shopping:0002",
+   "zone": "shopping",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 142.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:shopping:0003",
+   "zone": "shopping",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 157.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:shopping:0004",
+   "zone": "shopping",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 172.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:shopping:0005",
+   "zone": "shopping",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 187.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:shopping:0006",
+   "zone": "shopping",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 202.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:shopping:0007",
+   "zone": "shopping",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 217.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:shopping:0008",
+   "zone": "shopping",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 232.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:manufacture:0001",
+   "zone": "manufacture",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 247.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:manufacture:0002",
+   "zone": "manufacture",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 262.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:manufacture:0003",
+   "zone": "manufacture",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 277.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:manufacture:0004",
+   "zone": "manufacture",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 292.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:manufacture:0005",
+   "zone": "manufacture",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 307.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:manufacture:0006",
+   "zone": "manufacture",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 322.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:manufacture:0007",
+   "zone": "manufacture",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 337.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:manufacture:0008",
+   "zone": "manufacture",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 352.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0001",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 7.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0002",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 22.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0003",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 37.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0004",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 52.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0005",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 67.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0006",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 82.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0007",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 97.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0008",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 112.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0009",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 127.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0010",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 142.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0011",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 157.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0012",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 172.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0013",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 187.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0014",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 202.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0015",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 217.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0016",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 232.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0017",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 247.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0018",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 262.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0019",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 277.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0020",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 292.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0021",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 307.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0022",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 322.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0023",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 337.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "genesis:residential:0024",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 352.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r4a",
+   "zone": "harbor",
+   "zone_kind": "business",
+   "zone_label": "Harbor",
+   "ring": 4,
+   "sector": 10,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r5a",
+   "zone": "research_lab",
+   "zone_kind": "business",
+   "zone_label": null,
+   "ring": 5,
+   "sector": 200,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r4b",
+   "zone": "harbor",
+   "zone_kind": "business",
+   "zone_label": null,
+   "ring": 4,
+   "sector": 100,
+   "status": "available",
+   "owner_civic_did_hash": "abababababababababababababababababababababababababababababababab",
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r4c",
+   "zone": "harbor",
+   "zone_kind": "business",
+   "zone_label": null,
+   "ring": 4,
+   "sector": 190.5,
+   "status": "owned",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r6",
+   "zone": "quiet_homes",
+   "zone_kind": "home",
+   "zone_label": null,
+   "ring": 6,
+   "sector": -45,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r3half",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": 7.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r3neg",
+   "zone": "residential",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 3,
+   "sector": -7.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r2half",
+   "zone": "business",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 12.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r2neg",
+   "zone": "shopping",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": -0.5,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r1odd",
+   "zone": "infrastructure",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 1,
+   "sector": 45,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r1frac",
+   "zone": "infrastructure",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 1,
+   "sector": 135.25,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r35",
+   "zone": "harbor",
+   "zone_kind": "business",
+   "zone_label": null,
+   "ring": 3.5,
+   "sector": 30,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:r0",
+   "zone": "government_quarter",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 0,
+   "sector": 0,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:rneg",
+   "zone": "harbor",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": -1,
+   "sector": 0,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  },
+  {
+   "id": "x:emptyhash",
+   "zone": "business",
+   "zone_kind": null,
+   "zone_label": null,
+   "ring": 2,
+   "sector": 30,
+   "status": "available",
+   "owner_civic_did_hash": "",
+   "occupant_count": 0
+  },
+  {
+   "id": "x:feedkind",
+   "zone": "mystery",
+   "zone_kind": "civic",
+   "zone_label": null,
+   "ring": 2,
+   "sector": 60,
+   "status": "available",
+   "owner_civic_did_hash": null,
+   "occupant_count": 0
+  }
+ ],
+ "layout": [
+  {
+   "id": "genesis:infrastructure:0001",
+   "parent": "station",
+   "ring": 1,
+   "size": 4.2,
+   "pos": [
+    21.213203435596427,
+    5,
+    21.213203435596423
+   ]
+  },
+  {
+   "id": "genesis:infrastructure:0002",
+   "parent": "station",
+   "ring": 1,
+   "size": 4.2,
+   "pos": [
+    -21.213203435596423,
+    5,
+    21.213203435596427
+   ]
+  },
+  {
+   "id": "genesis:infrastructure:0003",
+   "parent": "station",
+   "ring": 1,
+   "size": 4.2,
+   "pos": [
+    -21.21320343559643,
+    5,
+    -21.213203435596423
+   ]
+  },
+  {
+   "id": "genesis:infrastructure:0004",
+   "parent": "station",
+   "ring": 1,
+   "size": 4.2,
+   "pos": [
+    21.21320343559642,
+    5,
+    -21.21320343559643
+   ]
+  },
+  {
+   "id": "genesis:business:0001",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    55.520912236933384,
+    -6,
+    7.309466764322888
+   ]
+  },
+  {
+   "id": "genesis:business:0002",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    51.737253820632056,
+    6,
+    21.43027221244503
+   ]
+  },
+  {
+   "id": "genesis:business:0003",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    44.42778705630917,
+    -6,
+    34.09064002448836
+   ]
+  },
+  {
+   "id": "genesis:business:0004",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    34.09064002448836,
+    6,
+    44.42778705630917
+   ]
+  },
+  {
+   "id": "genesis:business:0005",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    21.430272212445033,
+    -6,
+    51.737253820632056
+   ]
+  },
+  {
+   "id": "genesis:business:0006",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    7.309466764322896,
+    6,
+    55.520912236933384
+   ]
+  },
+  {
+   "id": "genesis:business:0007",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    -7.3094667643228775,
+    -6,
+    55.520912236933384
+   ]
+  },
+  {
+   "id": "genesis:business:0008",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    -21.430272212445026,
+    6,
+    51.737253820632056
+   ]
+  },
+  {
+   "id": "genesis:shopping:0001",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    -34.09064002448836,
+    -6,
+    44.42778705630917
+   ]
+  },
+  {
+   "id": "genesis:shopping:0002",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    -44.42778705630918,
+    6,
+    34.090640024488344
+   ]
+  },
+  {
+   "id": "genesis:shopping:0003",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    -51.737253820632056,
+    -6,
+    21.430272212445033
+   ]
+  },
+  {
+   "id": "genesis:shopping:0004",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    -55.520912236933384,
+    6,
+    7.309466764322888
+   ]
+  },
+  {
+   "id": "genesis:shopping:0005",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    -55.520912236933384,
+    -6,
+    -7.309466764322874
+   ]
+  },
+  {
+   "id": "genesis:shopping:0006",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    -51.73725382063207,
+    6,
+    -21.430272212444997
+   ]
+  },
+  {
+   "id": "genesis:shopping:0007",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    -44.42778705630917,
+    -6,
+    -34.09064002448836
+   ]
+  },
+  {
+   "id": "genesis:shopping:0008",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    -34.090640024488366,
+    6,
+    -44.42778705630916
+   ]
+  },
+  {
+   "id": "genesis:manufacture:0001",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    -21.43027221244501,
+    -6,
+    -51.73725382063206
+   ]
+  },
+  {
+   "id": "genesis:manufacture:0002",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    -7.309466764322892,
+    6,
+    -55.520912236933384
+   ]
+  },
+  {
+   "id": "genesis:manufacture:0003",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    7.309466764322919,
+    -6,
+    -55.520912236933384
+   ]
+  },
+  {
+   "id": "genesis:manufacture:0004",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    21.43027221244504,
+    6,
+    -51.73725382063205
+   ]
+  },
+  {
+   "id": "genesis:manufacture:0005",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    34.09064002448835,
+    -6,
+    -44.42778705630917
+   ]
+  },
+  {
+   "id": "genesis:manufacture:0006",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    44.42778705630916,
+    6,
+    -34.090640024488366
+   ]
+  },
+  {
+   "id": "genesis:manufacture:0007",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    51.73725382063206,
+    -6,
+    -21.430272212445015
+   ]
+  },
+  {
+   "id": "genesis:manufacture:0008",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    55.520912236933384,
+    6,
+    -7.309466764322894
+   ]
+  },
+  {
+   "id": "genesis:residential:0001",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    83.28136835540008,
+    4,
+    10.964200146484332
+   ]
+  },
+  {
+   "id": "genesis:residential:0002",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    77.60588073094809,
+    -4,
+    32.14540831866754
+   ]
+  },
+  {
+   "id": "genesis:residential:0003",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    66.64168058446376,
+    4,
+    51.135960036732534
+   ]
+  },
+  {
+   "id": "genesis:residential:0004",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    51.135960036732534,
+    -4,
+    66.64168058446376
+   ]
+  },
+  {
+   "id": "genesis:residential:0005",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    32.14540831866755,
+    4,
+    77.60588073094809
+   ]
+  },
+  {
+   "id": "genesis:residential:0006",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    10.964200146484345,
+    -4,
+    83.28136835540008
+   ]
+  },
+  {
+   "id": "genesis:residential:0007",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    -10.964200146484316,
+    4,
+    83.28136835540008
+   ]
+  },
+  {
+   "id": "genesis:residential:0008",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    -32.145408318667535,
+    -4,
+    77.60588073094809
+   ]
+  },
+  {
+   "id": "genesis:residential:0009",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    -51.135960036732534,
+    4,
+    66.64168058446376
+   ]
+  },
+  {
+   "id": "genesis:residential:0010",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    -66.64168058446376,
+    -4,
+    51.13596003673251
+   ]
+  },
+  {
+   "id": "genesis:residential:0011",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    -77.60588073094809,
+    4,
+    32.14540831866755
+   ]
+  },
+  {
+   "id": "genesis:residential:0012",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    -83.28136835540008,
+    -4,
+    10.964200146484332
+   ]
+  },
+  {
+   "id": "genesis:residential:0013",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    -83.28136835540008,
+    4,
+    -10.96420014648431
+   ]
+  },
+  {
+   "id": "genesis:residential:0014",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    -77.6058807309481,
+    -4,
+    -32.14540831866749
+   ]
+  },
+  {
+   "id": "genesis:residential:0015",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    -66.64168058446376,
+    4,
+    -51.135960036732534
+   ]
+  },
+  {
+   "id": "genesis:residential:0016",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    -51.135960036732556,
+    -4,
+    -66.64168058446373
+   ]
+  },
+  {
+   "id": "genesis:residential:0017",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    -32.14540831866752,
+    4,
+    -77.6058807309481
+   ]
+  },
+  {
+   "id": "genesis:residential:0018",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    -10.964200146484337,
+    -4,
+    -83.28136835540008
+   ]
+  },
+  {
+   "id": "genesis:residential:0019",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    10.964200146484378,
+    4,
+    -83.28136835540008
+   ]
+  },
+  {
+   "id": "genesis:residential:0020",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    32.14540831866756,
+    -4,
+    -77.60588073094807
+   ]
+  },
+  {
+   "id": "genesis:residential:0021",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    51.13596003673253,
+    4,
+    -66.64168058446376
+   ]
+  },
+  {
+   "id": "genesis:residential:0022",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    66.64168058446373,
+    -4,
+    -51.135960036732556
+   ]
+  },
+  {
+   "id": "genesis:residential:0023",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    77.6058807309481,
+    4,
+    -32.14540831866752
+   ]
+  },
+  {
+   "id": "genesis:residential:0024",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    83.28136835540008,
+    -4,
+    -10.964200146484341
+   ]
+  },
+  {
+   "id": "x:r4a",
+   "parent": "shell",
+   "ring": 4,
+   "size": 3,
+   "pos": [
+    106.35923732531846,
+    -4,
+    18.754003188028477
+   ]
+  },
+  {
+   "id": "x:r5a",
+   "parent": "shell",
+   "ring": 5,
+   "size": 3,
+   "pos": [
+    -124.03942594373991,
+    -4,
+    -45.146658918988265
+   ]
+  },
+  {
+   "id": "x:r4b",
+   "parent": "shell",
+   "ring": 4,
+   "size": 3,
+   "pos": [
+    -18.754003188028474,
+    4,
+    106.35923732531846
+   ]
+  },
+  {
+   "id": "x:r4c",
+   "parent": "shell",
+   "ring": 4,
+   "size": 3,
+   "pos": [
+    -106.1915300169071,
+    -4,
+    -19.68143675315188
+   ]
+  },
+  {
+   "id": "x:r6",
+   "parent": "shell",
+   "ring": 6,
+   "size": 3,
+   "pos": [
+    110.30865786510142,
+    -4,
+    -110.30865786510141
+   ]
+  },
+  {
+   "id": "x:r3half",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    83.28136835540008,
+    4,
+    10.964200146484332
+   ]
+  },
+  {
+   "id": "x:r3neg",
+   "parent": "r3spin",
+   "ring": 3,
+   "size": 3,
+   "pos": [
+    83.28136835540008,
+    -4,
+    -10.964200146484332
+   ]
+  },
+  {
+   "id": "x:r2half",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    54.67257639871627,
+    6,
+    12.120618380533761
+   ]
+  },
+  {
+   "id": "x:r2neg",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    55.99786769159359,
+    -6,
+    -0.48868598790894036
+   ]
+  },
+  {
+   "id": "x:r1odd",
+   "parent": "station",
+   "ring": 1,
+   "size": 4.2,
+   "pos": [
+    21.213203435596427,
+    5,
+    21.213203435596423
+   ]
+  },
+  {
+   "id": "x:r1frac",
+   "parent": "station",
+   "ring": 1,
+   "size": 4.2,
+   "pos": [
+    -21.30556126869856,
+    5,
+    21.120441733679048
+   ]
+  },
+  {
+   "id": "x:r35",
+   "parent": "shell",
+   "ring": 3.5,
+   "size": 3,
+   "pos": [
+    83.13843876330611,
+    -4,
+    47.99999999999999
+   ]
+  },
+  {
+   "id": "x:emptyhash",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    48.49742261192857,
+    -6,
+    27.999999999999996
+   ]
+  },
+  {
+   "id": "x:feedkind",
+   "parent": "station",
+   "ring": 2,
+   "size": 3.6,
+   "pos": [
+    28.000000000000007,
+    -6,
+    48.49742261192856
+   ]
+  }
+ ],
+ "status_template": [
+  "civic",
+  "commons",
+  "commons",
+  "commons",
+  "commons",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "owned",
+  "owned",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "commons",
+  "commons",
+  "unsold",
+  "civic",
+  "unsold",
+  "unsold",
+  "commons"
+ ],
+ "status_custom": [
+  "civic",
+  "commons",
+  "commons",
+  "commons",
+  "commons",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "owned",
+  "owned",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "unsold",
+  "commons",
+  "commons",
+  "unsold",
+  "civic",
+  "unsold",
+  "unsold",
+  "commons"
+ ],
+ "custom_zones": [
+  {
+   "zone_id": "government_quarter",
+   "label": "Senate Hill",
+   "kind": "civic"
+  },
+  {
+   "zone_id": "business",
+   "label": "Business",
+   "kind": "business"
+  },
+  {
+   "zone_id": "residential",
+   "label": "Residential",
+   "kind": "home"
+  },
+  {
+   "zone_id": "harbor",
+   "label": "Harbor",
+   "kind": "business"
+  },
+  {
+   "zone_id": "quiet_homes",
+   "label": "Quiet Homes",
+   "kind": "home"
+  },
+  {
+   "zone_id": "infrastructure",
+   "label": "Ünïcode Commons",
+   "kind": "civic"
+  }
+ ],
+ "colors": [
+  {
+   "id": "government_quarter",
+   "color": 9327800
+  },
+  {
+   "id": "infrastructure",
+   "color": 9083052
+  },
+  {
+   "id": "business",
+   "color": 12757112
+  },
+  {
+   "id": "shopping",
+   "color": 4171453
+  },
+  {
+   "id": "manufacture",
+   "color": 10115652
+  },
+  {
+   "id": "residential",
+   "color": 5932228
+  },
+  {
+   "id": "harbor",
+   "color": 6733516
+  },
+  {
+   "id": "research_lab",
+   "color": 6731468
+  },
+  {
+   "id": "quiet_homes",
+   "color": 8611532
+  },
+  {
+   "id": "a",
+   "color": 9292902
+  },
+  {
+   "id": "",
+   "color": 13395558
+  },
+  {
+   "id": "Ünïcode zone",
+   "color": 8309862
+  },
+  {
+   "id": "zone_with_a_very_long_name_0123456789",
+   "color": 13395621
+  },
+  {
+   "id": "한국어",
+   "color": 8808140
+  }
+ ],
+ "signs_template": [
+  "GOVERNMENT CORE",
+  "COMMONS",
+  "BUSINESS",
+  "SHOPPING",
+  "MANUFACTURE",
+  "RESIDENTIAL"
+ ],
+ "signs_custom": [
+  "SENATE HILL",
+  "BUSINESS",
+  "RESIDENTIAL",
+  "HARBOR",
+  "QUIET HOMES",
+  "ÜNÏCODE COMMONS"
+ ],
+ "fit": [
+  {
+   "radius": 94,
+   "fov": 50,
+   "aspect": 1.7777777777777777,
+   "distance": 130.62620554207825
+  },
+  {
+   "radius": 92,
+   "fov": 50,
+   "aspect": 0.46,
+   "distance": 463.2134948300647
+  },
+  {
+   "radius": 58,
+   "fov": 50,
+   "aspect": 1,
+   "distance": 134.33191350071877
+  },
+  {
+   "radius": 58,
+   "fov": 50,
+   "aspect": 2.4,
+   "distance": 80.59914810043125
+  },
+  {
+   "radius": 10,
+   "fov": 75,
+   "aspect": 1.333,
+   "distance": 10.558765211316597
+  }
+ ]
+}

@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GENESIS_SEED, type ParcelFeedEntry } from './OrbitalGenesisMap';
 import { mountOrbitalStation, type OrbitalHandle, type OrbitalObjectEntry } from './orbital-station-scene';
+import { mountOrbitalBevy, rendererChoice, type OrbitalRenderer } from './orbital-bevy';
 import { pickerEntries, type PickerEntry, type PortalGrid } from './grid-picker';
 import { gridEntryHref } from '@/lib/grid-host';
 import GridCard from './GridCard';
@@ -74,6 +75,8 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     const [nous, setNous] = useState<NousView[]>([]);
     const nousRef = useRef<NousView[]>([]);
     useEffect(() => { nousRef.current = nous; }, [nous]);
+    // Which renderer draws the station (null until one has mounted).
+    const [renderer, setRenderer] = useState<OrbitalRenderer | null>(null);
     const [lang, setLang] = useState<Lang>('en');
     const t = translator(lang);
 
@@ -87,14 +90,28 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
         try { window.localStorage.setItem(LANG_KEY, next); } catch { /* storage blocked — the choice lasts for this visit */ }
     };
 
-    // Mount the Three.js scene once (WebGL — client only).
+    // The latest feed state, so a scene that mounts late (Bevy loads asynchronously) starts current.
+    const sceneState = useRef({ parcels: GENESIS_SEED, zones: TEMPLATE_ZONES as readonly GridZoneView[], objects: [] as OrbitalObjectEntry[] });
+    useEffect(() => { sceneState.current = { parcels, zones, objects }; }, [parcels, zones, objects]);
+
+    // Mount the scene once (WebGL — client only): Bevy/WASM (option C, viz-rs), or the
+    // three.js scene when Bevy cannot run here or `?renderer=three` asks for it.
     useEffect(() => {
-        if (!canvasRef.current) return;
-        const h = mountOrbitalStation(canvasRef.current, { onPick: setPicked, onFocusLabel: setFocusLabel, onFocusGrid: (name) => { setActiveGrid(name); setDescribed(name); } });
-        handleRef.current = h;
-        h.setParcels(GENESIS_SEED);
-        if (typeof window !== 'undefined') (window as unknown as { __forestScene?: OrbitalHandle }).__forestScene = h;
-        return () => { h.dispose(); handleRef.current = null; };
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        let cancelled = false;
+        const opts = { onPick: setPicked, onFocusLabel: setFocusLabel, onFocusGrid: (name: string) => { setActiveGrid(name); setDescribed(name); } };
+        const attach = (h: OrbitalHandle, kind: OrbitalRenderer): void => {
+            handleRef.current = h;
+            const now = sceneState.current;
+            h.setParcels(now.parcels); h.setZones(now.zones); h.setObjects(now.objects);
+            setRenderer(kind);
+            (window as unknown as { __forestScene?: OrbitalHandle }).__forestScene = h;
+        };
+        const three = (): void => { if (!cancelled) attach(mountOrbitalStation(canvas, opts), 'three'); };
+        if (rendererChoice(window.location.search) === 'three') three();
+        else mountOrbitalBevy(canvas, opts, three).then((h) => { if (cancelled) h.dispose(); else attach(h, 'bevy'); }).catch(three);
+        return () => { cancelled = true; handleRef.current?.dispose(); handleRef.current = null; };
     }, []);
 
     // Live parcels — the same source of truth the Nous act on. Seed = offline fallback.
@@ -233,7 +250,7 @@ export function OrbitalStation3D({ portal = false, backHref }: { portal?: boolea
     const btn = (on: boolean): React.CSSProperties => ({ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, border: on ? '1px solid #da7a4e' : '1px solid rgba(255,255,255,.16)', cursor: 'pointer', borderRadius: 999, padding: '5px 12px', background: on ? '#da7a4e' : 'rgba(255,255,255,.04)', color: on ? '#0b1220' : '#f5f0ea', pointerEvents: 'auto' });
 
     return (
-        <div style={{ position: 'fixed', inset: 0, background: '#020610', overflow: 'hidden' }}>
+        <div data-renderer={renderer ?? undefined} style={{ position: 'fixed', inset: 0, background: '#020610', overflow: 'hidden' }}>
             <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, display: 'block' }} />
 
             {/* title + clock */}
