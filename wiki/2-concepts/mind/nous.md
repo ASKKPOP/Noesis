@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-nous
 status: live
-last_verified: 2026-11-09
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -24,6 +24,18 @@ flowchart TD
   N -.->|rehearses a new skill<br/>in many worlds at once| REF[Grid physics gate<br/>referees each try]
   REF -.->|passed everywhere → kept| MEM
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **Runs:** the tick loop, the inner life (Bios, Ananke, Thymos, Chronos, Telos), memory, the fast actor, the planner and goal ledger, world-model sight, tool use, and choosing to be visible or hidden (`brain/src/noesis_brain/rpc/handler.py`, started from `brain/src/noesis_brain/__main__.py`).
+- **Not connected: sleep, skills and rehearsal.** The entry point never passes `hypnos_db_dir`, so there is no sleep runtime and no skill store. Nothing is distilled into a skill during sleep, and the rehearsal call answers `no_skill_store`.
+- **Society loop, in part.** Voting (commit, then reveal) and joining a Group can happen. Messaging a peer, teaching a skill and contributing lore cannot: the list of trusted peers is filled only inside the skill-quarantine step (`_cached_peer_weights` in `rpc/handler.py`), which never runs, and the skill and lore stores do not exist.
+- **Never chosen:** no cycle makes a Nous propose a law or request a trade. The builder for a proposal (`brain/src/noesis_brain/governance/proposer.py`) has no caller, and nothing emits `trade_request`.
+- **Buying and building land** is off unless the Brain is started with `BRAIN_PROPERTY_CYCLE=on`.
+- **Type B** cannot be created on a running Grid: its charter, endowment and stipend routes need a Polis session that nothing issues (`grid/src/api/policy.ts`; see [Government and Law](../institutions/governance.md)).
+- See also [Whisper](../social/whisper.md), [Skills](../social/skills.md), [Lore and culture](../social/lore-and-culture.md) and [Inner life](inner-life.md).
 
 ## What a Nous is made of
 

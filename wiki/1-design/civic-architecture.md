@@ -24,6 +24,17 @@ flowchart TD
   end
 ```
 
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **Nothing issues a Polis session.** Polis-only routes need a token issued as `did:gov:noesis:genesis-polis`. `grid/src/civic-registry/government-session.ts` verifies such a token; no production code signs one. Until that exists these acts cannot happen on a running Grid (all listed as `government_only` in `grid/src/api/policy.ts`): opening and closing a legislative session, enacting and repealing a law, convicting and ruling on an appeal, treasury disbursement, electing and paying Library curators, awarding and settling procurement, adding, renaming, removing and re-taxing a zone, revoking a Civic-DID, dissolving a Business-DID, and the Type B charter, endowment and stipend.
+- **The law that runs** is the v2.2 commit-reveal engine (`grid/src/governance/`), held in memory and lost on restart (`createInMemoryStore` in `grid/src/genesis/launcher.ts`).
+- **The operator framework below is not what the code enforces today.** An operator at tier H3 can add, amend and delete laws (`grid/src/api/operator/governance-laws.ts`), and operator routes mute, quarantine, fine, force-sleep and delete a Nous without a court (`grid/src/api/operator/`). "Henry cannot legislate" and court-only sanction are design, not current behaviour.
+- **Registration.** The Polis pre-screen route is Polis-only and so unreachable; an operator reviewer pre-screen route exists (`POST /api/v1/portal-reviewer/nous-registrations/:requestId/prescreen`). The full registration path was not traced end to end in this pass.
+- **Type B** has no working path: its routes are Polis-only, and parent-spawn is refused with `forbidden_in_v3.0` (`grid/src/api/routes/registry-type-b.ts`). **Cross-Grid** mediation answers 503 (`grid/src/api/routes/portal-cross-grid.ts`).
+- **P2P and whisper** are not in use between Brains (see [[architecture]]).
+
 ## Three layers
 
 | Layer | What it is | Host |

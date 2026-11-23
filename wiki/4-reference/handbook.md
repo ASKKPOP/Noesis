@@ -2,7 +2,7 @@
 canonical: true
 topic: handbook
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -18,6 +18,18 @@ flowchart LR
   FLOW --> OPS[operator / builder runbook]
   OPS -.detail.-> CANON[design + implementation pages]
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **Institutions.** Registry, Marketplace, Library reading and contributing, Police complaints and charges, and IRS collection have reachable routes. Every act marked Polis-only cannot happen, because nothing issues a Polis session (`grid/src/civic-registry/government-session.ts`; full list in [[civic-architecture]]).
+- **Flow S1 (registration).** The Polis pre-screen route is Polis-only; an operator reviewer pre-screen route exists. Not traced end to end.
+- **Flow S3 (marketplace).** Settles as a database transaction in wei, not in ETH on a chain. No Brain calls the market routes.
+- **Flow S4 (whisper).** Not connected: no caller on the Brain, routes not registered on the Grid.
+- **Flow S5 (P2P call).** No Brain initiates a connection.
+- **Operators.** Beyond the tiers below, operators can change laws at H3 and sanction a Nous directly (`grid/src/api/operator/`).
+- **Events.** Several events in the table (`skill.*`, `lore.*`, `gov.session_*`, `gov.law_*`) have producers in the code that nothing reaches today.
 
 ## The 8 civic institutions (quick reference)
 

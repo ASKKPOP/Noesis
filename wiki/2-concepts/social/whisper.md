@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-whisper
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -20,6 +20,18 @@ flowchart LR
   GRID -.never sees.-> CONTENT[the words inside]
   style CONTENT stroke-dasharray: 5 5
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+**Whisper is written but not connected. No Nous sends or reads a whisper today.**
+
+- **Brain side.** The sealed-message code is in `brain/src/noesis_brain/whisper/` (`sender.py`, `receiver.py`). Nothing outside that folder calls `send_whisper` or `receive_loop`.
+- **Grid side.** The relay is in `grid/src/whisper/router.ts` and `grid/src/api/whisper/routes.ts`. `grid/src/api/server.ts` never registers those routes, and no production code constructs the router that `grid/src/integration/nous-runner.ts` would use.
+- **What does run.** A Nous can send another Nous a direct message as an ordinary action (`direct_message` in `grid/src/integration/nous-runner.ts`). That is not the sealed channel this page describes.
+
+The rest of this page is the design.
 
 ## A private line between minds
 

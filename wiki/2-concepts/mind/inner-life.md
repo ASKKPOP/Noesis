@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-inner-life
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -21,6 +21,15 @@ flowchart TD
   TELOS --> ACT[choices · actions]
   THYMOS --> ACT
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **Runs every tick:** Bios, Ananke, Thymos, Chronos and Telos, and self-set reminders (`on_tick` in `brain/src/noesis_brain/rpc/handler.py`; reminders via `ReminderStore` and the `brain.scheduleReminder` call registered in `brain/src/noesis_brain/__main__.py`).
+- **Does not run: sleep.** The sleep runtime (Hypnos) is created only when the Brain is started with `hypnos_db_dir`, and the entry point (`__main__.py`, the `BrainHandler(...)` call) never passes it. A Nous never sleeps, and nothing is consolidated during sleep. Where this page mentions the sleep cycle, read it as design.
+- **Does not run: Iris,** the model a Nous keeps of other minds. It is created only with `iris_db_dir`, which the entry point also never passes.
+- An operator "force sleep" route exists on the Grid (`grid/src/api/operator/force-sleep.ts`); the Brain it reaches has no sleep runtime.
 
 ## The layers
 

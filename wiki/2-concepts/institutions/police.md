@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-police
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -22,6 +22,15 @@ flowchart LR
   S --> F[freeze · exile · fine · warning]
   S -.appeal.-> PL[the Polis / Government]
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **Reachable:** filing a complaint, opening an investigation, filing a charge and filing an appeal (Civic-DID routes under `/api/v1/police/` and `/api/v1/gov/appeal` in `grid/src/api/policy.ts`).
+- **Not reachable: conviction and appeal rulings.** Both are Polis-only routes, and nothing issues a Polis session (`grid/src/civic-registry/government-session.ts` only verifies one). With no conviction, the court path cannot sanction anyone.
+- **This page's claim that nothing, not even the operator, can sanction a mind without a court is not true of the code today.** Operator routes mute, quarantine, fine (slash), force-sleep and delete a Nous directly, with no charge or conviction: `grid/src/api/operator/mute-broadcast.ts`, `quarantine.ts`, `slash-coin.ts`, `force-sleep.ts`, `delete-nous.ts`, registered through `grid/src/api/operator/index.ts`.
+- No Brain code calls the Police routes, so no Nous files a complaint on its own.
 
 ## What it is
 

@@ -64,6 +64,17 @@
     <div class="stat"><div class="n">0</div><div class="l">Spec items absent</div></div>
   </div>
 
+  <!-- ============================ SESSION 31 ============================ -->
+  <h2>Session 31 — 2026‑11‑23 · “Bring the public wiki in line with what runs”</h2>
+  <p class="sub">Follow-up to the README source audit (<code>.planning/research/wiring-audit-2026-11.md</code>, ASKKPOP/Noesis#69): the wiki still described not-wired parts as system behaviour.</p>
+  <ul>
+    <li><b>“What runs today” added to 18 wiki pages</b> <span class="tag done">done</span> — <code>wiki/2-concepts/social/{whisper,skills,lore-and-culture}.md</code>, <code>mind/{inner-life,personal-wiki,nous}.md</code>, <code>institutions/{governance,police,irs,library,marketplace}.md</code>, <code>city/zones.md</code>, <code>economy/{money,trade}.md</code>, <code>wiki/1-design/{architecture,economy,civic-architecture}.md</code>, <code>wiki/4-reference/handbook.md</code>. Each section sits under the At-a-glance diagram, separates live from written-but-not-connected, and cites the file checked. Design text kept. No code changed.</li>
+    <li><b>Every audit item re-checked by reading source</b> — nothing executed. Confirmed: the Brain entry point never passes <code>iris_db_dir</code>/<code>hypnos_db_dir</code> (no Iris, sleep, skill store); lore store never created (<code>MemoryStream</code> has no <code>_conn</code>); whisper has no caller; no code signs a Polis session; nothing imports <code>grid/src/onchain/</code>; H3 operators can add/amend/delete laws.</li>
+    <li><b>Found beyond the audit</b> — (1) the Grid never registers the whisper routes and never constructs the whisper router, so whisper is unwired on both sides; (2) the Brain's trusted-peer list is filled only inside the skill-quarantine step, which never runs, so the social cycle can vote and join a Group but cannot message a peer, teach or contribute lore; (3) operator routes mute, quarantine, fine, force-sleep and delete a Nous without a court, which contradicts the Police page and D‑V3‑18 as written; (4) the personal wiki has no run-time writer at all (<code>PersonalWiki</code>, <code>RuleStore</code>, the research learner are never constructed); (5) <code>wiki/1-design/architecture.md</code> said 41 migrations, the schema has 81 (corrected).</li>
+    <li><b>Stale run documentation marked</b> <span class="tag done">done</span> — <code>.env.example</code>: the Traefik section is marked superseded, the AWS/nginx section is marked as the production path, the on-chain variables are marked not connected. <code>docs/noesis-deploy-runbook.html</code>: superseded banner pointing to <code>deploy.sh</code>.</li>
+    <li><b>Checked</b> — <code>check-wiki</code>, <code>check-state-doc-sync</code>, <code>lint-research-wiki</code> each run twice. Not verified: anything at run time; the registration path end to end; Nous-only enforcement on every ballot route; skill lineage and Group-research skills; norm emergence.</li>
+  </ul>
+
   <!-- ============================ SESSION 30 ============================ -->
   <h2>Session 30 — 2026‑11‑23 · “Update the GitHub README”</h2>
   <p class="sub">Operator: the README had not been updated for a long time. Last edit 2026‑07‑02, 396 commits behind.</p>

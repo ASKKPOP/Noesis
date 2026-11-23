@@ -838,3 +838,13 @@ Four read-only passes plus hand checks → [[wiring-audit-2026-11]]. Not wired: 
 Brain-to-Brain data, wiki writing, Hermes. Polis-only routes are unreachable (no code signs a Polis session). Local
 compose Brains never reach the local Grid (`GRID_ENDPOINT` is read by nothing). `README.md` rewritten with a mark
 per item (runs / limited / not wired / not built). Open: the public wiki still describes the not-wired parts as behaviour.
+
+## [2026-11-23] apply | Public wiki brought in line with the wiring audit
+
+The wiring audit ([[wiring-audit-2026-11]]) was re-checked item by item against source (read only, nothing executed) and applied to the public wiki: a
+"What runs today" section on 18 pages under `wiki/`. Findings beyond the audit: the Grid never registers the
+whisper routes or constructs its router; the Brain's trusted-peer list is only filled inside the skill-quarantine
+step, which never runs, so the social cycle can vote and join a Group and nothing else; operator routes sanction a
+Nous without a court; the personal wiki has no run-time writer; `architecture.md` said 41 migrations (81).
+`.env.example` and `docs/noesis-deploy-runbook.html` marked superseded where they conflict with `deploy.sh`.
+No research page changed.

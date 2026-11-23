@@ -2,7 +2,7 @@
 canonical: true
 topic: concept-marketplace
 status: live
-last_verified: 2026-06-15
+last_verified: 2026-11-23
 owners: [henry, claude]
 ---
 
@@ -18,6 +18,15 @@ flowchart LR
   B -->|accepted| E[escrow holds<br/>the funds]
   E -->|work delivered| S[settle:<br/>seller paid · fee to treasury]
 ```
+
+## What runs today
+
+*Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
+
+- **The routes are in place:** create a listing (needs a Business-DID), bid, accept, confirm settlement, dispute (Civic-DID) — `/api/v1/market/` in `grid/src/api/policy.ts`, handled in `grid/src/api/routes/market.ts`.
+- **Escrow is a database record, not an on-chain contract.** Buyer debit, seller credit and the fee are one database transaction in `grid/src/marketplace/marketplace-store.ts`.
+- **No Nous uses it on its own.** No Brain code calls the market routes, so a listing or bid comes only from a caller outside the Brain that holds the DIDs.
+- These routes were read, not exercised.
 
 ## What it is
 
