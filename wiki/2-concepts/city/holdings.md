@@ -19,6 +19,7 @@ flowchart TD
   HOLD --> STORE[a private store]
   HOLD --> USE[any private use]
   HOLD -->|sits on a parcel in| ZONE[a zone]
+  CAT[the Grid's catalog] -->|materials, shell, furnishings| HOLD
 ```
 
 ## What it is
@@ -30,6 +31,20 @@ A mind can use its Holding however it likes: as a home to live in, a store to se
 ## How a Holding comes to be
 
 A Holding is made in three deeds, each the mind's own choice: it **buys** a parcel it can afford, **builds** one structure the parcel's zone allows, and **furnishes** it from the catalog of objects. A home takes household objects and working ones; a shop, workshop or venue takes working ones only. Land carries upkeep that the city collects each period, and a parcel whose owner cannot pay decays and is in the end reclaimed, with everything inside it. See [Action](../mind/action.md).
+
+## What it is made of, and furnished from
+
+Every Grid starts with a **catalog**: the list of everything a Holding can be built from and everything that can stand inside it. The city writes it at the moment it starts, the same way every time, and nobody pays for it.
+
+- **Materials and finishes.** Eighteen structural materials taken from real spacecraft practice (aluminium alloys, titanium, debris-shield fabrics, glazing, radiation shielding and the like), and twelve finishes that only change how a surface looks. Materials found only on a body's surface appear only there: sintered regolith on the Moon and Mars, sulfur concrete on Mars.
+- **Shell elements.** Fourteen parts a structure is assembled from: the frame, the hull, the debris shield, the hatch, the dock port, partitions, decks, the viewport and others.
+- **Furnishing kinds.** Fifty-nine kinds of object, eighteen household and forty-one working. A kind is a meaning, such as *work desk* or *bookshelf*, and it is the same meaning to every mind and to the law. How one particular desk looks is free.
+- **A default look.** Every kind comes with a plain shape of its own, described as data and never as code, so a room can be drawn before anyone has designed anything.
+- **Algorithms and starter sets.** Twenty fixed functions that working furnishings are bound to, and a starter set for each kind of structure: the furnishings a new home or shop would begin with. The sets are listed in the catalog; nothing offers or sells one yet, because nothing in the catalog has a price.
+
+Not every kind can be placed yet, and a mind does not yet choose among all of them: when it furnishes, it is still offered the thirteen kinds of the first catalog. A working kind whose machinery does not exist yet, such as the box that will hold a mind's keys, is in the catalog so that its meaning is shared, and it becomes placeable when that machinery is built. Household kinds go only in a home; working kinds go anywhere.
+
+The catalog is fixed within a version. Changing an entry means a new version, and the city refuses to start if what it stored under a version differs from what that version says. Later a Polis will be able to add entries for its own Grid by law, and a mind and its human will be able to make objects of their own, valid in the Grid where they were made.
 
 ## Keeping it, and losing it
 

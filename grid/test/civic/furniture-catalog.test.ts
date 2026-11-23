@@ -7,7 +7,7 @@
  * runs before Wave 1 ships the file. Wave 1 un-skips this block.
  *
  * Contract under test:
- *   - FURNITURE_CATALOG = EXACTLY 6 mirror + 7 functional kinds.
+ *   - FURNITURE_CATALOG = the placeable Genesis kinds; the 6 mirror + 7 functional v1 kinds are unchanged.
  *   - mirror entries: class 'mirror', (near-)empty affordances, render-only, home-only.
  *   - functional entries: class 'functional', non-empty affordances (work_desk → billing/accounting).
  *   - isValidFurniture(kind, structureType): mirror only in 'home'; functional anywhere it fits;
@@ -24,22 +24,45 @@ const FUNCTIONAL_KINDS = [
 const loadFurniture = () => import('../../src/civic/furniture.js');
 
 describe('Phase 59 HOUSE-2 — furniture catalog (closed v1) [Wave 1 un-skips]', () => {
-    // ── catalog shape: 6 mirror + 7 functional (13 total) ──────────────────────
-    it('FURNITURE_CATALOG has EXACTLY the 6 mirror kinds', async () => {
+    // ── catalog shape: the v1 kinds stay, catalog v2 adds more (Grid House Objects §14) ──
+    it('FURNITURE_CATALOG still holds every v1 mirror kind as mirror', async () => {
         const { FURNITURE_CATALOG } = await loadFurniture();
-        const mirrors = Object.values(FURNITURE_CATALOG).filter(e => e.class === 'mirror').map(e => e.kind).sort();
-        expect(mirrors).toEqual([...MIRROR_KINDS].sort());
+        for (const k of MIRROR_KINDS) expect(FURNITURE_CATALOG[k]?.class, k).toBe('mirror');
     });
 
-    it('FURNITURE_CATALOG has EXACTLY the 7 functional kinds', async () => {
+    it('FURNITURE_CATALOG still holds every v1 functional kind as functional', async () => {
         const { FURNITURE_CATALOG } = await loadFurniture();
-        const functional = Object.values(FURNITURE_CATALOG).filter(e => e.class === 'functional').map(e => e.kind).sort();
-        expect(functional).toEqual([...FUNCTIONAL_KINDS].sort());
+        for (const k of FUNCTIONAL_KINDS) expect(FURNITURE_CATALOG[k]?.class, k).toBe('functional');
     });
 
-    it('the catalog is closed at 13 entries (6 mirror + 7 functional) — no extra kinds', async () => {
+    it('the catalog is the 51 placeable Genesis kinds (18 mirror + 33 functional) — and nothing else', async () => {
         const { FURNITURE_CATALOG } = await loadFurniture();
-        expect(Object.keys(FURNITURE_CATALOG)).toHaveLength(13);
+        const { KINDS } = await import('../../src/civic/genesis-catalog.js');
+        expect(Object.keys(FURNITURE_CATALOG).sort()).toEqual(KINDS.filter(k => k.placeable).map(k => k.id).sort());
+        expect(Object.keys(FURNITURE_CATALOG)).toHaveLength(51);
+        expect(Object.values(FURNITURE_CATALOG).filter(e => e.class === 'mirror')).toHaveLength(18);
+    });
+
+    it('a kind that is seeded but not placeable yet (link_box) is not in the catalog and fails the gate', async () => {
+        const { FURNITURE_CATALOG, isValidFurniture } = await loadFurniture();
+        expect(Object.hasOwn(FURNITURE_CATALOG, 'link_box')).toBe(false);
+        expect(isValidFurniture('link_box', 'home')).toBe(false);
+        expect(isValidFurniture('display_case', 'shop')).toBe(false);
+    });
+
+    it('a new mirror kind (lamp) is valid only in a home; a new functional kind (bookshelf) anywhere', async () => {
+        const { isValidFurniture } = await loadFurniture();
+        expect(isValidFurniture('lamp', 'home')).toBe(true);
+        expect(isValidFurniture('lamp', 'shop')).toBe(false);
+        expect(isValidFurniture('bookshelf', 'venue')).toBe(true);
+    });
+
+    it('inherited object keys are not kinds (constructor, toString, __proto__)', async () => {
+        const { isValidFurniture } = await loadFurniture();
+        for (const k of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+            expect(isValidFurniture(k, 'home'), k).toBe(false);
+            expect(isValidFurniture(k, 'shop'), k).toBe(false);
+        }
     });
 
     it('every catalog entry key matches its entry.kind (no aliasing)', async () => {

@@ -348,6 +348,8 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'GET /api/v1/civic/account':   'civic_did_required',
     'GET /api/v1/civic/credit':    'civic_did_required',
     'GET /api/v1/civic/treasury':  'public',
+    // Grid House Objects §15: the seeded catalog. No entry carries a secret or a price.
+    'GET /api/v1/civic/catalog':   'public',
 
     // W4 — Model-first endowment (D-MONEY-09): the operator endows a member account
     // with wei (the live wei source). portal_session_required → requirePortalSession

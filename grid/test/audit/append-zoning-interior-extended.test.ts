@@ -44,6 +44,29 @@ describe('Phase 59 — appendZoningInteriorExtended sole producer [Wave 4 un-ski
             .toThrow(/object_class/);
     });
 
+    it('rejects an object_kind outside the core catalog (the chain carries a closed enum)', async () => {
+        const { appendZoningInteriorExtended } = await loadProducer();
+        const { AuditChain } = await loadChain();
+        for (const k of ['throne', '', 'constructor', 'nous:genesis:abc:my_lamp']) {
+            expect(() => appendZoningInteriorExtended(new AuditChain(), { ...valid, object_kind: k }), k)
+                .toThrow(/core catalog kind/);
+        }
+    });
+
+    it('rejects a kind whose class does not match (bed is mirror, not functional)', async () => {
+        const { appendZoningInteriorExtended } = await loadProducer();
+        const { AuditChain } = await loadChain();
+        expect(() => appendZoningInteriorExtended(new AuditChain(), { ...valid, object_class: 'functional' }))
+            .toThrow(/core catalog kind/);
+    });
+
+    it('accepts a catalog v2 kind (lamp, mirror)', async () => {
+        const { appendZoningInteriorExtended } = await loadProducer();
+        const { AuditChain } = await loadChain();
+        expect(appendZoningInteriorExtended(new AuditChain(), { ...valid, object_kind: 'lamp' }).payload)
+            .toMatchObject({ object_kind: 'lamp' });
+    });
+
     it('rejects a malformed parcel_id (PARCEL_ID_RE)', async () => {
         const { appendZoningInteriorExtended } = await loadProducer();
         const { AuditChain } = await loadChain();
