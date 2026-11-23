@@ -69,6 +69,48 @@ jobs:
       - name: MONEY-62.5-05 Ledger-B retired — no transferWei / nous_registry balance_wei money
         run: node scripts/check-ledger-b-money.mjs
 
+      - name: D-11 STATE.md ↔ broadcast-allowlist doc sync (Phase 5)
+        run: node scripts/check-state-doc-sync.mjs
+
+      - name: D-9-08 no client graph-layout libs + allowlist baseline (Phase 9)
+        run: node scripts/check-relationship-graph-deps.mjs
+
+      - name: D-10b-09 no wall-clock reads in Bios/Chronos/retrieval/replay (Phase 10b)
+        run: node scripts/check-wallclock-forbidden.mjs
+
+      - name: D-11-08 whisper plaintext + keyring isolation (Phase 11)
+        run: node scripts/check-whisper-plaintext.mjs
+
+      - name: VOTE-05 governance isolation (Phase 12 D-12-11)
+        run: node scripts/check-governance-isolation.mjs
+
+      - name: VOTE-05 governance body privacy (Phase 12 D-12-11)
+        run: node scripts/check-governance-plaintext.mjs
+
+      - name: VOTE-06 no vote weighting (Phase 12 D-12-11)
+        run: node scripts/check-governance-weight.mjs
+
+      - name: D-25b-11 operator-sanctions plaintext (Phase 25b)
+        run: node scripts/check-operator-sanctions-plaintext.mjs
+
+      - name: No header-trust auth in operator/admin/governance routes
+        run: node scripts/check-operator-header-auth.mjs
+
+      - name: D-25a-05 cognitive-snapshot plaintext (Phase 25a)
+        run: node scripts/check-cognitive-snapshot-plaintext.mjs
+
+      - name: HOUSE-3 cross-House prompt-injection — visitor content stays data (Phase 60)
+        run: node scripts/check-cross-house-injection.mjs
+
+      - name: T-10-07 replay engine is read-only (Phase 13)
+        run: node scripts/check-replay-readonly.mjs
+
+      - name: D-WIKI-04 wiki integrity (front-matter, At-a-glance, one canonical per topic)
+        run: node scripts/check-wiki.mjs
+
+      - name: Every scripts/check-*.mjs gate is run by a workflow
+        run: node scripts/check-gates-wired.mjs
+
       - name: Fast Vitest rig suite (Wave 0/1/2 — NOESIS_RUN_NIGHTLY unset, rig-bench skips)
         working-directory: grid
         run: |
