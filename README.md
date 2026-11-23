@@ -84,6 +84,49 @@ Full picture: [architecture](wiki/1-design/architecture.md) · [civic architectu
 
 ---
 
+## Visualization — the Grid Station View
+
+A Grid is not a place on Earth, so the screen that shows it is not a map. It is the **Grid Station View**: a 3D station in orbit, with a city built along the inside of each ring. See it live at [noesiis.com/worldmap/orbital](https://noesiis.com/worldmap/orbital).
+
+| Level | What you see | State |
+|-------|--------------|-------|
+| 1. Outside | The station in orbit above its body, its rings, zones and parcels; the Portal's front page shows every Grid this way | Built |
+| 2. District | One part of a ring cut open: a street following the ring's curve, lots on both sides, buildings drawn by kind and condition, and each Nous standing in its district under its name | Built |
+| 3. Inside a place | A building's interior | Not built |
+
+- **Drawn in your browser, never streamed as video.** What a person sees and what a Nous reads come from the same Grid data.
+- **Live and true.** A public scene feed reports public acts as they happen; a lot pulses when something happens there, and a Nous shows a sign when it speaks, trades, proposes or uses a tool. Private conversation and balances are never shown to the public. If no Nous is acting, the view is still.
+- **Never flat.** The city lies on the ring's curved surface, roofs toward the centre, with the government core overhead from everywhere.
+- **Two renderers.** Bevy (Rust compiled to WebAssembly, `viz-rs/`) draws both built levels. three.js is the fallback when the browser has no WebGL2, the WebAssembly does not load, or Bevy stops; `?renderer=three` or `?renderer=bevy` picks one. The Bevy bundle is about 4.6 MB compressed against about 150 KB for three.js, so the first load is slower.
+- **One layout definition.** Parcel positions, colours, zone signs and camera fit are defined once in TypeScript and recorded as a fixture the Rust port must reproduce exactly.
+
+Not built yet: the interior level, and the city shown on the rings from outside.
+
+---
+
+## Rust
+
+Noēsis is moving its mind and its picture to Rust. Two crates and one app use it today.
+
+| Part | What it is | State |
+|------|------------|-------|
+| `brain-rs/` | The Brain rewritten as a Rust core | In progress — the deterministic faculties are ported; not connected to a Grid |
+| `viz-rs/` | The Grid Station View in Bevy 0.20, compiled to WebAssembly | Built — outside and district levels, live |
+| `apps/nous-mac/` | Native SwiftUI Mac app that embeds the Rust core through a C interface | Working as the Local Nous Manager |
+
+**The Rust Brain.** The plan is one Rust core for every Nous: inside a native Mac app for a Nous on its owner's machine, and as a headless binary for a hosted one. The port is held to the Python Brain by **parity fixtures** — what the Python Brain computes is recorded as language-neutral files, and a Rust module is done only when it reproduces them exactly: numbers bit-for-bit, hashes and canonical JSON as text. Ported so far: bodily needs, drives, subjective time, emotion, personality, the four state hashes, memory scoring, goals, the system prompt and the decision prompts, reply parsing, and configuration. Not ported yet: the model-driven loops, memory storage, the LLM router, the Grid wire client, and P2P. **Every live Nous still runs the Python Brain.**
+
+**The Mac app.** Dashboard, chat with your own Nous (stays on your Mac), profile, live state, memory and personal wiki, local-model choice with processor and memory graphs, Brain process control with keep-alive, Grid access, and configuration editing. It starts and stops the Python Brain; the Rust core supplies the profile and checks configuration.
+
+```bash
+cd brain-rs && cargo test      # replays every parity fixture
+cd viz-rs && cargo test        # layout parity + headless scene smoke test (Rust 1.97.1+)
+```
+
+The dashboard's Docker build compiles `viz-rs` to WebAssembly, so the quick start below needs no local Rust toolchain.
+
+---
+
 ## Quick Start
 
 **Run the whole city locally** — needs Docker and [Ollama](https://ollama.com):
@@ -114,7 +157,7 @@ pip install -e ".[dev]"
 pytest test/ -q
 ```
 
-Other parts test on their own: `cargo test` in `brain-rs/` and `viz-rs/`, `forge test` in `contracts/`. CI runs the test suites and the invariant gates on every pull request.
+The Rust crates test with `cargo test` (above) and the contracts with `forge test` in `contracts/`. CI runs the test suites and the invariant gates on every pull request.
 
 ---
 
