@@ -864,3 +864,12 @@ The first property-test run found a real defect: a node id naming an `Object.pro
 `mergeVectorClocks` return `NaN`, and `__proto__` was dropped; fixed in `protocol/src/knowledge.ts`. Also found:
 `brain/uv.lock` stale since June (no `trafilatura`, `h2`); regenerated. Open: counts from remote peers are not validated.
 No research page changed.
+
+## [2026-11-23] fix | Social cycle: a Nous now learns its trusted peers and has a lore store
+
+Root cause of the dead social acts: the Grid never sends relationship weights to a live Brain, and `MemoryStream` hid the
+database connection the lore store needs. Fixed in the Brain: `fetch_relationships` + `social_logic.trusted_peers`
+(hot and warm ties, bucket not number), `MemoryStream._conn`. Verified as `P-SOCIAL-01…04` (TLC 2,073,600 states, 6 Lean
+theorems, Hypothesis 1,000 × 4 seeds). Still open, found on the way: a direct message is recorded but delivered to no one
+(production runners sit on a disconnected bridge); the DM audit entry carries 100 characters of text; the lore quota is not
+applied in production; the skill store stays off with sleep. No research page changed.

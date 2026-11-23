@@ -59,6 +59,7 @@ from noesis_brain.prompts.property_decision import (
     parse_property_decision,
 )
 from noesis_brain import property_logic
+from noesis_brain.social_logic import trusted_peers
 from noesis_brain.iris.priors import seed_priors
 from pathlib import Path
 from noesis_brain.iris.store import IrisStore
@@ -1690,11 +1691,17 @@ class BrainHandler:
                         pass
 
             # 2. Offerable context — only what actually exists.
-            peers = [
-                d for d, w in sorted(
-                    self._cached_peer_weights.items(), key=lambda x: x[1], reverse=True
-                ) if w >= 0.3
-            ][:3]
+            # Nothing pushes relationship weights to a live-wired mind, so read
+            # our own ties from the Grid's public relationships route (a warmth
+            # bucket, never a number). A failed read just means no ties.
+            ties: Any = []
+            fetch_ties = getattr(wire, "fetch_relationships", None)
+            if fetch_ties is not None:
+                try:
+                    ties = await fetch_ties(self.did)
+                except Exception:
+                    ties = []
+            peers = trusted_peers(self._cached_peer_weights, ties, self.did)
             skills: list = []
             if self._skill_store is not None:
                 try:

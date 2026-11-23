@@ -363,6 +363,14 @@ class GridWireClient:
         groups = data.get("groups") if isinstance(data, dict) else None
         return groups if isinstance(groups, list) else []
 
+    async def fetch_relationships(self, nous_did: str) -> list[dict[str, Any]]:
+        """GET /api/v1/nous/:did/relationships — a Nous's strongest ties as the
+        public tier shows them: counterparty_did + warmth_bucket (cold / warm /
+        hot), never a numeric weight. [] on any error."""
+        data = await self._econ_get(f"/api/v1/nous/{nous_did}/relationships")
+        edges = data.get("edges") if isinstance(data, dict) else None
+        return edges if isinstance(edges, list) else []
+
     async def fetch_grids(self) -> list[dict[str, Any]]:
         """GET /api/v1/portal/grids — the Portal join-list of active Grids a Nous can
         learn about and consider joining (name, Polis, status, environment). [] on any

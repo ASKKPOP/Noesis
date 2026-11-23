@@ -204,3 +204,20 @@ async def test_physics_check_is_none_when_the_grid_is_unreachable():
     wire, _ = _make_client(raise_exc=httpx.ConnectError("down"))
     assert await wire.check_physics({}, "Mars") is None
     assert await wire.fetch_physics_environments() == []
+
+
+@pytest.mark.asyncio
+async def test_fetch_relationships_reads_the_public_ties_route():
+    edge = {"counterparty_did": "did:noesis:hermes", "warmth_bucket": "warm", "recency_tick": 9, "edge_hash": "h"}
+    wire, http = _make_client(get_json={"edges": [edge]})
+    out = await wire.fetch_relationships("did:noesis:sophia")
+    assert out == [edge]
+    assert http.get.call_args[0][0].endswith("/api/v1/nous/did:noesis:sophia/relationships")
+
+
+@pytest.mark.asyncio
+async def test_fetch_relationships_is_empty_on_error():
+    wire, _ = _make_client(get_status=400, get_json={"error": "invalid_did"})
+    assert await wire.fetch_relationships("did:civic:noesis:x") == []
+    wire, _ = _make_client(raise_exc=httpx.ConnectError("down"))
+    assert await wire.fetch_relationships("did:noesis:sophia") == []
