@@ -46,6 +46,7 @@ import { LoreQuotaTracker } from '../lore/LoreQuotaTracker.js';
 import type { GroupStore, GroupRole } from '../economy/group-store.js';
 import type { NousAccountStore } from '../economy/nous-account-store.js';
 import type { CivicDidStore } from '../civic-registry/civic-did-store.js';
+import { checkPeerText, type PeerMessageSink } from './peer-messages.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -148,6 +149,12 @@ export interface NousRunnerConfig {
     accountStore?: NousAccountStore;
     civicDidStore?: CivicDidStore;
     gridName?: string;
+    /**
+     * Where a direct message (and a lore request/response) goes after it is audited:
+     * the target Nous's inbox, which its Brain polls. Optional — when absent the
+     * message is recorded and delivered to no one (DB-less mode, most tests).
+     */
+    peerMessages?: PeerMessageSink;
 }
 
 export type SpeakHandler = (runner: NousRunner, channel: string, text: string, tick: number) => void;
@@ -170,6 +177,7 @@ export class NousRunner {
     private readonly accountStore: NousAccountStore | undefined;
     private readonly civicDidStore: CivicDidStore | undefined;
     private readonly gridName: string | undefined;
+    private readonly peerMessages: PeerMessageSink | undefined;
 
     private speakHandler: SpeakHandler | null = null;
 
@@ -222,6 +230,7 @@ export class NousRunner {
         this.accountStore = config.accountStore;
         this.civicDidStore = config.civicDidStore;
         this.gridName = config.gridName;
+        this.peerMessages = config.peerMessages;
     }
 
     /** Register handler called when this Nous speaks (for message routing). */
@@ -366,14 +375,24 @@ export class NousRunner {
                     if (this.muteFlag) {
                         break;
                     }
-                    // Direct messages are logged but routing is handled by coordinator
+                    // P-DM-04: an empty or over-long text is dropped whole — no record, no delivery.
+                    const textVerdict = checkPeerText(action.text);
+                    if (textVerdict !== 'ok') {
+                        console.warn(JSON.stringify({
+                            event: 'peer_message.rejected', did: this.nousDid, reason: textVerdict, tick,
+                        }));
+                        break;
+                    }
                     const targetDid = action.metadata?.['target_did'] as string | undefined;
+                    // P-DM-05: the audit record says who wrote to whom. It never carries the text.
                     this.audit.append('nous.direct_message', this.nousDid, {
                         targetDid,
                         channel: action.channel,
-                        text: action.text.slice(0, 100),
                         tick,
                     });
+                    if (typeof targetDid === 'string') {
+                        await this.deliverPeerMessage(targetDid, action.channel, action.text, tick);
+                    }
                     break;
                 }
 
@@ -1070,6 +1089,7 @@ export class NousRunner {
                         content_hash: contentHash,
                         tick,
                     }));
+                    await this.deliverPeerMessage(recipientDid, 'direct', `__lore_request:${contentHash}`, tick);
                     break;
                 }
 
@@ -1087,6 +1107,9 @@ export class NousRunner {
                         recipient_did: recipientDid,
                         tick,
                     }));
+                    if (typeof md['payload'] === 'string') {
+                        await this.deliverPeerMessage(recipientDid, 'direct', md['payload'], tick);
+                    }
                     break;
                 }
 
@@ -1188,6 +1211,27 @@ export class NousRunner {
                     // Nothing to do
                     break;
             }
+        }
+    }
+
+    /**
+     * Put a message in the target Nous's inbox. A muted Nous delivers nothing
+     * (P-DM-03). Never throws: a failed delivery must not take down the tick.
+     */
+    private async deliverPeerMessage(targetDid: string, channel: string, text: string, tick: number): Promise<void> {
+        if (this.muteFlag || !this.peerMessages) return;
+        let reason: string;
+        try {
+            reason = await this.peerMessages.deliver({
+                senderDid: this.nousDid, senderName: this.nousName, targetDid, channel, text, tick,
+            });
+        } catch (err) {
+            reason = `error: ${(err as Error).message}`;
+        }
+        if (reason !== 'queued') {
+            console.warn(JSON.stringify({
+                event: 'peer_message.not_delivered', did: this.nousDid, target_did: targetDid, reason, tick,
+            }));
         }
     }
 

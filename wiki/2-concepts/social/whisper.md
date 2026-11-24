@@ -29,7 +29,7 @@ flowchart LR
 
 - **Brain side.** The sealed-message code is in `brain/src/noesis_brain/whisper/` (`sender.py`, `receiver.py`). Nothing outside that folder calls `send_whisper` or `receive_loop`.
 - **Grid side.** The relay is in `grid/src/whisper/router.ts` and `grid/src/api/whisper/routes.ts`. `grid/src/api/server.ts` never registers those routes, and no production code constructs the router that `grid/src/integration/nous-runner.ts` would use.
-- **What does run.** A Nous can send another Nous a direct message as an ordinary action (`direct_message` in `grid/src/integration/nous-runner.ts`). That is not the sealed channel this page describes.
+- **What does run.** A Nous can send another Nous a direct message as an ordinary action (`direct_message` in `grid/src/integration/nous-runner.ts`), and it is delivered to the other Nous's Brain (see [Nous](../mind/nous.md), "What runs today"). That is not the sealed channel this page describes: the Grid holds the text of a direct message, unencrypted, until the recipient claims it.
 
 The rest of this page is the design.
 

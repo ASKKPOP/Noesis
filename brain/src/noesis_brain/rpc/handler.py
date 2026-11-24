@@ -60,6 +60,7 @@ from noesis_brain.prompts.property_decision import (
 )
 from noesis_brain import property_logic
 from noesis_brain.social_logic import trusted_peers
+from noesis_brain.peer_inbox import message_id as peer_message_id, parse_peer_message
 from noesis_brain.iris.priors import seed_priors
 from pathlib import Path
 from noesis_brain.iris.store import IrisStore
@@ -185,6 +186,7 @@ class BrainHandler:
         # W-B: social/civic cycle — outreach, teaching, lore, commit-reveal voting.
         self._last_social_tick = -10_000
         self._last_conversation_tick = -10_000
+        self._last_peer_inbox_tick = -10_000
         self._governance_state = GovernanceState()
         # Duplicate-action guards (surfaced by the 2026-07-02 liveness run: the
         # real model bid the SAME open RFP every cycle and re-joined the same
@@ -402,6 +404,20 @@ class BrainHandler:
                     )
                     self._pending_actions.append(_response_action)
             return []  # __lore_request is never a conversational reply
+
+        # A private word from another Nous, read from the peer inbox. It is heard
+        # — it moves the mood and is remembered — but not answered here: this
+        # method's reply is public speech (a SPEAK on the audit chain), and a
+        # private message must not be answered in public. Whether to write back
+        # is the social cycle's choice.
+        if params.get("via") == "peer_inbox":
+            self.thymos.apply_triggers(text)
+            if self.memory is not None and hasattr(self.memory, "record_event"):
+                self.memory.record_event(
+                    content=f"{sender_name} wrote to me privately: \"{text[:1000]}\"",
+                    source_did=sender_did, tick=int(params.get("tick", 0) or 0),
+                )
+            return []
 
         # 1. Update emotions based on message content
         self.thymos.apply_triggers(text)
@@ -1650,6 +1666,61 @@ class BrainHandler:
         except Exception:
             log.debug("conversation cycle skipped", exc_info=True)
 
+    # ── Peer inbox: direct messages from other Nous ───────────────────────────
+    _PEER_INBOX_COOLDOWN_TICKS = 1
+    _PEER_INBOX_PER_CYCLE = 10
+
+    def _should_run_peer_inbox_cycle(self, tick: int) -> bool:
+        """Live-wired minds only. No model call is involved, so it runs awake or
+        resting: one cheap GET per tick."""
+        if self._grid_wire_client is None:
+            return False
+        return (tick - self._last_peer_inbox_tick) >= self._PEER_INBOX_COOLDOWN_TICKS
+
+    async def _run_peer_inbox_cycle(self, tick: int) -> None:
+        """Read the messages other Nous sent to this one and hand each to
+        on_message — so a taught skill (__skill_share:), a lore request or
+        response, or a plain word from a peer arrives.
+
+        Each message is claimed on the Grid first, one id at a time, and handled
+        only when the Grid confirms the claim (P-DM-01): two cycles in flight, a
+        second Brain process for the same Nous, or a restart cannot handle one
+        message twice. The price is that a message claimed just before a crash
+        is lost. Rows that are not a direct message from another Nous are claimed
+        and dropped (P-DM-04). Background; never fatal."""
+        wire = self._grid_wire_client
+        fetch = getattr(wire, "fetch_peer_inbox", None)
+        claim = getattr(wire, "claim_peer_message", None)
+        if fetch is None or claim is None:
+            return
+        try:
+            rows = await fetch(self._PEER_INBOX_PER_CYCLE)
+            if not isinstance(rows, list):
+                return
+            for row in rows[: self._PEER_INBOX_PER_CYCLE]:
+                mid = peer_message_id(row)
+                if mid is None or (await claim(mid)) is not True:
+                    continue
+                message = parse_peer_message(row, self.did)
+                if message is None:
+                    log.info("[Brain] peer inbox: dropped message %s (not a direct message)", mid)
+                    continue
+                try:
+                    actions = await self.on_message({
+                        "sender_name": message.sender_name,
+                        "sender_did": message.sender_did,
+                        "channel": message.channel,
+                        "text": message.text,
+                        "tick": tick,
+                        "via": "peer_inbox",
+                    })
+                    if actions:
+                        await wire.post_actions(actions, tick=tick)
+                except Exception:
+                    log.warning("[Brain] peer inbox: message %s failed in on_message", mid, exc_info=True)
+        except Exception:
+            log.debug("peer inbox cycle skipped", exc_info=True)
+
     # ── W-B: social/civic cycle ───────────────────────────────────────────────
     _SOCIAL_COOLDOWN_TICKS = 60
 
@@ -2063,6 +2134,11 @@ class BrainHandler:
             self._last_conversation_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_conversation_cycle(tick))
+        # Peer inbox: direct messages, taught skills and lore from other Nous.
+        if self._should_run_peer_inbox_cycle(tick):
+            self._last_peer_inbox_tick = tick
+            import asyncio as _asyncio
+            _asyncio.create_task(self._run_peer_inbox_cycle(tick))
         # W-A3: reflection cadence — every tick counts (the counter must advance even
         # while resting); the LLM-driven reflection dispatch itself waits for the mind.
         if self._reflection is not None:

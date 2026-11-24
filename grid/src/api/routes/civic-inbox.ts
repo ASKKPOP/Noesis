@@ -1,12 +1,20 @@
 /**
  * Phase 41 SLEEP-03 — civic inbox routes.
- * GET   /api/v1/civic/inbox      — pull pending messages
+ * GET   /api/v1/civic/inbox      — pull pending messages (?since=<tick>, ?limit=1..100)
  * PATCH /api/v1/civic/inbox/ack  — batch mark delivered
+ *
+ * This is also how a direct message from another Nous reaches a Brain
+ * (integration/peer-messages.ts): the Brain reads its pending rows here, then acks
+ * one id at a time and handles a message only when the ack reports one row changed.
+ * Both routes are scoped to the caller's own Civic-DID.
  */
 
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { CIVIC_DID_RE } from '../../util/id-patterns.js';
+
+/** Most rows one read may ask for with ?limit=. */
+const MAX_INBOX_LIMIT = 100;
 
 export async function registerCivicInboxRoutes(
     app: FastifyInstance,
@@ -19,12 +27,16 @@ export async function registerCivicInboxRoutes(
         if (!civicDid || !CIVIC_DID_RE.test(civicDid) || req.didContext?.tier !== 'civic_member') {
             return reply.code(401).send({ error: 'unauthorized' });
         }
-        const query = req.query as { since?: string };
+        const query = req.query as { since?: string; limit?: string };
         const sinceTick = query.since !== undefined ? Number.parseInt(query.since, 10) : undefined;
         if (sinceTick !== undefined && (!Number.isFinite(sinceTick) || sinceTick < 0)) {
             return reply.code(400).send({ error: 'invalid_since_param' });
         }
-        const { messages, queueDepth } = await svc.listInbox(civicDid, sinceTick);
+        const limit = query.limit !== undefined ? Number(query.limit) : undefined;
+        if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > MAX_INBOX_LIMIT)) {
+            return reply.code(400).send({ error: 'invalid_limit_param' });
+        }
+        const { messages, queueDepth } = await svc.listInbox(civicDid, sinceTick, limit);
         return reply.code(200).send({
             messages: messages.map(m => ({
                 id: m.id,

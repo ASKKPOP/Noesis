@@ -294,7 +294,8 @@ export interface BrainActionSkillRejected {
 /**
  * Phase 20 D-20-12: Lore Commons actions.
  * Grid injects contributor_did/citing_did + tick; Brain sends 1-2 keys.
- * lore_request / lore_response are logged-only; primary path is Brain HTTP-poll (D-20-11).
+ * lore_request / lore_response are put in the peer's inbox (integration/peer-messages.ts);
+ * the primary discovery path stays the Brain's HTTP-poll (D-20-11).
  */
 export interface BrainActionLoreContribute {
     readonly action_type: 'lore_contribute';

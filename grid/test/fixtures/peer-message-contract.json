@@ -1,0 +1,20 @@
+{
+  "_comment": "The shape a direct message has on each side of the Brain-Grid surface. grid/test/integration/peer-message-contract.test.ts checks the Grid turns `action` into `inbox_message`; brain/test/test_peer_inbox.py checks one Brain produces `action` and another consumes `inbox_message`.",
+  "sender": { "did": "did:noesis:sophia", "name": "Sophia" },
+  "target": { "did": "did:noesis:hermes" },
+  "tick": 100,
+  "action": {
+    "action_type": "direct_message",
+    "channel": "direct",
+    "text": "shall we survey the ring together?",
+    "metadata": { "target_did": "did:noesis:hermes" }
+  },
+  "inbox_message": {
+    "kind": "direct_message",
+    "sender_did": "did:noesis:sophia",
+    "sender_name": "Sophia",
+    "channel": "direct",
+    "text": "shall we survey the ring together?",
+    "tick": 100
+  }
+}

@@ -65,6 +65,69 @@
   </div>
 
   <!-- ============================ SESSION 32 ============================ -->
+  <h2>Session 34 — 2026‑11‑23 · “Deliver a direct message to the other Nous's Brain”</h2>
+  <p class="sub">Request: make a direct message sent by one Nous reach the other Nous's Brain (the first finding left open in Session 33). Grid and Brain changed; nothing deployed. Stacked on Session 33's branch (PR #71).</p>
+
+  <h3>State confirmed from source before any change</h3>
+  <ul>
+    <li><b>Recorded, not delivered</b> — <code>case 'direct_message'</code> in <code>grid/src/integration/nous-runner.ts</code> only appended <code>nous.direct_message</code>; production runners sit on a disconnected bridge (<code>grid/src/main.ts</code>); nothing calls <code>on_message</code> for a live Brain.</li>
+    <li><b>A queue already existed</b> — Phase 41 built <code>civic_message_queue</code> with <code>POST /civic/message</code>, <code>GET /civic/inbox</code> and <code>PATCH /civic/inbox/ack</code>, scoped by Civic-DID. No Brain ever polled it and its route tests are all <code>it.skip</code>.</li>
+    <li><b>The audit entry carried text</b> — the first 100 characters, under a key (<code>text</code>) that <code>FORBIDDEN_KEY_PATTERN</code> forbids and the allowlist comment rules out.</li>
+  </ul>
+
+  <h3>Change</h3>
+  <ul>
+    <li><b>Grid: the runner queues the message for the target</b> <span class="tag done">done</span> — new <code>grid/src/integration/peer-messages.ts</code> (<code>PeerMessageRouter</code>): resolves sender and target to active Civic-DIDs and writes one envelope <code>{kind, sender_did, sender_name, channel, text, tick}</code> to the existing queue. <code>lore_request</code> and <code>lore_response</code> go the same way. Wired in <code>grid/src/main.ts</code>.</li>
+    <li><b>Brain: polls, claims, then handles</b> <span class="tag done">done</span> — <code>GridWireClient.fetch_peer_inbox</code> / <code>claim_peer_message</code>; <code>BrainHandler._run_peer_inbox_cycle</code> every tick; pure checks in <code>brain/src/noesis_brain/peer_inbox.py</code>. A message goes to <code>on_message</code> only after the Grid confirms the claim of that one id.</li>
+    <li><b>Audit payload</b> <span class="tag done">done</span> — <code>nous.direct_message</code> is now <code>{targetDid, channel, tick}</code>. No test pinned the old <code>text</code>; no zero-diff test covers this event; allowlist +0.</li>
+    <li><b>Inbox routes</b> <span class="tag done">done</span> — <code>GET /civic/inbox?limit=1..100</code>; an ack empties the stored message; <code>POST /civic/message</code> refuses <code>kind: direct_message</code> (reserved for the runner).</li>
+    <li><b>Wiki</b> <span class="tag done">done</span> — <code>wiki/2-concepts/mind/nous.md</code>, <code>social/skills.md</code>, <code>social/lore-and-culture.md</code>, <code>social/whisper.md</code>, <code>wiki/1-design/architecture.md</code>, decision <code>D-SOC-04</code>.</li>
+  </ul>
+  <div class="panel"><ul class="dec">
+    <li><b>Decision:</b> reuse the Phase 41 queue, no new table. <span class="q">It is already the Grid's home for Nous-to-Nous messages, already scoped by Civic-DID, and it adds no migration that the mock-pool tests could not check.</span></li>
+    <li><b>Decision:</b> at most once, not at least once. <span class="q">The Brain claims one id, and handles the message only if the Grid says one row changed. Two cycles, two Brain processes or a restart cannot handle a message twice. The price: a message claimed just before a crash is lost.</span></li>
+    <li><b>Decision:</b> a plain peer message is heard and remembered, not answered automatically. <span class="q"><code>on_message</code>'s reply is public speech (<code>nous.spoke</code>, with text, on the audit chain); answering a private message there would publish it, and two Brains answering each other would never stop. Writing back stays a choice of the social cycle.</span></li>
+    <li><b>Decision:</b> the text lives on the Grid, unencrypted, from send until claim, then is emptied. <span class="q">Message text on the Grid was already the design (Phase 41 queue, the Portal conversation table). Readable by the recipient's Brain through its token, and by whoever can read the database.</span></li>
+    <li><b>Limits:</b> text 1–16,384 characters (empty or longer is dropped whole, no audit record); 1,000 waiting messages per Nous; sender and target must each hold an active Civic-DID and not be deleted; a muted Nous delivers nothing; a Nous cannot write to itself.</li>
+  </ul></div>
+
+  <h3>Found while building — not fixed here</h3>
+  <ul>
+    <li><b>A taught skill would be delivered and then refused.</b> There is no skill store today; with one, the receiving Brain's trust gate needs a relationship weight ≥ 0.35 for the sender, and nothing gives a live Brain weights. Needs a decision: trust hot ties, warm ties, or give a Nous its own numbers.</li>
+    <li><b>No lore request is ever sent</b> — the discovery poll needs <code>_grid_base_url</code>, which nothing sets. The road for requests and responses now works; nothing uses it.</li>
+    <li><b>The inbox size limit can be passed</b> — <code>MessageQueueStore.enqueue</code> counts, then inserts, in two statements. Unclaimed messages never expire.</li>
+    <li><b>System notices in the same queue</b> (<code>absent_escalation_notice</code>) are now claimed and dropped by the Brain; before, nothing read them at all.</li>
+    <li><b><code>on_message</code>'s wire post reads <code>resp.status_code</code> on <code>None</code></b> (<code>post_actions</code> returns nothing), so the public-reply path logs an exception on every reply. Not on the path added here.</li>
+    <li><b><code>nous.spoke</code> still carries 200 characters of text</b> under the same forbidden key. Public speech, so left alone; worth a decision.</li>
+    <li><b>The first stateful generator missed one planted bug</b>: it sent only direct messages, so removing the mute check on the lore path passed. Lore sends added; the bug is then caught.</li>
+  </ul>
+<pre>Class: A (delivery over time; touches the audit payload, so run at the correctness-critical counts)
+Property  TLA+ PeerMessages.tla (3 Nous, 4 Brain processes, 1 text, 2 sends;   Lean PeerMessages.lean (no bound)   PBT (cases x seeds)             Mutation caught
+          67,312 distinct states, 961,081 generated)
+P-DM-01   AtMostOnce                                                         handed_at_most_once                Grid 10,000 x 10, Brain 10,000 x 10   TLC yes, PBT yes (Brain)
+P-DM-02   OnlyToTarget                                                       claim_only_by_target               Grid 10,000 x 10, Brain 10,000 x 10   TLC yes, PBT yes (2 Grid bugs)
+P-DM-03   NothingFromMuted                                                   muted_routes_nothing               Grid 10,000 x 10                      TLC yes, Lean yes, PBT yes (2 bugs)
+P-DM-04   QueuedOnlyForGoodTarget (no text length in the model)              queued_only_if_accepted            Grid 10,000 x 10, Brain 10,000 x 10   PBT yes (2 Grid, 2 Brain bugs)
+P-DM-05   AuditHasNoText                                                     audit_ignores_text (audit only)    Grid 10,000 x 10                      PBT yes
+P-DM-06   EventuallyHanded (WF on Poll, SF on Claim)                         pending_claim_succeeds (one step)  Grid 10,000 x 10, Brain 10,000 x 10   TLC yes (fairness removed)
+TLC and lake build: 2 clean runs each (verification/run.sh, all three specs, 19 theorems, standard axioms only).
+Larger bounds (3 sends, 2 texts): all six invariants hold over the complete state space, 5,672,848 distinct states
+(111,398,585 generated). The liveness check at those bounds had not finished when this was written.
+Seeds (both sides): 11, 20261123, 4242424242, 77, 123456789, 987654321, 31337, 2718281828, 1618033, 5.
+Mutations: 4 TLA+ breaks (caller check, pending check, mute check, claim fairness), 1 Lean (hypothesis removed),
+10 planted code bugs (7 Grid, 3 Brain). One Grid bug passed the first stateful generator (mute check on the lore
+path; the generator sent only direct messages); lore sends were added and it is caught.
+Grid suite 4535 passed, 2 runs. Brain suite 1565 passed, 2 runs. All scripts/check-*.mjs and lint-research-wiki: 2 runs.
+Not verified:
+- No test runs a real Brain against a real Grid. Each side runs against a stand-in for the other; one shared
+  fixture pins the message shape. Nothing was run on a live Grid or deployed.
+- The SQL was not run against MySQL. The claim rule (pending AND addressed to the caller) and the emptying of the
+  text are one UPDATE; the tests use an in-memory queue with the same rule and pin the statement's text.
+- The inbox size limit (count, then insert: two senders can pass it) and message expiry (none) are not properties.
+- Tests were written after the Grid code, not before; the mutation runs are the evidence that they can fail.
+- TLA+ models direct messages; the lore request/response path is covered by the property tests only.
+- That the DID a Brain names as target equals the DID the Civic-DID registry holds for that Nous at run time.</pre>
+
   <h2>Session 33 — 2026‑11‑23 · “Fix the social cycle wiring”</h2>
   <p class="sub">Request: fix the finding from Session 31 that a Nous can vote and join a Group but cannot message a peer, teach or contribute lore. Brain only; no Grid code changed; nothing deployed.</p>
 

@@ -31,6 +31,7 @@ flowchart TD
 - The skill store (`brain/src/noesis_brain/skills/store.py`) is created only when the Brain is started with a sleep store (`hypnos_db_dir`), in `brain/src/noesis_brain/rpc/handler.py` (the block starting at `if hypnos_db_dir is not None`). The Brain's entry point (`brain/src/noesis_brain/__main__.py`, the `BrainHandler(...)` call) does not pass it.
 - The database handle the store needs (`memory._conn`) is passed through by the memory object the entry point builds (`MemoryStream`, `brain/src/noesis_brain/memory/stream.py`). The sleep store is the only missing piece.
 - So the "teach a skill" branch of the social cycle has nothing to offer, a skill received from a peer is not stored, and the rehearsal call (`brain.rehearseSkill`) answers `no_skill_store`.
+- The road a taught skill travels is open: a direct message from one Nous now reaches the other Nous's Brain through its inbox on the Grid (see [Nous](../mind/nous.md), "What runs today"). Two things still stop a lesson. There is no skill store on either end. And with one, the receiving Brain's trust gate (`brain/src/noesis_brain/skills/peer_filter.py`) asks for a relationship weight of at least 0.35 for the sender; a live Brain is given no weights, so every taught skill would be refused as low trust.
 - Lineage and skills produced by a Group's research were not checked in this pass.
 
 The rest of this page is the design.
