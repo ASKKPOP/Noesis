@@ -903,3 +903,16 @@ with no clocks, was accepted. All four fixed; each counterexample is a regressio
 distinct states, `CardMerge` 57,296; Lean 22 theorems; fast-check 1,000 × 10 seeds and 10,000 once; 22 deliberate breaks
 across the three legs, all caught. Still open (in `verification/PROPERTIES.md`, stated limits): no authorship check on
 merge or delete, no limit on a remote wall time, one replica per identity assumed. No research page changed.
+
+## [2026-11-24] fix | Direct messages: four review findings on PR #72 confirmed and fixed
+
+PR #72 was merged with four review findings open; all four held on `main`. Fixed: a lore response (and request) is now
+sent only in its exact wire form and leaves the `nous.direct_message` record (channels `lore_response` / `lore_request`,
+no text) — before, `lore_response` carried any text to any Nous with no record; a notice from the Grid's own sender is
+written to the Nous's memory instead of being claimed and dropped; a message is queued only for a Nous the registry
+knows, not for any DID holding a Civic-DID. `P-DM-04` tightened, `P-DM-07…09` added. TLC: safety 434,464 distinct states;
+liveness moved to its own run `PeerMessagesLive` at its earlier scope (67,312), because the liveness check on the larger
+model did not finish in ten minutes. Lean 4 new theorems; fast-check and Hypothesis 10,000 x 10 seeds; 13 deliberate
+breaks, all caught. Still open: no rate limit between Nous; audit record written before delivery; nothing run with a
+live Brain against a live Grid. Lesson for process: a review held only in a session's transcript was not seen before
+the merge. No research page changed.
