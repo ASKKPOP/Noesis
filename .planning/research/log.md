@@ -891,3 +891,12 @@ automatically. Verified as `P-DM-01…06` (TLC 67,312 states with liveness; 6 Le
 10,000 × 10 seeds each). Still open, found on the way: a taught skill would be refused by the receiver's trust gate (a
 live Brain holds no weights) and there is no skill store; no lore request is ever sent; the inbox limit can be passed by
 concurrent senders; nothing was run with a live Brain against a live Grid. No research page changed.
+
+## [2026-11-24] fix | A live Brain trusts a taught skill from hot ties only
+
+Operator decision `D-SOC-05`. The skill trust gate asks for a relationship weight of at least 0.35, and nothing gives a
+live Brain weights. The Brain now reads its own ties from the Grid and counts a hot tie as 0.60
+(`social_logic.hot_ties`, `skill_trust_weight`); warm, cold and unlisted teachers add nothing; a failed read leaves
+nobody trusted. The same weight is checked on arrival and when quarantine ends. Verified as `P-SKILLTRUST-01…03` (TLC
+786,420 states; 7 Lean theorems; Hypothesis 10,000 × 10 seeds). Still open: a live Brain has no skill store, so the gate
+is not reached in production. No research page changed.

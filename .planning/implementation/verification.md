@@ -28,10 +28,11 @@ flowchart TD
 
 ## Status today (read this first)
 
-The toolchain was bootstrapped on 2026-11-23. **Three areas are verified under these rules:** vector clocks
+The toolchain was bootstrapped on 2026-11-23. **Four areas are verified under these rules:** vector clocks
 (`P-VCLOCK-01…08`, `protocol/src/knowledge.ts`), the social cycle's trusted-peer list (`P-SOCIAL-01…04`,
-`brain/src/noesis_brain/social_logic.py`) and direct-message delivery between Nous (`P-DM-01…06`,
-`grid/src/integration/peer-messages.ts`, `brain/src/noesis_brain/peer_inbox.py`). Everything else written before
+`brain/src/noesis_brain/social_logic.py`), direct-message delivery between Nous (`P-DM-01…06`,
+`grid/src/integration/peer-messages.ts`, `brain/src/noesis_brain/peer_inbox.py`) and whom a Brain trusts to teach it
+a skill (`P-SKILLTRUST-01…03`, `brain/src/noesis_brain/social_logic.py`). Everything else written before
 that date is unverified.
 
 | Piece | Where |

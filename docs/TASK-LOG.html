@@ -65,6 +65,48 @@
   </div>
 
   <!-- ============================ SESSION 32 ============================ -->
+  <h2>Session 35 — 2026‑11‑24 · “A live Brain accepts a taught skill from hot ties only”</h2>
+  <p class="sub">Request: the operator's answer to the question Session 34 left open — trust hot ties only. Brain only; nothing deployed. Same branch and PR as Session 34 (PR #72).</p>
+  <ul>
+    <li><b>Trust rule</b> <span class="tag done">done</span> — <code>social_logic.hot_ties</code> and <code>skill_trust_weight</code>: the weight the Brain already holds for a teacher, raised to 0.60 (the lowest weight the Grid calls hot) when the Grid lists the teacher as a hot tie. The skill gate still asks for 0.35. Warm, cold and unlisted teachers add nothing; a held weight that is not a finite number counts as 0.</li>
+    <li><b>Where the ties come from</b> <span class="tag done">done</span> — <code>BrainHandler._refresh_hot_ties</code> reads the Brain's own ties from the public relationships route: before a taught skill is handled, in the tick before a quarantined skill is due (<code>QuarantineStore.due_by</code>), and at least every 60 ticks. A failed read leaves nobody trusted.</li>
+    <li><b>Same weight at both gates</b> <span class="tag done">done</span> — arrival (<code>PeerSkillFilter</code>) and the end of quarantine (<code>_sweep_quarantine</code>, moved out of <code>on_tick</code> unchanged apart from the weight it asks for).</li>
+    <li><b>Wiki</b> <span class="tag done">done</span> — <code>wiki/2-concepts/social/skills.md</code>, <code>wiki/2-concepts/mind/nous.md</code>, decision <code>D-SOC-05</code>.</li>
+  </ul>
+  <div class="panel"><ul class="dec">
+    <li><b>Decision (operator):</b> hot ties only. <span class="q">The warm bucket starts at 0.20, below the 0.35 gate; every hot weight is at least 0.60. Lean states both.</span></li>
+    <li><b>Decision:</b> a failed ties read forgets the earlier answer. <span class="q">This is a gate against poisoned skills, so it closes when it cannot see. The price: a skill whose quarantine ends during a Grid outage is thrown away.</span></li>
+    <li><b>Found by the first test run:</b> a 60-tick refresh alone left the promotion check on stale ties, because quarantine lasts 5 ticks. The read before a due skill was added for that.</li>
+  </ul></div>
+  <h3>Not done here</h3>
+  <ul>
+    <li><b>A live Brain still has no skill store</b> (the entry point never passes <code>hypnos_db_dir</code>), so the gate is never reached in production and a taught skill is still dropped. Giving it one also turns on sleep and learning by watching, which is a separate decision.</li>
+    <li><b>An older gap, now closed on this path only:</b> <code>PeerSkillFilter</code> accepts a weight of NaN (<code>NaN &lt; 0.35</code> is false). The handler no longer hands it one; the filter itself is unchanged.</li>
+  </ul>
+<pre>Class: A (trust is read, cached and checked again later). A gate against poisoned skills, run at the correctness-critical counts.
+Property          TLA+ SkillTrust.tla (2 peers, 3 taught skills, no held weights;   Lean SkillTrust.lean (no bound)                        PBT brain/test/test_skill_trust_properties.py
+                  786,420 distinct states, 5,105,161 generated)
+P-SKILLTRUST-01   TrustedOnlyIfReadHot                                              trusted_iff, only_hot_without_weight                   10,000 x 10 seeds (2 properties + stateful)
+P-SKILLTRUST-02   NoAnswerTrustsNobody                                              failed_read_trusts_nobody                              10,000 x 10 seeds (1 property + stateful)
+P-SKILLTRUST-03   HeldOnlyFromHot                                                   quarantined_only_if_trusted,                           10,000 x 10 seeds (stateful, 30 steps)
+                                                                                    active_only_if_trusted_twice
+Also in Lean: hot_bucket_reaches_threshold, warm_bucket_can_miss_threshold (why hot and not warm).
+TLC and lake build: verification/run.sh run 5 times, 4 clean (four specs, 29 theorems, standard axioms only).
+Run 2 ended inside the unchanged PeerMessages model with no error and no violation printed: the TLC process stopped
+during its last liveness pass while the Brain suite and the seed runs shared the machine. Cause not established;
+the next three runs, alone on the machine, were clean.
+Seeds: 101, 202, 303, 404, 505, 606, 707, 808, 909, 1010.
+Mutations, each caught: 4 TLA+ breaks (warm counts as hot; a failed read keeps the earlier ties; the sweep promotes
+without the check; arrival skips the read), 2 Lean (hot weight below the threshold; warm read counts as hot),
+11 planted code bugs, each caught by the property tests alone.
+Brain suite 1576 passed, 2 runs. All scripts/check-*.mjs and lint-research-wiki: 2 runs. Grid code unchanged, Grid suite not re-run.
+Not verified:
+- The models and tests are about the Brain's last read of its ties. A tie can cool between the read and the sweep.
+- The Brain takes the Grid's public answer as given. Nothing was run against a real Grid.
+- No effect in production until a live Brain has a skill store; the tests build the store themselves.
+- The 60-tick refresh and the read before a due skill are in the stateful property test, not in TLA+ or Lean.
+</pre>
+
   <h2>Session 34 — 2026‑11‑23 · “Deliver a direct message to the other Nous's Brain”</h2>
   <p class="sub">Request: make a direct message sent by one Nous reach the other Nous's Brain (the first finding left open in Session 33). Grid and Brain changed; nothing deployed. Stacked on Session 33's branch (PR #71).</p>
 

@@ -124,8 +124,7 @@ async def test_taught_skill_reaches_the_peer_and_is_quarantined_when_the_sender_
 
 @pytest.mark.asyncio
 async def test_taught_skill_from_a_peer_the_brain_holds_no_weight_for_is_rejected(tmp_path):
-    """Today nothing gives a live-wired Brain relationship weights, so this is what
-    happens to every taught skill on a live Grid: delivered, then refused as low trust."""
+    """No held weight and no tie on the Grid: delivered, then refused as low trust."""
     grid = FakeGrid()
     hermes = make_handler(HERMES, memory=MemoryStore(":memory:"), hypnos_db_dir=tmp_path)
     hermes._grid_wire_client = grid.wire(HERMES, "Hermes")
@@ -226,3 +225,90 @@ def test_parse_examples():
     parsed = parse_peer_message(good, HERMES)
     assert parsed is not None and (parsed.message_id, parsed.sender_name, parsed.channel) == (7, "Unknown", "direct")
     assert message_id({"id": True}) is None and message_id({"id": 0}) is None and message_id("x") is None
+
+
+# ── A live-wired Brain trusts a taught skill from a hot tie only (P-SKILLTRUST) ──
+def _skill_share_row(sender: str, instructions: str = "do it") -> dict:
+    payload = json.dumps({"name": "s", "description": "d", "instructions": instructions, "triggers": []})
+    return {"kind": "direct_message", "sender_did": sender, "sender_name": "Sophia",
+            "channel": "direct", "text": "__skill_share:" + payload, "tick": 1}
+
+
+def _live_hermes(tmp_path, ties):
+    grid = FakeGrid()
+    hermes = make_handler(HERMES, memory=MemoryStore(":memory:"), hypnos_db_dir=tmp_path)
+    hermes._grid_wire_client = grid.wire(HERMES, "Hermes")
+    hermes._grid_wire_client.fetch_relationships = AsyncMock(return_value=ties)
+    return grid, hermes
+
+
+def _quarantined(handler) -> int:
+    return handler.memory._conn.execute("SELECT COUNT(*) FROM skills_quarantine").fetchone()[0]
+
+
+@pytest.mark.asyncio
+async def test_taught_skill_from_a_hot_tie_is_quarantined_without_a_held_weight(tmp_path):
+    grid, hermes = _live_hermes(tmp_path, [{"counterparty_did": SOPHIA, "warmth_bucket": "hot"}])
+    grid.enqueue(HERMES, _skill_share_row(SOPHIA))
+
+    await hermes._run_peer_inbox_cycle(2)
+
+    assert _quarantined(hermes) == 1
+    assert [p for p in grid.posted if p[0] == HERMES] == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("bucket", ["warm", "cold"])
+async def test_taught_skill_from_a_tie_that_is_not_hot_is_rejected(tmp_path, bucket):
+    grid, hermes = _live_hermes(tmp_path, [{"counterparty_did": SOPHIA, "warmth_bucket": bucket}])
+    grid.enqueue(HERMES, _skill_share_row(SOPHIA))
+
+    await hermes._run_peer_inbox_cycle(2)
+
+    assert _quarantined(hermes) == 0
+    assert grid.posted[0][1][0]["action_type"] == ActionType.SKILL_REJECTED.value
+
+
+@pytest.mark.asyncio
+async def test_taught_skill_is_rejected_when_the_ties_cannot_be_read(tmp_path):
+    grid, hermes = _live_hermes(tmp_path, [])
+    hermes._grid_wire_client.fetch_relationships = AsyncMock(side_effect=RuntimeError("grid down"))
+    grid.enqueue(HERMES, _skill_share_row(SOPHIA))
+
+    await hermes._run_peer_inbox_cycle(2)
+
+    assert _quarantined(hermes) == 0
+
+
+@pytest.mark.asyncio
+async def test_a_failed_ties_read_forgets_the_earlier_hot_ties(tmp_path):
+    grid, hermes = _live_hermes(tmp_path, [{"counterparty_did": SOPHIA, "warmth_bucket": "hot"}])
+    grid.enqueue(HERMES, _skill_share_row(SOPHIA, "first"))
+    await hermes._run_peer_inbox_cycle(2)
+    assert _quarantined(hermes) == 1
+
+    hermes._grid_wire_client.fetch_relationships = AsyncMock(side_effect=RuntimeError("grid down"))
+    grid.enqueue(HERMES, _skill_share_row(SOPHIA, "second"))
+    await hermes._run_peer_inbox_cycle(3)
+
+    assert _quarantined(hermes) == 1
+
+
+@pytest.mark.asyncio
+async def test_quarantined_skill_joins_the_skills_only_while_the_tie_is_still_hot(tmp_path):
+    from noesis_brain.skills.quarantine import QUARANTINE_TICKS
+
+    async def run(bucket_at_promotion: str) -> list[str]:
+        grid, hermes = _live_hermes(tmp_path, [{"counterparty_did": SOPHIA, "warmth_bucket": "hot"}])
+        grid.enqueue(HERMES, _skill_share_row(SOPHIA))
+        await hermes._run_peer_inbox_cycle(2)
+        hermes._grid_wire_client.fetch_relationships = AsyncMock(
+            return_value=[{"counterparty_did": SOPHIA, "warmth_bucket": bucket_at_promotion}])
+        due = 2 + QUARANTINE_TICKS
+        await hermes._run_peer_inbox_cycle(due)          # the ties are read again before the sweep
+        actions = hermes._sweep_quarantine({"tick": due})
+        assert _quarantined(hermes) == 0
+        return [a["action_type"] for a in actions]
+
+    assert await run("hot") == [ActionType.SKILL_TAUGHT.value]
+    assert await run("warm") == [ActionType.SKILL_REJECTED.value]

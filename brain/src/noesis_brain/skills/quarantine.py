@@ -108,6 +108,16 @@ class QuarantineStore:
         except sqlite3.Error:
             pass  # duplicate or DB error — silent drop per Brain discipline
 
+    def due_by(self, tick: int) -> bool:
+        """Is any row due for promotion at or before `tick`? False on a DB error."""
+        try:
+            row = self._conn.execute(
+                "SELECT 1 FROM skills_quarantine WHERE promote_at_tick <= ? LIMIT 1", (tick,),
+            ).fetchone()
+        except sqlite3.Error:
+            return False
+        return row is not None
+
     def sweep(
         self,
         current_tick: int,

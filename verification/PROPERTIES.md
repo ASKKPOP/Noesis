@@ -25,6 +25,9 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
 | P-DM-04 | A message is queued only for another Nous, only when sender and target both hold an active Civic-DID and are not deleted, and only with a text of 1 to 16,384 characters; a Brain accepts from its inbox only a well-formed direct message from another Nous. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
 | P-DM-05 | The audit record of a direct message is the target, the channel and the tick, never the text; the Grid's copy of the text is emptied when the message is claimed. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
 | P-DM-06 | A queued message is handed over in the end, as long as the target's Brain keeps polling and is not stopped between claiming a message and handling it. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
+| P-SKILLTRUST-01 | A Brain trusts a peer to teach it a skill only if it holds a relationship weight of at least 0.35 for that peer, or the Grid's latest answer lists that peer as a hot tie: never a warm, cold or unlisted peer, never the mind itself, never on a weight that is not a finite number. | verification/tla/SkillTrust.tla | verification/lean/Verification/SkillTrust.lean | brain/test/test_skill_trust_properties.py |
+| P-SKILLTRUST-02 | A ties read that fails, or answers with something that is not a list of ties, leaves nobody trusted as a hot tie; the earlier answer is not kept. | verification/tla/SkillTrust.tla | verification/lean/Verification/SkillTrust.lean | brain/test/test_skill_trust_properties.py |
+| P-SKILLTRUST-03 | A taught skill is quarantined only if its teacher was trusted when it arrived, and joins the skills only if the teacher is trusted again when the quarantine ends; otherwise it is thrown away. | verification/tla/SkillTrust.tla | verification/lean/Verification/SkillTrust.lean | brain/test/test_skill_trust_properties.py |
 
 ## Stated limits
 
@@ -58,3 +61,14 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
   the single step (a waiting message claimed by its target is delivered), not the eventual claim.
   The TLA+ model has no text length and no lore request or response; those are checked in Lean (length) and by the
   property tests (both).
+- **P-SKILLTRUST-\*** are about the Brain's last read of its ties, not the tie at that instant. The Brain reads its ties
+  before it handles a taught skill, in the tick before a quarantined skill is due, and at least every 60 ticks. A tie
+  can cool after the read and before the sweep (one tick apart when the Brain keeps up), and the skill still joins.
+  A hot tie is taken from the Grid's public answer as given: the Brain does not check that the answer is true.
+- **P-SKILLTRUST-\*** change nothing while a live Brain has no skill store (the entry point never passes
+  `hypnos_db_dir`): the gate is then never reached and a taught skill is dropped. The tests build the store themselves.
+- The flood cap (3 skills per teacher) and the injection scan are older gates and are not registered properties; the
+  stateful property test models the cap so that its expectations are exact.
+- TLA+ bounds for `SkillTrust`: 2 peers, 3 taught skills, no held weights (the live-wired case). Held weights are in
+  Lean and the property tests. The Lean theorems have no bound and use whole hundredths for weights; they also show
+  why the rule is hot and not warm (`hot_bucket_reaches_threshold`, `warm_bucket_can_miss_threshold`).

@@ -1012,7 +1012,7 @@ Every task is verified by **TLA+ (TLC), Lean 4, and property-based tests with ge
 `.planning/implementation/verification.md`; short form in `CLAUDE.md`. Toolchain bootstrapped 2026-11-23:
 `verification/` (TLA+ specs, Lean project, `PROPERTIES.md` registry, `run.sh`), gate `scripts/check-verification.mjs`,
 workflow `verification.yml`. Verified so far: vector clocks (`P-VCLOCK-01…08`), the social cycle's trusted peers
-(`P-SOCIAL-01…04`), direct-message delivery (`P-DM-01…06`). All other existing code is unverified by this rule.
+(`P-SOCIAL-01…04`), direct-message delivery (`P-DM-01…06`), skill-teacher trust (`P-SKILLTRUST-01…03`). All other existing code is unverified by this rule.
 
 ### Invariant — `nous.direct_message` carries no text (2026-11-23, D-SOC-04)
 
