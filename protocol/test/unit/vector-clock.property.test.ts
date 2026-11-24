@@ -322,5 +322,5 @@ describe('cards from the network (Deliver in VectorClock.tla)', () => {
             }),
             params,
         );
-    });
+    }, 120_000); // each case opens its own store; about 20 s for 1,000 cases on CI
 });
