@@ -884,3 +884,10 @@ automatically. Verified as `P-DM-01…06` (TLC 67,312 states with liveness; 6 Le
 10,000 × 10 seeds each). Still open, found on the way: a taught skill would be refused by the receiver's trust gate (a
 live Brain holds no weights) and there is no skill store; no lore request is ever sent; the inbox limit can be passed by
 concurrent senders; nothing was run with a live Brain against a live Grid. No research page changed.
+
+## [2026-11-23] fix | Invalid vector clocks from the network are rejected
+
+`P-VCLOCK-07`/`08`: `isValidVectorClock` + a guard in `KnowledgePool.mergeCard` (`protocol/src/knowledge.ts`); a clock with a
+negative, fractional, NaN or non-number count is rejected whole and nothing is stored. Done properties-first under the
+verification rule. Open: well-formed but false counts from a peer; stored cards are not re-validated on load.
+No research page changed.

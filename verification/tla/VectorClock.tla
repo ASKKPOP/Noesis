@@ -5,10 +5,15 @@
 (*   Tick(r)       models  vectorClock[did] = (vectorClock[did] || 0) + 1  *)
 (*   Receive(r, s) models  mergeVectorClocks(local, remote)                *)
 (*                                                                         *)
+(*   Deliver(r, m) models  mergeCard(remote) for a card from the network   *)
+(*                         whose clock is not a valid clock                *)
+(*                                                                         *)
 (* A missing entry in the code reads as 0; here every entry is present and *)
-(* starts at 0.                                                            *)
+(* starts at 0. Bad stands for any count that is not a whole number >= 0   *)
+(* (negative, fractional, NaN, a string). A merge that reads Bad gives     *)
+(* Bad, as Math.max does with NaN.                                         *)
 (***************************************************************************)
-EXTENDS Naturals
+EXTENDS Integers
 
 CONSTANTS Replicas, MaxTick
 
@@ -20,6 +25,16 @@ Merge(a, b) == [n \in Replicas |-> Max(a[n], b[n])]
 
 Leq(a, b) == \A n \in Replicas : a[n] <= b[n]
 
+Bad == -1
+
+Valid(m) == \A n \in Replicas : m[n] \in Nat
+
+\* Every clock a peer can send that has at least one bad count.
+InvalidClocks == {m \in [Replicas -> (0..MaxTick) \cup {Bad}] : ~Valid(m)}
+
+\* What an unguarded merge would store.
+RawMerge(a, m) == [n \in Replicas |-> IF m[n] = Bad THEN Bad ELSE Max(a[n], m[n])]
+
 Init == clock = [r \in Replicas |-> [n \in Replicas |-> 0]]
 
 Tick(r) ==
@@ -30,7 +45,14 @@ Receive(r, s) ==
     /\ r # s
     /\ clock' = [clock EXCEPT ![r] = Merge(clock[r], clock[s])]
 
-Next == \E r \in Replicas : Tick(r) \/ (\E s \in Replicas : Receive(r, s))
+Deliver(r, m) ==
+    clock' = IF Valid(m) THEN [clock EXCEPT ![r] = RawMerge(clock[r], m)] ELSE clock
+
+Next ==
+    \E r \in Replicas :
+        \/ Tick(r)
+        \/ \E s \in Replicas : Receive(r, s)
+        \/ \E m \in InvalidClocks : Deliver(r, m)
 
 Spec == Init /\ [][Next]_clock
 
@@ -61,5 +83,12 @@ NoFutureKnowledge == \A r, s \in Replicas : clock[s][r] <= clock[r][r]
 
 \* P-VCLOCK-06: a replica's clock never goes backward.
 NeverBackward == [][\A r \in Replicas : Leq(clock[r], clock'[r])]_clock
+
+\* P-VCLOCK-07: every stored count is a whole number >= 0.
+AllCountsNatural == \A r \in Replicas : Valid(clock[r])
+
+\* P-VCLOCK-08: a card whose clock is not valid changes nothing.
+InvalidChangesNothing ==
+    [][\A r \in Replicas : \A m \in InvalidClocks : Deliver(r, m) => clock' = clock]_clock
 
 =============================================================================

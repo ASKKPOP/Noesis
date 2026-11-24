@@ -13,6 +13,8 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
 | P-VCLOCK-04 | A merge is at least as large as both inputs. | verification/tla/VectorClock.tla | verification/lean/Verification/VectorClock.lean | protocol/test/unit/vector-clock.property.test.ts |
 | P-VCLOCK-05 | No replica knows a higher count for replica r than r itself holds. | verification/tla/VectorClock.tla | verification/lean/Verification/VectorClock.lean | protocol/test/unit/vector-clock.property.test.ts |
 | P-VCLOCK-06 | A replica's clock never goes backward. | verification/tla/VectorClock.tla | verification/lean/Verification/VectorClock.lean | protocol/test/unit/vector-clock.property.test.ts |
+| P-VCLOCK-07 | Every stored vector clock count is a whole number ≥ 0, and merging two valid clocks gives a valid clock. | verification/tla/VectorClock.tla | verification/lean/Verification/VectorClock.lean | protocol/test/unit/vector-clock.property.test.ts |
+| P-VCLOCK-08 | A card from the network whose vector clock is not valid is rejected and changes nothing. | verification/tla/VectorClock.tla | verification/lean/Verification/VectorClock.lean | protocol/test/unit/vector-clock.property.test.ts |
 | P-SOCIAL-01 | A trusted peer is another Nous whose tie is hot or warm, or whose known weight is at least 0.3: never a cold or unknown one, never the mind itself. | N/A (V-9.2) pure function, no state between calls | verification/lean/Verification/SocialPeers.lean | brain/test/test_social_peers_properties.py |
 | P-SOCIAL-02 | The trusted-peer list has at most three entries and none twice. | N/A (V-9.2) pure function, no state between calls | verification/lean/Verification/SocialPeers.lean | brain/test/test_social_peers_properties.py |
 | P-SOCIAL-03 | A peer from a later source (weight, then hot, then warm) is listed only if every peer from the earlier sources is listed. | N/A (V-9.2) pure function, no state between calls | verification/lean/Verification/SocialPeers.lean | brain/test/test_social_peers_properties.py |
@@ -26,8 +28,12 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
 
 ## Stated limits
 
-- **P-VCLOCK-\*** hold for counts that are natural numbers. `mergeVectorClocks` does not validate counts; a
-  negative, fractional or `NaN` count from a remote peer is outside these properties and is not rejected today.
+- **P-VCLOCK-01…06** hold for clocks that pass `isValidVectorClock` (every count a whole number ≥ 0).
+  `mergeCard` rejects any other clock (P-VCLOCK-08); `mergeVectorClocks` itself does not check its inputs.
+- A peer that sends a well-formed clock with **false** counts (claiming ticks it never made) is not detected.
+- Cards loaded from local storage at start-up are not re-validated.
+- In the models, one marker stands for every bad count: `Bad` (−1) in TLA+, a negative `Int` in Lean. Fractions,
+  `NaN`, strings and the like are exercised only by the property tests.
 - TLA+ bounds for `VectorClock`: 3 replicas, at most 3 ticks each. The Lean theorems have no bound.
 - **P-SOCIAL-\*** say who may be messaged. Whether the message arrives is **P-DM-\***. The list is a snapshot: a tie can cool between the read and the send, and the
   message still goes (TLC confirms this when asked; it is not promised otherwise).
