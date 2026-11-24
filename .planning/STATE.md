@@ -1011,7 +1011,8 @@ Driving inputs for v3.0 (locked at milestone open):
 Every task is verified by **TLA+ (TLC), Lean 4, and property-based tests with generated inputs**. Rules V-1…V-11:
 `.planning/implementation/verification.md`; short form in `CLAUDE.md`. Toolchain bootstrapped 2026-11-23:
 `verification/` (TLA+ specs, Lean project, `PROPERTIES.md` registry, `run.sh`), gate `scripts/check-verification.mjs`,
-workflow `verification.yml`. Verified so far: vector clocks (`P-VCLOCK-01…08`), the social cycle's trusted peers
+workflow `verification.yml`. Verified so far: vector clocks (`P-VCLOCK-01…08`), hybrid clocks and knowledge-card merge
+(`P-HLC-01…05`, `P-CARD-01…06`), the social cycle's trusted peers
 (`P-SOCIAL-01…04`), direct-message delivery (`P-DM-01…06`). All other existing code is unverified by this rule.
 
 ### Invariant — `nous.direct_message` carries no text (2026-11-23, D-SOC-04)

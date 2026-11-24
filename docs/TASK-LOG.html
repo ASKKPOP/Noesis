@@ -65,6 +65,65 @@
   </div>
 
   <!-- ============================ SESSION 32 ============================ -->
+  <h2>Session 35 — 2026‑11‑24 · “Verify the next area: card merge and hybrid clocks”</h2>
+  <p class="sub">Request: verify card merge and hybrid clocks under the Triple Verification Rule. Protocol package only; nothing deployed.</p>
+  <ul>
+    <li><b>Done under the rule, in order</b> <span class="tag done">done</span> — properties <code>P-HLC-01…05</code> and <code>P-CARD-01…06</code> written first (<a href="../verification/PROPERTIES.md">verification/PROPERTIES.md</a>); TLA+ <code>verification/tla/HybridClock.tla</code>, <code>CardMerge.tla</code>; Lean <code>verification/lean/Verification/HybridClock.lean</code>, <code>CardMerge.lean</code>; property tests <code>protocol/test/unit/hybrid-clock.property.test.ts</code>, <code>card-merge.property.test.ts</code>, written and failing on the code as it was; then the code.</li>
+    <li><b>Result for the hybrid clock functions</b> — <code>tickHLC</code>, <code>receiveHLC</code>, <code>compareHLC</code> passed every property unchanged.</li>
+    <li><b>Result for card merge: four defects, all fixed</b> <span class="tag done">done</span> in <code>protocol/src/knowledge.ts</code>. Each is a shrunk fast-check counterexample (seed 1), kept as a fixed regression test.
+      <ol>
+        <li><b>Replicas could disagree for good.</b> <code>mergeCard</code> replaced a card's stamp with the receiver's own clock and node id. The stamp stopped being the stamp of a write, so replicas that had seen the same writes compared different stamps and chose different winners; with equal vector clocks nothing ever repaired it. Now the merge keeps the larger of the two write stamps.</li>
+        <li><b>Two nodes could give two writes the same stamp.</b> A write kept the node id already on the stamp. Now <code>stampWrite</code> stamps every local write as the writing node.</li>
+        <li><b>A delete never reached another replica.</b> <code>deleteCard</code> set the tombstone without advancing either clock, so peers saw an equal vector clock and discarded it. Now a delete is a write.</li>
+        <li><b>Invalid stamps were accepted.</b> A stamp with a negative, fractional or <code>NaN</code> field, or no stamp, was stored (a <code>NaN</code> wall time can never be ordered or advanced). A card from the network with no <code>crdt</code> at all was given fresh local clocks and accepted. Now both are rejected: <code>isValidHybridClock</code>, and a check in <code>deserializeCard</code>.</li>
+      </ol>
+    </li>
+    <li><b>Test generator corrected on the way</b> — a guard added to the stateful test showed the first generator reached a concurrent merge only 16 times in 1,000 cases. It now starts most cases with the card on all three replicas and prefers recent card states; each merge outcome occurs 800 to 1,000 times per 1,000 cases, and the test fails if any outcome falls below 500.</li>
+    <li><b>Wiki</b> — the public wiki has no page on the protocol package's knowledge sync, so no wiki page changed.</li>
+  </ul>
+  <div class="panel"><ul class="dec">
+    <li><b>Decision (Claude's, open to correction):</b> the defects were fixed in this task instead of being reported and left. <span class="q">V‑10 says a defect a leg finds is fixed in the code, and the properties could not be registered as verified against code that fails them.</span></li>
+    <li><b>Behaviour change to know about:</b> a delete now reaches every replica. <code>deleteCard</code> has no permission check, so any node that holds a card can delete it for all. Before, such a delete stayed local by accident.</li>
+    <li><b>Design note:</b> <code>receiveHLC</code> is verified but <code>mergeCard</code> no longer calls it. A card keeps the larger write stamp and the next local write ticks from it, which gives the same ordering guarantee.</li>
+  </ul></div>
+<pre>Class: A
+Property     TLA+                                     Lean (no bound)                               PBT (cases x seeds)   Mutation caught
+P-HLC-01     HybridClock.tla CompareTotalOrder        lt_trichotomy, lt_irrefl, lt_asymm, lt_trans  1,000 x 10 + 10,000   PBT yes
+P-HLC-02     HybridClock.tla TickAdvances             tick_lt                                       1,000 x 10 + 10,000   TLC yes, Lean yes, PBT yes
+P-HLC-03     HybridClock.tla ReceiveAdvances          receive_gt_local, receive_gt_remote           1,000 x 10 + 10,000   PBT yes (TLC caught it as P-HLC-05)
+P-HLC-04     HybridClock.tla NotBehindClock,          tick_wall, receive_wall                       1,000 x 10 + 10,000   TLC yes
+             NeverInvented
+P-HLC-05     HybridClock.tla + CardMerge.tla          stampWrite_gt, write_above_seen (the step)    1,000 x 10 + 10,000   TLC yes, Lean yes, PBT yes
+             ClockCondition
+P-CARD-01    CardMerge.tla Converged                  converge, mergeCard_comm, mergeCard_assoc     1,000 x 10 + 10,000   TLC yes, Lean yes, PBT yes
+P-CARD-02    CardMerge.tla LastWriteWins              mergeCard_good, write_good                    1,000 x 10 + 10,000   TLC yes, Lean yes, PBT yes
+P-CARD-03    CardMerge.tla StaleChangesNothing        mergeCard_redeliver, mergeCard_idem           1,000 x 10 + 10,000   not broken separately
+P-CARD-04    CardMerge.tla DeletedIffDeleteSeen       tombstone_sticky, mergeCard_good, write_good  1,000 x 10 + 10,000   TLC yes, PBT yes
+P-CARD-05    CardMerge.tla NeverBackward              mergeCard_never_backward                      1,000 x 10 + 10,000   PBT yes
+P-CARD-06    CardMerge.tla AllStampsValid,            deliver_invalid, stamps_valid                 1,000 x 10 + 10,000   TLC yes, Lean yes, PBT yes
+             InvalidChangesNothing
+TLC bounds and states: HybridClock 3 replicas, 2 events each, clock readings 0..2 — 936,385 generated, 181,432 distinct.
+                       CardMerge 3 replicas, 1 card, 4 writes in all, clock readings 0..1, any past card state deliverable —
+                       2,678,781 generated, 57,296 distinct. The clock reading is arbitrary at every step in both.
+TLC and lake build: 2 clean runs each (verification/run.sh). Lean: 22 new headline theorems, standard axioms only.
+Mutations: 9 breaks of the two TLA+ models, 5 of the Lean files, 8 of the real code; every one was caught.
+Suites after the change: protocol unit 401 passed, twice; tsc clean; protocol benchmark 4 passed.
+Not verified: a peer sending a well-formed but false stamp or clock (no drift limit, no signature or authorship check);
+the same identity writing from two devices; fields of a remote card other than its two clocks; changes that do not advance
+the clocks (applyKnowledgeDecay); the order of the verification list and two entries with the same verifier and timestamp;
+a space's card list and the search indexes; cards loaded from local storage; liveness (none promised: no property says a
+card is ever delivered). "Carries no clocks" (P-CARD-06) is checked by the property tests only.
+Three protocol/test/integration/real-agents-e2e tests fail locally with or without this change (they need live LLMs).</pre>
+
+  <h3>Found while verifying — not fixed here</h3>
+  <ul>
+    <li><b>No authorship check on merge or delete.</b> <code>mergeCard</code> accepts any card from any peer; <code>deleteCard</code> lets any holder delete. <code>updateCard</code> has a <code>TODO</code> for edit permissions.</li>
+    <li><b>No limit on a remote wall time.</b> A stamp far in the future wins every concurrent write on that card until real time catches up.</li>
+    <li><b>Shared arrays.</b> <code>mergeCard</code> given an object (not bytes) keeps that object's <code>verifications</code> and <code>tags</code> arrays. <code>real-agents-e2e</code> Scenario 3 passes one object to three pools and its "verified by 2 agents" check passes only because of that sharing.</li>
+    <li><b>Verification list.</b> Two different entries with the same verifier and timestamp keep whichever arrived first, so replicas can differ.</li>
+    <li><b>Older weak tests.</b> <code>protocol/test/unit/crdt-properties.test.ts</code> is titled "Formal Verification"; its convergence test gives every node different card ids, so no merge in it ever has a conflict.</li>
+  </ul>
+
   <h2>Session 34 — 2026‑11‑23 · “Deliver a direct message to the other Nous's Brain”</h2>
   <p class="sub">Request: make a direct message sent by one Nous reach the other Nous's Brain (the first finding left open in Session 33). Grid and Brain changed; nothing deployed. Stacked on Session 33's branch (PR #71).</p>
 

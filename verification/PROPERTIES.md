@@ -15,6 +15,17 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
 | P-VCLOCK-06 | A replica's clock never goes backward. | verification/tla/VectorClock.tla | verification/lean/Verification/VectorClock.lean | protocol/test/unit/vector-clock.property.test.ts |
 | P-VCLOCK-07 | Every stored vector clock count is a whole number ≥ 0, and merging two valid clocks gives a valid clock. | verification/tla/VectorClock.tla | verification/lean/Verification/VectorClock.lean | protocol/test/unit/vector-clock.property.test.ts |
 | P-VCLOCK-08 | A card from the network whose vector clock is not valid is rejected and changes nothing. | verification/tla/VectorClock.tla | verification/lean/Verification/VectorClock.lean | protocol/test/unit/vector-clock.property.test.ts |
+| P-HLC-01 | Hybrid clock stamps are in one strict total order: of any two, exactly one is smaller or they are the same stamp. | verification/tla/HybridClock.tla | verification/lean/Verification/HybridClock.lean | protocol/test/unit/hybrid-clock.property.test.ts |
+| P-HLC-02 | A local tick gives a strictly larger stamp. | verification/tla/HybridClock.tla | verification/lean/Verification/HybridClock.lean | protocol/test/unit/hybrid-clock.property.test.ts |
+| P-HLC-03 | A receive gives a stamp strictly larger than the local stamp and the remote stamp. | verification/tla/HybridClock.tla | verification/lean/Verification/HybridClock.lean | protocol/test/unit/hybrid-clock.property.test.ts |
+| P-HLC-04 | A stamp's wall time is never behind the physical clock that made it and is never invented: it is that clock reading or a wall time the stamp was built from. | verification/tla/HybridClock.tla | verification/lean/Verification/HybridClock.lean | protocol/test/unit/hybrid-clock.property.test.ts |
+| P-HLC-05 | If one write or event was seen before another was made, its stamp is smaller; no two share a stamp. | verification/tla/HybridClock.tla | verification/lean/Verification/HybridClock.lean | protocol/test/unit/hybrid-clock.property.test.ts |
+| P-CARD-01 | Replicas that have seen the same writes to a card hold the same card, whatever order the writes arrived in. | verification/tla/CardMerge.tla | verification/lean/Verification/CardMerge.lean | protocol/test/unit/card-merge.property.test.ts |
+| P-CARD-02 | A replica shows the write with the largest stamp among the writes it has seen. | verification/tla/CardMerge.tla | verification/lean/Verification/CardMerge.lean | protocol/test/unit/card-merge.property.test.ts |
+| P-CARD-03 | Delivering a card the replica has already seen changes nothing. | verification/tla/CardMerge.tla | verification/lean/Verification/CardMerge.lean | protocol/test/unit/card-merge.property.test.ts |
+| P-CARD-04 | A replica's card is deleted exactly when it has seen a delete; a deleted card stays deleted. | verification/tla/CardMerge.tla | verification/lean/Verification/CardMerge.lean | protocol/test/unit/card-merge.property.test.ts |
+| P-CARD-05 | A replica's card never goes backward: not its vector clock, not its stamp, not its deleted flag. | verification/tla/CardMerge.tla | verification/lean/Verification/CardMerge.lean | protocol/test/unit/card-merge.property.test.ts |
+| P-CARD-06 | A card from the network whose stamp is not valid, or that carries no clocks, is rejected and changes nothing; every stored stamp is valid. | verification/tla/CardMerge.tla | verification/lean/Verification/HybridClock.lean | protocol/test/unit/card-merge.property.test.ts |
 | P-SOCIAL-01 | A trusted peer is another Nous whose tie is hot or warm, or whose known weight is at least 0.3: never a cold or unknown one, never the mind itself. | N/A (V-9.2) pure function, no state between calls | verification/lean/Verification/SocialPeers.lean | brain/test/test_social_peers_properties.py |
 | P-SOCIAL-02 | The trusted-peer list has at most three entries and none twice. | N/A (V-9.2) pure function, no state between calls | verification/lean/Verification/SocialPeers.lean | brain/test/test_social_peers_properties.py |
 | P-SOCIAL-03 | A peer from a later source (weight, then hot, then warm) is listed only if every peer from the earlier sources is listed. | N/A (V-9.2) pure function, no state between calls | verification/lean/Verification/SocialPeers.lean | brain/test/test_social_peers_properties.py |
@@ -35,6 +46,33 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
 - In the models, one marker stands for every bad count: `Bad` (−1) in TLA+, a negative `Int` in Lean. Fractions,
   `NaN`, strings and the like are exercised only by the property tests.
 - TLA+ bounds for `VectorClock`: 3 replicas, at most 3 ticks each. The Lean theorems have no bound.
+- **P-HLC-\*, P-CARD-\*** (hybrid clocks and card merge, `protocol/src/knowledge.ts`):
+  - They hold for honest nodes with **one replica per node id**. The same identity writing from two devices breaks the
+    vector clock and the "no two writes share a stamp" condition that P-CARD-01 needs (in Lean it is the hypothesis
+    `huniq`; TLC and the tests check it as part of P-HLC-05).
+  - A peer that sends a **well-formed but false** stamp or clock is not detected. A wall time far in the future wins
+    every concurrent write on that card and pulls every later stamp on it forward; there is no drift limit. `mergeCard`
+    checks no signature and no authorship: any peer can overwrite or delete any card.
+  - P-HLC-02 and P-HLC-03 need a logical counter below 2^53 − 1. A peer can send a counter near that limit.
+  - Only the two clocks of a remote card are validated. Its other fields (`version`, `usage`, `tombstone`,
+    `verifications`) are taken as sent.
+  - Changes that do not advance the clocks are outside the properties and are not replicated on their own:
+    `applyKnowledgeDecay` (confidence).
+  - The verification list is compared as a set. Its order differs between replicas, and two different entries with the
+    same verifier and timestamp keep whichever arrived first; the tests have each node confirm as itself.
+  - Not covered: a space's card list and the tag, author and type indexes; cards loaded from local storage (not
+    re-validated, and still given default clocks if they have none); cards merged before 2026-11-24, which keep the
+    stamp they were given then. `mergeCard` called with an object, rather than bytes from the network, shares that
+    object's arrays.
+  - `receiveHLC` is verified (P-HLC-03) but `mergeCard` no longer calls it: a card keeps the larger write stamp, and
+    the next local write ticks from that.
+  - TLA+ bounds: `HybridClock` 3 replicas, 2 events each, clock readings 0..2; `CardMerge` 3 replicas, one card, 4
+    writes in all, clock readings 0..1, every past card state deliverable in any order. In both, the clock reading is
+    arbitrary at every step. One marker (−1) stands for every invalid stamp field. "Carries no clocks" (P-CARD-06) is checked by the property tests
+    only.
+  - Lean has no bound. A node id is a number there. P-HLC-05 in Lean is the single step (a new write's stamp is above
+    every stamp its replica had seen); the whole-history form is checked by TLC and the property tests. P-CARD-01/02/04
+    are proved as an invariant kept by every write and every merge.
 - **P-SOCIAL-\*** say who may be messaged. Whether the message arrives is **P-DM-\***. The list is a snapshot: a tie can cool between the read and the send, and the
   message still goes (TLC confirms this when asked; it is not promised otherwise).
 - TLA+ bounds for `SocialPeers`: the mind and 3 other Nous, 2 cycles in flight, a list of at most 2. The model lets
