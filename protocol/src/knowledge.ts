@@ -299,6 +299,19 @@ export function mergeVectorClocks(
 }
 
 /**
+ * Whether a value is a usable hybrid clock stamp: wallTime and logical whole
+ * numbers >= 0, nodeId a string. Stamps arrive from remote peers; a NaN wall time
+ * can never be ordered or advanced, so such a stamp is rejected whole.
+ */
+export function isValidHybridClock(value: unknown): value is HybridLogicalClock {
+    if (typeof value !== 'object' || value === null) return false;
+    const { wallTime, logical, nodeId } = value as Record<string, unknown>;
+    return Number.isSafeInteger(wallTime) && (wallTime as number) >= 0
+        && Number.isSafeInteger(logical) && (logical as number) >= 0
+        && typeof nodeId === 'string';
+}
+
+/**
  * Advance HLC for a local event (Kulkarni et al. 2014, §3.1).
  * l' = max(l.wallTime, pt) ; c' = (l' == l.wallTime) ? l.logical + 1 : 0
  */
@@ -548,12 +561,9 @@ export class KnowledgePool extends EventEmitter {
             throw new Error('No permission to edit');
         }
 
-        // CRDT: Advance HLC (Kulkarni et al. 2014) and increment vector clock
         card.version++;
         card.updatedAt = Date.now();
-        card.crdt.hlc = tickHLC(card.crdt.hlc);
-        card.crdt.vectorClock[this.identity.did] =
-            (card.crdt.vectorClock[this.identity.did] || 0) + 1;
+        this.stampWrite(card);
         
         // Aplicar updates
         if (updates.title) card.title = updates.title;
@@ -580,9 +590,11 @@ export class KnowledgePool extends EventEmitter {
         const card = this.cards.get(id);
         if (!card) throw new Error('Card not found');
 
-        // Soft delete (tombstone para CRDT)
+        // Soft delete (tombstone para CRDT). A delete is a write: without advancing
+        // the clocks, peers see an equal vector clock and discard it.
         card.crdt.tombstone = true;
         card.updatedAt = Date.now();
+        this.stampWrite(card);
         
         const space = this.spaces.get(card.spaceId);
         if (space) {
@@ -598,6 +610,17 @@ export class KnowledgePool extends EventEmitter {
     // ─── CRDT Merge ────────────────────────────────────────────────
 
     /**
+     * Record a local write on a card: advance its stamp (Kulkarni et al. 2014) as
+     * this node, and count the write in its vector clock. The stamp carries the
+     * writer's node id, so two nodes never give concurrent writes the same stamp.
+     */
+    private stampWrite(card: KnowledgeCard): void {
+        card.crdt.hlc = { ...tickHLC(card.crdt.hlc), nodeId: this.identity.did };
+        card.crdt.vectorClock[this.identity.did] =
+            (card.crdt.vectorClock[this.identity.did] || 0) + 1;
+    }
+
+    /**
      * Merge a remote knowledge card with the local copy.
      *
      * Algorithm (state-based CRDT with causal metadata):
@@ -607,30 +630,29 @@ export class KnowledgePool extends EventEmitter {
      *    - local < remote  → accept remote (strictly newer).
      *    - concurrent      → LWW tie-break on HLC (wallTime, logical, nodeId).
      * 3. Merge vector clocks (component-wise max) regardless of winner.
-     * 4. Advance local HLC via receiveHLC to maintain causal consistency.
+     * 4. Keep the larger of the two HLC stamps: the stamp of the newest write seen.
      * 5. Tombstone wins: if either copy is tombstoned, result is tombstoned.
      *
      * Returns the merged card, or null if the remote was stale.
-     * Throws if the remote's vector clock is not valid (see isValidVectorClock).
+     * Throws if the remote's vector clock or HLC stamp is not valid
+     * (see isValidVectorClock, isValidHybridClock).
      */
     mergeCard(remote: KnowledgeCard): KnowledgeCard | null {
         if (!isValidVectorClock(remote.crdt?.vectorClock)) {
             throw new Error(`Rejected card ${remote.id}: invalid vector clock`);
         }
+        if (!isValidHybridClock(remote.crdt.hlc)) {
+            throw new Error(`Rejected card ${remote.id}: invalid hybrid clock`);
+        }
         const local = this.cards.get(remote.id);
 
         // Case 1: New card — accept remote entirely
         if (!local) {
-            // Advance our HLC on receipt of remote clock
-            const mergedHlc = receiveHLC(
-                { wallTime: Date.now(), logical: 0, nodeId: this.identity.did },
-                remote.crdt.hlc
-            );
             const card: KnowledgeCard = {
                 ...remote,
                 crdt: {
                     ...remote.crdt,
-                    hlc: mergedHlc,
+                    hlc: { ...remote.crdt.hlc },
                     vectorClock: { ...remote.crdt.vectorClock }
                 }
             };
@@ -675,7 +697,9 @@ export class KnowledgePool extends EventEmitter {
             local.crdt.vectorClock,
             remote.crdt.vectorClock
         );
-        const mergedHlc = receiveHLC(local.crdt.hlc, remote.crdt.hlc);
+        // Keep the larger write stamp. The stamp must stay the stamp of a write, the
+        // same on every replica, or replicas that saw the same writes pick different winners.
+        const mergedHlc = { ...(compareHLC(local.crdt.hlc, remote.crdt.hlc) >= 0 ? local.crdt.hlc : remote.crdt.hlc) };
         // Tombstone wins: once deleted, stays deleted
         const tombstone = local.crdt.tombstone || remote.crdt.tombstone;
 
@@ -751,6 +775,9 @@ export class KnowledgePool extends EventEmitter {
      */
     deserializeCard(data: Uint8Array): KnowledgeCard {
         const raw = JSON.parse(new TextDecoder().decode(data));
+        // A card from the network must carry its own clocks. normalizeCard would give
+        // it fresh local ones, which is meant only for old cards in local storage.
+        if (!raw?.crdt) throw new Error(`Rejected card ${raw?.id}: no clocks`);
         return this.normalizeCard(raw);
     }
 
@@ -1362,9 +1389,7 @@ Respond ONLY with valid JSON, no markdown.`
         }
 
         card.updatedAt = Date.now();
-        card.crdt.hlc = tickHLC(card.crdt.hlc);
-        card.crdt.vectorClock[this.identity.did] =
-            (card.crdt.vectorClock[this.identity.did] || 0) + 1;
+        this.stampWrite(card);
 
         this.saveCard(card);
         this.emit('knowledge:confirmed', { cardId, verifier: verifierDid, confidence: card.confidence });

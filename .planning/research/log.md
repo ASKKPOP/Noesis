@@ -892,6 +892,18 @@ automatically. Verified as `P-DM-01…06` (TLC 67,312 states with liveness; 6 Le
 live Brain holds no weights) and there is no skill store; no lore request is ever sent; the inbox limit can be passed by
 concurrent senders; nothing was run with a live Brain against a live Grid. No research page changed.
 
+## [2026-11-24] verify+fix | Hybrid clocks and knowledge-card merge verified; four merge defects fixed
+
+Verified `tickHLC` / `receiveHLC` / `compareHLC` (`P-HLC-01…05`) and `KnowledgePool.mergeCard` with its writes
+(`P-CARD-01…06`) in `protocol/src/knowledge.ts`. The three clock functions passed unchanged. The merge did not: the
+property tests found that (1) a merge replaced the card's stamp with the receiver's own clock, so replicas that saw the
+same writes could keep different content for good; (2) a write kept the stamp's old node id, so two nodes could stamp
+two writes identically; (3) a delete advanced no clock and never reached a peer; (4) an invalid stamp, or a network card
+with no clocks, was accepted. All four fixed; each counterexample is a regression test. TLC: `HybridClock` 181,432
+distinct states, `CardMerge` 57,296; Lean 22 theorems; fast-check 1,000 × 10 seeds and 10,000 once; 22 deliberate breaks
+across the three legs, all caught. Still open (in `verification/PROPERTIES.md`, stated limits): no authorship check on
+merge or delete, no limit on a remote wall time, one replica per identity assumed. No research page changed.
+
 ## [2026-11-24] fix | A live Brain trusts a taught skill from hot ties only
 
 Operator decision `D-SOC-05`. The skill trust gate asks for a relationship weight of at least 0.35, and nothing gives a
