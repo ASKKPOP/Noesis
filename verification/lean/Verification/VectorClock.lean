@@ -113,6 +113,84 @@ theorem step_never_backward {s t : State Node} (st : Step s t) (r : Node) :
 
 end VectorClock
 
+/-! ## Clocks from the network
+
+A count that arrives from a peer may be any number. Here it is an `Int`, and a
+negative `Int` stands for every count that is not a whole number ≥ 0. The code
+check is `isValidVectorClock`; the delivery step is `mergeCard`. -/
+
+namespace VectorClockInput
+
+variable {Node : Type}
+
+abbrev RawClock (Node : Type) := Node → Int
+
+/-- `isValidVectorClock`: every count is a whole number ≥ 0. -/
+def Valid (m : RawClock Node) : Prop := ∀ n, 0 ≤ m n
+
+def merge (a b : RawClock Node) : RawClock Node := fun n => max (a n) (b n)
+
+/-- P-VCLOCK-07: merging two valid clocks gives a valid clock. -/
+theorem valid_merge (a b : RawClock Node) (ha : Valid a) (_hb : Valid b) :
+    Valid (merge a b) := by
+  intro n
+  have := ha n
+  simp only [merge]
+  omega
+
+abbrev State (Node : Type) := Node → RawClock Node
+
+variable [DecidableEq Node]
+
+/-- Replica `r` is handed clock `m` from the network: merged if valid, dropped if not. -/
+noncomputable def deliver (s : State Node) (r : Node) (m : RawClock Node) : State Node :=
+  open Classical in
+  if Valid m then (fun x => if x = r then merge (s r) m else s x) else s
+
+/-- Replica `r` increments its own entry. -/
+def tick (s : State Node) (r : Node) : State Node :=
+  fun x => if x = r then (fun n => if n = r then s r r + 1 else s r n) else s x
+
+inductive Step : State Node → State Node → Prop
+  | tick (s : State Node) (r : Node) : Step s (tick s r)
+  | deliver (s : State Node) (r : Node) (m : RawClock Node) : Step s (deliver s r m)
+
+inductive Reachable : State Node → Prop
+  | init : Reachable (fun _ _ => 0)
+  | step {s t : State Node} : Reachable s → Step s t → Reachable t
+
+/-- P-VCLOCK-08: a clock that is not valid changes nothing. -/
+theorem deliver_invalid (s : State Node) (r : Node) (m : RawClock Node)
+    (h : ¬ Valid m) : deliver s r m = s := by
+  simp [deliver, h]
+
+/-- P-VCLOCK-07: whatever any peer sends, every stored count stays a whole number ≥ 0. -/
+theorem counts_natural {s : State Node} (h : Reachable s) : ∀ r, Valid (s r) := by
+  induction h with
+  | init => intro _ _; exact Int.le_refl 0
+  | step _ st ih =>
+    intro x n
+    cases st with
+    | tick r =>
+      have h1 := ih x n
+      have h2 := ih r n
+      have h3 := ih r r
+      simp only [tick]
+      by_cases hx : x = r <;> by_cases hn : n = r <;> simp [hx, hn] <;> subst_vars <;> omega
+    | deliver r m =>
+      have h1 := ih x n
+      have h2 := ih r n
+      simp only [deliver]
+      by_cases hv : Valid m
+      · have h3 := hv n
+        by_cases hx : x = r <;> simp [hv, hx, merge] <;> subst_vars <;> omega
+      · simpa [hv] using h1
+
+end VectorClockInput
+
+#print axioms VectorClockInput.valid_merge
+#print axioms VectorClockInput.deliver_invalid
+#print axioms VectorClockInput.counts_natural
 #print axioms VectorClock.merge_comm
 #print axioms VectorClock.merge_assoc
 #print axioms VectorClock.merge_idem

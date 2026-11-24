@@ -29,7 +29,7 @@ flowchart TD
 ## Status today (read this first)
 
 The toolchain was bootstrapped on 2026-11-23. **One area is verified under these rules: vector clocks**
-(`P-VCLOCK-01…06`, `protocol/src/knowledge.ts`). Everything else written before that date is unverified.
+(`P-VCLOCK-01…08`, `protocol/src/knowledge.ts`). Everything else written before that date is unverified.
 
 | Piece | Where |
 |-------|-------|

@@ -1011,7 +1011,7 @@ Driving inputs for v3.0 (locked at milestone open):
 Every task is verified by **TLA+ (TLC), Lean 4, and property-based tests with generated inputs**. Rules V-1…V-11:
 `.planning/implementation/verification.md`; short form in `CLAUDE.md`. Toolchain bootstrapped 2026-11-23:
 `verification/` (TLA+ specs, Lean project, `PROPERTIES.md` registry, `run.sh`), gate `scripts/check-verification.mjs`,
-workflow `verification.yml`. Verified so far: vector clocks only (`P-VCLOCK-01…06`). All other existing code is
+workflow `verification.yml`. Verified so far: vector clocks only (`P-VCLOCK-01…08`). All other existing code is
 unverified by this rule.
 
 ### ⛔ INVARIANT — One Grid focus; new Grids are Nous+User charter, not a dev launch (operator-locked 2026-06-24)

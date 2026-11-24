@@ -7,9 +7,20 @@
  * Inputs are generated. Set PBT_SEED to replay a run, PBT_RUNS to change the case count.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import * as fc from 'fast-check';
-import { compareVectorClocks, mergeVectorClocks } from '../../src/knowledge.js';
+import { mkdirSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import {
+    compareVectorClocks,
+    isValidVectorClock,
+    mergeVectorClocks,
+    KnowledgePool,
+    type KnowledgeCard,
+} from '../../src/knowledge.js';
+import { Storage } from '../../src/storage.js';
+import { generateIdentity } from '../../src/identity.js';
 
 const seed = process.env.PBT_SEED ? Number(process.env.PBT_SEED) : Date.now() | 0;
 const numRuns = process.env.PBT_RUNS ? Number(process.env.PBT_RUNS) : 1000;
@@ -151,6 +162,161 @@ describe('vector clocks across replicas (actions of VectorClock.tla)', () => {
                         for (const s of REPLICAS) {
                             expect(at(clock[s], r)).toBeLessThanOrEqual(at(clock[r], r));
                         }
+                    }
+                }
+            }),
+            params,
+        );
+    });
+});
+
+// Clocks from the network: what a hostile or broken peer can put in a count.
+const arbBadCount: fc.Arbitrary<unknown> = fc.oneof(
+    fc.constantFrom(-1, -0.5, 0.5, NaN, Infinity, -Infinity, Number.MAX_SAFE_INTEGER + 1, null, true, '3', '', {}, []),
+    fc.integer({ max: -1 }),
+    fc.double({ noInteger: true }),
+    fc.string(),
+);
+/** A clock with at least one bad count among otherwise valid entries. */
+const arbInvalidClock: fc.Arbitrary<unknown> = fc
+    .tuple(arbClock, arbNode, arbBadCount)
+    .map(([clock, node, bad]) => {
+        const out: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(clock)) Object.defineProperty(out, k, { value: v, enumerable: true, writable: true, configurable: true });
+        Object.defineProperty(out, node, { value: bad, enumerable: true, writable: true, configurable: true });
+        return out;
+    });
+/** Values that are not a clock at all. */
+const arbNotAClock: fc.Arbitrary<unknown> = fc.oneof(
+    fc.constantFrom(null, undefined, 0, 1, NaN, '', 'clock', true, [], [1, 2]),
+    fc.array(fc.nat()),
+    fc.string(),
+);
+
+describe('vector clocks from the network', () => {
+    it('P-VCLOCK-07: a clock of whole counts >= 0 is valid, and so is a merge of two', () => {
+        fc.assert(
+            fc.property(arbClock, arbClock, (a, b) => {
+                expect(isValidVectorClock(a)).toBe(true);
+                expect(isValidVectorClock(b)).toBe(true);
+                expect(isValidVectorClock(mergeVectorClocks(a, b))).toBe(true);
+            }),
+            params,
+        );
+    });
+
+    it('P-VCLOCK-07: a clock with any count that is not a whole number >= 0 is not valid', () => {
+        fc.assert(
+            fc.property(arbInvalidClock, (clock) => {
+                expect(isValidVectorClock(clock)).toBe(false);
+            }),
+            params,
+        );
+    });
+
+    it('P-VCLOCK-07: a value that is not an object of counts is not valid', () => {
+        fc.assert(
+            fc.property(arbNotAClock, (value) => {
+                expect(isValidVectorClock(value)).toBe(false);
+            }),
+            params,
+        );
+    });
+});
+
+// Stateful test on a real KnowledgePool: valid and invalid cards arrive in any order.
+describe('cards from the network (Deliver in VectorClock.tla)', () => {
+    let dir: string;
+    let n = 0;
+
+    beforeAll(() => {
+        dir = join(tmpdir(), `vclock-prop-${Date.now()}`);
+        mkdirSync(dir, { recursive: true });
+    });
+    afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+    function newPool(): KnowledgePool {
+        const identity = generateIdentity('prop');
+        const storage = new Storage({ dbPath: join(dir, `p-${n++}.db`) });
+        storage.saveIdentity(
+            identity.did,
+            Buffer.from(identity.privateKey).toString('hex'),
+            Buffer.from(identity.publicKey).toString('hex'),
+            identity.displayName,
+        );
+        return new KnowledgePool(storage, identity);
+    }
+
+    function card(id: string, vectorClock: unknown, wallTime: number): KnowledgeCard {
+        return {
+            id,
+            spaceId: 'space',
+            type: 'fact',
+            title: id,
+            summary: id,
+            content: id,
+            contentFormat: 'plain',
+            author: 'did:test:peer',
+            createdAt: 1,
+            updatedAt: 1,
+            version: 1,
+            tags: [],
+            domain: [],
+            entities: [],
+            confidence: 0.8,
+            verificationStatus: 'unverified',
+            verifications: [],
+            usage: { views: 0, citations: 0, applications: 0, lastAccessed: 1 },
+            privacy: 'public',
+            crdt: { hlc: { wallTime, logical: 0, nodeId: 'did:test:peer' }, vectorClock, tombstone: false },
+        } as unknown as KnowledgeCard;
+    }
+
+    const snapshot = (pool: KnowledgePool): string =>
+        JSON.stringify([...(pool as any).cards.entries()].map(([id, c]: [string, KnowledgeCard]) => [id, c.crdt.vectorClock, c.title]));
+
+    const arbDelivery = fc.record({
+        id: fc.constantFrom('c1', 'c2', 'c3'),
+        clock: fc.oneof(arbClock as fc.Arbitrary<unknown>, arbInvalidClock, arbNotAClock),
+        viaNetwork: fc.boolean(),
+    });
+
+    it('P-VCLOCK-07 and P-VCLOCK-08 hold after every delivery of any sequence', () => {
+        fc.assert(
+            fc.property(fc.array(arbDelivery, { maxLength: 12 }), (deliveries) => {
+                const pool = newPool();
+                const errors: unknown[] = [];
+                pool.on('sync:error', (e: unknown) => errors.push(e));
+                let wallTime = Date.now() + 100_000;
+
+                for (const d of deliveries) {
+                    const remote = card(d.id, d.clock, wallTime++);
+                    const valid = isValidVectorClock(d.clock);
+                    const before = snapshot(pool);
+                    const errorsBefore = errors.length;
+
+                    if (d.viaNetwork) {
+                        // The real wire path: JSON bytes in. JSON cannot carry NaN or undefined,
+                        // so judge validity on what actually arrives.
+                        const bytes = new TextEncoder().encode(JSON.stringify(remote));
+                        const arrived = JSON.parse(new TextDecoder().decode(bytes)).crdt?.vectorClock;
+                        pool.handleSyncMessage(bytes, 'did:test:peer');
+                        if (!isValidVectorClock(arrived)) {
+                            // P-VCLOCK-08: rejected, reported, nothing changed.
+                            expect(errors.length).toBe(errorsBefore + 1);
+                            expect(snapshot(pool)).toBe(before);
+                        }
+                    } else if (valid) {
+                        pool.mergeCard(remote);
+                    } else {
+                        // P-VCLOCK-08: rejected, nothing changed.
+                        expect(() => pool.mergeCard(remote)).toThrow(/vector clock/i);
+                        expect(snapshot(pool)).toBe(before);
+                    }
+
+                    // P-VCLOCK-07: every stored count is a whole number >= 0.
+                    for (const stored of (pool as any).cards.values()) {
+                        expect(isValidVectorClock(stored.crdt.vectorClock)).toBe(true);
                     }
                 }
             }),

@@ -21,7 +21,8 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ID = /P-[A-Z0-9]+-\d+/g;
-const SKIP = new Set(['node_modules', '.git', '.lake', '.tools', 'target', 'dist', '.next', '.venv']);
+// .claude holds other sessions' worktrees: separate checkouts with their own registry.
+const SKIP = new Set(['node_modules', '.git', '.claude', '.lake', '.tools', 'target', 'dist', '.next', '.venv']);
 const SKIP_PATHS = new Set(['contracts/lib', 'contracts/out', 'contracts/cache']);
 const errors = [];
 
