@@ -238,3 +238,93 @@ async def test_garbage_llm_output_changes_nothing():
     await h._run_social_cycle(100)
 
     assert h._pending_actions == []
+
+
+# ── wiring: where the inputs come from ───────────────────────────────────────
+# The tests above hand the cycle its trusted peers and its lore store. These
+# check that a real mind actually gets them.
+def _edge(did: str, bucket: str) -> dict:
+    return {"counterparty_did": did, "warmth_bucket": bucket, "recency_tick": 90, "edge_hash": "h"}
+
+
+@pytest.mark.asyncio
+async def test_learns_trusted_peers_from_the_grid():
+    """Nothing pushes relationship weights to a live-wired mind, so the cycle
+    reads its own ties from the Grid's public relationships route."""
+    h = _handler()
+    w = _wire()
+    w.fetch_relationships = AsyncMock(return_value=[_edge(PEER, "warm")])
+    h._grid_wire_client = w
+    assert h._cached_peer_weights == {}
+    h.llm = _llm_saying('{"action": "message_peer", "peer_did": "%s", "text": "shall we talk?"}' % PEER)
+
+    await h._run_social_cycle(100)
+
+    w.fetch_relationships.assert_awaited_once_with("did:noesis:sophia")
+    assert f"- {PEER}" in h.llm.generate.await_args.args[0]
+    assert len(h._pending_actions) == 1
+    assert h._pending_actions[0].metadata["target_did"] == PEER
+
+
+@pytest.mark.asyncio
+async def test_cold_tie_is_not_a_trusted_peer():
+    h = _handler()
+    w = _wire()
+    w.fetch_relationships = AsyncMock(return_value=[_edge(PEER, "cold")])
+    h._grid_wire_client = w
+    h.llm = _llm_saying('{"action": "message_peer", "peer_did": "%s", "text": "hi"}' % PEER)
+
+    await h._run_social_cycle(100)
+
+    assert "Peers you trust" not in h.llm.generate.await_args.args[0]
+    assert h._pending_actions == []
+
+
+@pytest.mark.asyncio
+async def test_hot_ties_come_before_warm_and_three_at_most():
+    h = _handler()
+    w = _wire()
+    w.fetch_relationships = AsyncMock(return_value=[
+        _edge("did:noesis:a", "warm"), _edge("did:noesis:b", "hot"),
+        _edge("did:noesis:c", "warm"), _edge("did:noesis:d", "warm"),
+        _edge("did:noesis:sophia", "hot"),  # never ourselves
+    ])
+    h._grid_wire_client = w
+    h.llm = _llm_saying('{"action": "none"}')
+
+    await h._run_social_cycle(100)
+
+    prompt = h.llm.generate.await_args.args[0]
+    listed = [ln[2:] for ln in prompt.splitlines() if ln.startswith("- did:noesis:")]
+    assert listed == ["did:noesis:b", "did:noesis:a", "did:noesis:c"]
+
+
+def test_memory_stream_exposes_its_database_connection():
+    """The lore store (and the skill store) open on the mind's own database.
+    __main__ wraps the store in a MemoryStream, which has to pass it through."""
+    from noesis_brain.memory.sqlite_store import MemoryStore
+    from noesis_brain.memory.stream import MemoryStream
+
+    store = MemoryStore(":memory:")
+    assert MemoryStream(store)._conn is store._conn
+
+
+@pytest.mark.asyncio
+async def test_real_memory_gives_the_mind_a_lore_store_and_lore_lands_in_it():
+    from noesis_brain.memory.sqlite_store import MemoryStore
+    from noesis_brain.memory.stream import MemoryStream
+
+    h = _handler()
+    h.memory = MemoryStream(MemoryStore(":memory:"))  # what __main__ builds
+    h.llm = _llm_saying('{"action": "none"}')
+    await h.on_tick({"tick": 1, "epoch": 0})
+    assert h._lore_store is not None
+
+    h._grid_wire_client = _wire()
+    h._pending_actions.clear()
+    h.llm = _llm_saying('{"action": "contribute_lore", "title": "Ring power", "content": "The residential ring browns out at dusk.", "category": "observation"}')
+    await h._run_social_cycle(100)
+
+    lore = [a for a in h._pending_actions if a.action_type == ActionType.LORE_CONTRIBUTE]
+    assert len(lore) == 1
+    assert h._lore_store.has(lore[0].metadata["content_hash"])

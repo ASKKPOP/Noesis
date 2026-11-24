@@ -65,6 +65,48 @@
   </div>
 
   <!-- ============================ SESSION 32 ============================ -->
+  <h2>Session 33 — 2026‑11‑23 · “Fix the social cycle wiring”</h2>
+  <p class="sub">Request: fix the finding from Session 31 that a Nous can vote and join a Group but cannot message a peer, teach or contribute lore. Brain only; no Grid code changed; nothing deployed.</p>
+
+  <h3>Root cause (read from source before any change)</h3>
+  <ul>
+    <li><b>No source of trusted peers</b> — the Grid never sends <code>relationship_context</code> (no occurrence in <code>grid/src</code>); a live Brain gets <code>{tick, epoch}</code> only. The one line that fills <code>_cached_peer_weights</code> sits inside the skill-quarantine block, which never runs.</li>
+    <li><b>No lore store</b> — <code>rpc/handler.py</code> creates it only when <code>memory._conn</code> exists; <code>MemoryStream</code> did not expose its store's connection.</li>
+  </ul>
+
+  <h3>Change</h3>
+  <ul>
+    <li><b>Trusted peers read from the Grid</b> <span class="tag done">done</span> — <code>GridWireClient.fetch_relationships</code> (public <code>GET /api/v1/nous/:did/relationships</code>, warmth bucket only); the social cycle passes the result to the new pure function <code>brain/src/noesis_brain/social_logic.py · trusted_peers</code> (weighted ≥ 0.3, then hot, then warm; never self; no repeats; three at most). A failed read no longer ends the cycle.</li>
+    <li><b>Lore store reachable</b> <span class="tag done">done</span> — <code>MemoryStream._conn</code> passes the connection through; the store is created on the first tick.</li>
+    <li><b>Wiki</b> <span class="tag done">done</span> — <code>wiki/2-concepts/mind/nous.md</code>, <code>social/lore-and-culture.md</code>, <code>social/skills.md</code> “What runs today” updated.</li>
+  </ul>
+  <div class="panel"><ul class="dec">
+    <li><b>Decision:</b> trust is read as a bucket, not a number. <span class="q">The public tier of the relationships route hides numeric weights by design (T‑09‑07). Warm starts at 0.20, so a tie between 0.20 and 0.30 now counts as trusted where the old numeric rule said 0.30.</span></li>
+    <li><b>Decision:</b> a Nous never lists itself, on either source. <span class="q">The old weight path did not exclude it; nothing filled that path for a live mind.</span></li>
+    <li><b>Not done, on purpose:</b> the skill store. <span class="q">It is built only together with the sleep runtime (<code>hypnos_db_dir</code>); turning that on starts sleep, consolidation and observational learning — a separate switch-on, not social wiring.</span></li>
+  </ul></div>
+
+  <h3>Found while fixing — not fixed here</h3>
+  <ul>
+    <li><b>A direct message is recorded and delivered to no one.</b> The runner appends <code>nous.direct_message</code>; production runners sit on a disconnected bridge (<code>grid/src/main.ts</code>), and nothing calls <code>brain.onMessage</code> for a live Brain. So outreach, taught skills and lore requests never reach the other Nous.</li>
+    <li><b>The audit entry carries the first 100 characters of the message</b> (<code>text</code>), while the allowlist comment for <code>nous.direct_message</code> says the payload must not contain the body.</li>
+    <li><b>The lore quota is not applied in production</b> — <code>main.ts</code> gives runners no quota tracker.</li>
+    <li><b>The first generators were too weak</b>: three of seven planted bugs passed. Repeating a strategy inside <code>st.one_of</code> does not weight it; 59% of generated tie lists were not lists. Generators rebuilt; all seven then caught.</li>
+  </ul>
+<pre>Class: B (pure logic, with the caller modelled)
+Property     TLA+ (me + 3 Nous, 2 cycles, list <= 2)        Lean (no bound)                                PBT (cases x seeds)  Mutation caught
+P-SOCIAL-01  N/A (V-9.2)                                    trusted_sound                                  1,000 x 4            PBT yes (2 bugs)
+P-SOCIAL-02  N/A (V-9.2)                                    trusted_length_le, trusted_nodup               1,000 x 4            Lean yes, PBT yes (2 bugs)
+P-SOCIAL-03  N/A (V-9.2)                                    warm_only_after_hot, hot_only_after_weighted   1,000 x 4            Lean yes, PBT yes
+P-SOCIAL-04  SocialPeers.tla OnlyToListedPeers,             queued_is_trusted                              1,000 x 4            TLC yes (2 breaks), PBT yes (2 bugs)
+             2,073,600 distinct states (33,246,721 generated)
+TLC and lake build: 2 clean runs each (verification/run.sh). Seeds: 11, 20261123, 4242424242, 3076442270.
+Brain suite 1554 passed, 3 runs. Gates: check-verification, check-wiki, check-state-doc-sync, lint-research-wiki, twice each.
+Not verified: nothing was run against a live Grid; that the Brain's DID equals the DID the Grid keys its ties on at run time;
+that ties form at all in production (the listener needs a second DID on nous.spoke); fetch_relationships and the _conn
+pass-through have example tests only, no registered property; order among weighted peers; liveness (none promised).
+Stated limit, confirmed by TLC: the list is a snapshot — a tie can cool between the read and the send.</pre>
+
   <h2>Session 32 — 2026‑11‑23 · “Verification rules: TLA+, Lean, property-based testing”</h2>
   <p class="sub">User instruction: all project tasks need full verification by three methods — TLA+, Lean, and property-based testing with random/generated inputs.</p>
   <ul>

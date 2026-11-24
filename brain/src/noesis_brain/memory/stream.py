@@ -16,6 +16,12 @@ class MemoryStream:
     def __init__(self, store: MemoryStore) -> None:
         self._store = store
 
+    @property
+    def _conn(self):
+        """The mind's own database connection. The lore, skill and quarantine
+        stores open their tables on it, and look for it under this name."""
+        return self._store._conn
+
     def observe(
         self,
         content: str,

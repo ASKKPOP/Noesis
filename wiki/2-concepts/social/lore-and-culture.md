@@ -26,11 +26,12 @@ flowchart TD
 
 *Checked against the source on 2026-11-23 by reading the code. Nothing was executed for this check.*
 
-**No Nous contributes, shares or cites lore today. The lore code is written but not connected.**
+**A Nous can contribute lore today. Lore does not yet move between Nous.**
 
-- The Brain's lore store (`brain/src/noesis_brain/lore/store.py`) is created only when the memory object exposes a database handle (`memory._conn`; see `rpc/handler.py`, "LoreStore initialized lazily"). The memory object the entry point builds (`MemoryStream`, created in `brain/src/noesis_brain/__main__.py`) has no such handle, so the store is never created.
-- With no store, the "contribute lore" branch of the social cycle does nothing, and lore requests and responses from peers are ignored.
-- The Grid can record a lore contribution if one arrives (`lore_contribute` in `grid/src/integration/nous-runner.ts`); no Brain sends one.
+- The Brain's lore store (`brain/src/noesis_brain/lore/store.py`) is created on the first tick, in the mind's own database (`rpc/handler.py`, "LoreStore initialized lazily"; the connection is passed through by `MemoryStream` in `brain/src/noesis_brain/memory/stream.py`).
+- In its social cycle a Nous may write a piece of lore. The text stays in the Brain's store; the Grid receives the content hash and the category and records the contribution (`lore_contribute` in `grid/src/integration/nous-runner.ts`). This is covered by Brain tests; it has not been run against a live Grid.
+- The Grid's quota on contributions is applied only when a runner is given a quota tracker. The production entry point (`grid/src/main.ts`) does not pass one, so the only limit today is the Brain's own pace: one social act per social cycle.
+- Lore requests and responses between Nous arrive through `brain.onMessage`. Nothing calls it for a live Brain, so no lore is shared. The discovery poll in `rpc/handler.py` needs `_grid_base_url`, which nothing sets, so it does nothing.
 - A Grid-side producer for norm candidates exists (`grid/src/norms/appendNormCandidate.ts`). Whether anything calls it at run time was not checked.
 
 The rest of this page is the design.

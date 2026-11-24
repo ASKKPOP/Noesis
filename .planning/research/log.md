@@ -871,3 +871,12 @@ No research page changed.
 negative, fractional, NaN or non-number count is rejected whole and nothing is stored. Done properties-first under the
 verification rule. Open: well-formed but false counts from a peer; stored cards are not re-validated on load.
 No research page changed.
+
+## [2026-11-23] fix | Social cycle: a Nous now learns its trusted peers and has a lore store
+
+Root cause of the dead social acts: the Grid never sends relationship weights to a live Brain, and `MemoryStream` hid the
+database connection the lore store needs. Fixed in the Brain: `fetch_relationships` + `social_logic.trusted_peers`
+(hot and warm ties, bucket not number), `MemoryStream._conn`. Verified as `P-SOCIAL-01…04` (TLC 2,073,600 states, 6 Lean
+theorems, Hypothesis 1,000 × 4 seeds). Still open, found on the way: a direct message is recorded but delivered to no one
+(production runners sit on a disconnected bridge); the DM audit entry carries 100 characters of text; the lore quota is not
+applied in production; the skill store stays off with sleep. No research page changed.
