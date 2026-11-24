@@ -1,2 +1,3 @@
 import Verification.VectorClock
 import Verification.SocialPeers
+import Verification.PeerMessages

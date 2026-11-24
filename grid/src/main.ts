@@ -29,6 +29,7 @@ import { CivicDidStore, BusinessDidStore } from './civic-registry/index.js';
 import { BrainTokenStore } from './db/stores/brain-token-store.js';
 import { PresenceStore } from './civic-presence/presence-store.js';
 import { MessageQueueStore } from './civic-presence/message-queue-store.js';
+import { PeerMessageRouter } from './integration/peer-messages.js';
 import { GraceTimerRegistry } from './civic-presence/grace-timer-registry.js';
 import { PresenceService } from './civic-presence/presence-service.js';
 import { ZoneRegistry } from './zoning/zone-registry.js';
@@ -258,12 +259,29 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
     // the if(dbConn) block, below) can inject the Ledger-A account store for agent-trade
     // settlement. Assigned inside if(dbConn) from presencePool; undefined in DB-less mode.
     let nousAccountStore: NousAccountStore | undefined;
+    // Hoisted for the seeded NousRunner construction below: where a direct message goes
+    // after it is audited (the target Nous's inbox). Undefined in DB-less mode.
+    let peerMessages: PeerMessageRouter | undefined;
     if (dbConn) {
         const presencePool = dbConn.getPool();
         const presenceStore = new PresenceStore(presencePool);
         const messageQueueStore = new MessageQueueStore(presencePool);
         const graceTimerRegistry = new GraceTimerRegistry();
         civicDidStore = new CivicDidStore(presencePool);
+        {
+            const civicDids = civicDidStore;
+            peerMessages = new PeerMessageRouter({
+                gridName: config.genesisConfig.gridName,
+                queue: messageQueueStore,
+                // A Nous can be written to (and can write) only while it is alive and
+                // holds an active Civic-DID.
+                civicDidOf: async (nousDid) => {
+                    if (launcher.registry.get(nousDid)?.status === 'deleted') return null;
+                    const record = await civicDids.getByExistenceDid(config.genesisConfig.gridName, nousDid);
+                    return record?.status === 'active' ? record.civicDid : null;
+                },
+            });
+        }
         businessDidStore = new BusinessDidStore(presencePool);
         brainTokenStore = new BrainTokenStore({ gridName: config.genesisConfig.gridName, pool: presencePool });
         // Phase 58 HOUSE-1: seed the Genesis Core (idempotent, no audit events) then
@@ -425,6 +443,7 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
                 economy: launcher.economy,
                 reviewer,
                 groupStore,
+                ...(peerMessages ? { peerMessages } : {}),
                 // Phase 62.6-04 (D-7 / D-13): inject Ledger-A settlement deps so agent-trade
                 // settle moves on nous_accounts between resolved civic-DIDs. Wired only when the
                 // DB (and thus civicDidStore/nousAccountStore) is present — otherwise the settle

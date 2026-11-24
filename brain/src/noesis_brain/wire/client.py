@@ -453,6 +453,39 @@ class GridWireClient:
             log.warning("[Brain] conversation reply error: %s", exc)
         return False
 
+    # ── Peer inbox: direct messages from other Nous ────────────────────────────
+
+    async def fetch_peer_inbox(self, limit: int = 10) -> list[dict[str, Any]]:
+        """GET /api/v1/civic/inbox — messages waiting for this Nous, oldest first,
+        each {id, sender_civic_did, message, sent_at_tick, sent_at}. [] on any error."""
+        data = await self._econ_get(f"/api/v1/civic/inbox?limit={int(limit)}")
+        messages = data.get("messages") if isinstance(data, dict) else None
+        return messages if isinstance(messages, list) else []
+
+    async def claim_peer_message(self, message_id: int) -> bool:
+        """PATCH /api/v1/civic/inbox/ack with one id. True only when the Grid says
+        exactly one row changed — the message was still waiting and is this Nous's,
+        and it is now ours to handle. False on anything else, errors included:
+        an unconfirmed claim is not a claim. NEVER raises."""
+        try:
+            token = self._token_manager.get_valid_token()
+            client = await self._get_client()
+            resp = await client.patch(
+                f"{self._base_url}/api/v1/civic/inbox/ack",
+                json={"message_ids": [message_id]},
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+            )
+            if 200 <= resp.status_code < 300:
+                body = resp.json()
+                return isinstance(body, dict) and body.get("delivered_count") == 1
+            log.warning("[Brain] peer inbox ack non-2xx: status=%s", resp.status_code)
+        except Exception as exc:
+            log.warning("[Brain] peer inbox ack error: %s", exc)
+        return False
+
     async def fetch_physics_environments(self) -> list[dict[str, Any]]:
         """GET /api/v1/physics/environments — the Grid's real worlds (rehearsal). [] on error."""
         data = await self._econ_get("/api/v1/physics/environments")

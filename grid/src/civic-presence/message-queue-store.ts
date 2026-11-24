@@ -61,22 +61,28 @@ export class MessageQueueStore {
         return Number(rows[0]?.n ?? 0);
     }
 
-    /** Inbox endpoint backing query — pending messages for caller Civic-DID. */
+    /**
+     * Inbox endpoint backing query — pending messages for caller Civic-DID, oldest
+     * first. `limit` (when given) caps how many rows come back.
+     */
     async listPending(
         gridName: string,
         recipientCivicDid: string,
         sinceTick: number | undefined,
+        limit?: number,
     ): Promise<QueuedMessage[]> {
         const sinceClause = sinceTick !== undefined ? ' AND sent_at_tick >= ?' : '';
-        const params = sinceTick !== undefined
+        const limitClause = limit !== undefined ? ' LIMIT ?' : '';
+        const params: (string | number)[] = sinceTick !== undefined
             ? [gridName, recipientCivicDid, sinceTick]
             : [gridName, recipientCivicDid];
+        if (limit !== undefined) params.push(limit);
         const [rows] = await this.pool.query<MessageRow[]>(
             `SELECT id, grid_name, recipient_civic_did, sender_civic_did, message_json,
                     sent_at_tick, sent_at, status
              FROM civic_message_queue
              WHERE grid_name = ? AND recipient_civic_did = ? AND status='pending'${sinceClause}
-             ORDER BY sent_at_tick ASC, id ASC`,
+             ORDER BY sent_at_tick ASC, id ASC${limitClause}`,
             params,
         );
         return rows.map(rowToMessage);
@@ -84,7 +90,10 @@ export class MessageQueueStore {
 
     /**
      * Batch mark delivered. recipientCivicDid REQUIRED — prevents cross-DID ack (T-41-05).
-     * Returns count of rows updated.
+     * Returns count of rows updated: a row counts only if it was still pending and is
+     * addressed to this recipient, so a message can be claimed once (P-DM-01, P-DM-02).
+     * The stored message is emptied in the same statement — the Grid keeps the text of a
+     * message only until the recipient has claimed it (P-DM-05).
      */
     async markDelivered(
         gridName: string,
@@ -95,7 +104,7 @@ export class MessageQueueStore {
         const placeholders = messageIds.map(() => '?').join(',');
         const [result] = await this.pool.query<ResultSetHeader>(
             `UPDATE civic_message_queue
-             SET status='delivered'
+             SET status='delivered', message_json='{}'
              WHERE grid_name = ? AND recipient_civic_did = ?
                AND status='pending' AND id IN (${placeholders})`,
             [gridName, recipientCivicDid, ...messageIds],

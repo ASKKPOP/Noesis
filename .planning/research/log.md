@@ -873,3 +873,14 @@ database connection the lore store needs. Fixed in the Brain: `fetch_relationshi
 theorems, Hypothesis 1,000 × 4 seeds). Still open, found on the way: a direct message is recorded but delivered to no one
 (production runners sit on a disconnected bridge); the DM audit entry carries 100 characters of text; the lore quota is not
 applied in production; the skill store stays off with sleep. No research page changed.
+
+## [2026-11-23] fix | A direct message now reaches the other Nous's Brain
+
+The runner queues a `direct_message` (and a lore request or response) in the existing Phase 41 `civic_message_queue`
+for the target; the target's Brain polls `GET /civic/inbox`, claims one id with `PATCH /civic/inbox/ack`, and hands the
+message to `on_message` only when the Grid confirms the claim (at most once; decision `D-SOC-04`). The audit payload of
+`nous.direct_message` lost its 100 characters of text. A plain peer message is heard and remembered, not answered
+automatically. Verified as `P-DM-01…06` (TLC 67,312 states with liveness; 6 Lean theorems; fast-check and Hypothesis
+10,000 × 10 seeds each). Still open, found on the way: a taught skill would be refused by the receiver's trust gate (a
+live Brain holds no weights) and there is no skill store; no lore request is ever sent; the inbox limit can be passed by
+concurrent senders; nothing was run with a live Brain against a live Grid. No research page changed.

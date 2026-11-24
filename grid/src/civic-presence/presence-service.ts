@@ -74,12 +74,12 @@ export class PresenceService {
         return { queued: true, messageId, queueFull: false };
     }
 
-    async listInbox(civicDid: string, sinceTick: number | undefined): Promise<{
+    async listInbox(civicDid: string, sinceTick: number | undefined, limit?: number): Promise<{
         messages: QueuedMessage[];
         queueDepth: number;
     }> {
         const [messages, queueDepth] = await Promise.all([
-            this.deps.messageQueueStore.listPending(this.deps.gridName, civicDid, sinceTick),
+            this.deps.messageQueueStore.listPending(this.deps.gridName, civicDid, sinceTick, limit),
             this.deps.messageQueueStore.depth(this.deps.gridName, civicDid),
         ]);
         return { messages, queueDepth };

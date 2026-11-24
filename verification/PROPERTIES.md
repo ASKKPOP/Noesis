@@ -17,15 +17,38 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
 | P-SOCIAL-02 | The trusted-peer list has at most three entries and none twice. | N/A (V-9.2) pure function, no state between calls | verification/lean/Verification/SocialPeers.lean | brain/test/test_social_peers_properties.py |
 | P-SOCIAL-03 | A peer from a later source (weight, then hot, then warm) is listed only if every peer from the earlier sources is listed. | N/A (V-9.2) pure function, no state between calls | verification/lean/Verification/SocialPeers.lean | brain/test/test_social_peers_properties.py |
 | P-SOCIAL-04 | Whatever DID the model names, the social cycle queues a message or a taught skill only to a peer on the list it built in that same cycle. | verification/tla/SocialPeers.tla | verification/lean/Verification/SocialPeers.lean | brain/test/test_social_peers_properties.py |
+| P-DM-01 | A direct message is handed to the target Brain's `on_message` at most once, however often it is polled, however many Brain processes poll for that Nous, and across restarts. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
+| P-DM-02 | A direct message is shown to, and handed to, only the Brain of the Nous it was addressed to. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
+| P-DM-03 | Nothing a Nous sends while it is muted — a direct message, a lore request or a lore response — is queued for anyone. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
+| P-DM-04 | A message is queued only for another Nous, only when sender and target both hold an active Civic-DID and are not deleted, and only with a text of 1 to 16,384 characters; a Brain accepts from its inbox only a well-formed direct message from another Nous. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
+| P-DM-05 | The audit record of a direct message is the target, the channel and the tick, never the text; the Grid's copy of the text is emptied when the message is claimed. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
+| P-DM-06 | A queued message is handed over in the end, as long as the target's Brain keeps polling and is not stopped between claiming a message and handling it. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
 
 ## Stated limits
 
 - **P-VCLOCK-\*** hold for counts that are natural numbers. `mergeVectorClocks` does not validate counts; a
   negative, fractional or `NaN` count from a remote peer is outside these properties and is not rejected today.
 - TLA+ bounds for `VectorClock`: 3 replicas, at most 3 ticks each. The Lean theorems have no bound.
-- **P-SOCIAL-\*** say who may be messaged. They do not say the message arrives: the Grid records a direct message
-  and delivers it to no one today. The list is a snapshot: a tie can cool between the read and the send, and the
+- **P-SOCIAL-\*** say who may be messaged. Whether the message arrives is **P-DM-\***. The list is a snapshot: a tie can cool between the read and the send, and the
   message still goes (TLC confirms this when asked; it is not promised otherwise).
 - TLA+ bounds for `SocialPeers`: the mind and 3 other Nous, 2 cycles in flight, a list of at most 2. The model lets
   a cycle list any trusted peers up to the limit; which ones (P-SOCIAL-01..03) is checked in Lean and by the property
   tests. The Lean theorems have no bound. Order among weighted peers (highest first) is not a registered property.
+- **P-DM-\*** are about one Grid. The property-test cell names the Grid file; the Brain side of P-DM-01, 02, 04 and 06
+  is `brain/test/test_peer_inbox_properties.py`. No test runs a real Brain against a real Grid: each side is tested
+  against a stand-in for the other, and one shared fixture (`grid/test/fixtures/peer-message-contract.json`) pins the
+  message shape both sides use.
+- **P-DM-01, P-DM-02** rest on one database statement: `markDelivered` flips a row only if it is still pending and
+  addressed to the caller, and reports how many rows it flipped. The tests replace MySQL with an in-memory queue that
+  keeps that rule; the statement's text is pinned by `grid/test/civic-presence/message-queue-store.test.ts`, and it is
+  not run against MySQL by any test.
+- **P-DM-01** is at-most-once, chosen over at-least-once: a message claimed just before the Brain stops is lost
+  (that is the exception in P-DM-06). A message sent before a mute, or before a Civic-DID is revoked, is still delivered.
+- **Not a property:** the inbox size limit (1,000 waiting messages). The store counts, then inserts, in two statements,
+  so two senders at the same moment can pass it by one or more. Unclaimed messages never expire.
+- **P-DM-05** in Lean covers the audit record only; the emptied text is checked by TLC and the property tests.
+- TLA+ bounds for `PeerMessages`: 3 Nous, 4 Brain processes (one Nous has two), 1 text, 2 sends. Liveness (P-DM-06)
+  assumes weak fairness on polling and strong fairness on claiming. The Lean theorems have no bound; in Lean P-DM-06 is
+  the single step (a waiting message claimed by its target is delivered), not the eventual claim.
+  The TLA+ model has no text length and no lore request or response; those are checked in Lean (length) and by the
+  property tests (both).

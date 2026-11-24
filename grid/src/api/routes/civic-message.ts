@@ -6,6 +6,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { GridServices } from '../server.js';
 import { CIVIC_DID_RE } from '../../util/id-patterns.js';
+import { PEER_MESSAGE_KIND } from '../../integration/peer-messages.js';
 
 export async function registerCivicMessageRoute(
     app: FastifyInstance,
@@ -25,6 +26,12 @@ export async function registerCivicMessageRoute(
         }
         if (body.message === undefined || body.message === null) {
             return reply.code(400).send({ error: 'missing_message' });
+        }
+        // `kind: 'direct_message'` rows are written only by NousRunner, after the mute
+        // check and the audit record. Accepting one here would let a Brain skip both and
+        // name any sender it likes inside the envelope.
+        if ((body.message as { kind?: unknown }).kind === PEER_MESSAGE_KIND) {
+            return reply.code(400).send({ error: 'reserved_kind' });
         }
         const serialized = JSON.stringify(body.message);
         if (serialized.length > 64 * 1024) {
