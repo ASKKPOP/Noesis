@@ -141,6 +141,20 @@ Not verified: negative, fractional or NaN counts from a remote peer (not rejecte
 the tick step is mirrored in the test because the code increments inline; KnowledgeCard merge and HLC;
 the new CI workflow and gate step had not run on GitHub when this was written.</pre>
 
+  <h3>Follow-up — reject invalid vector clocks from the network</h3>
+  <ul>
+    <li><b>Done under the rule, in order</b> <span class="tag done">done</span> — properties <code>P-VCLOCK-07</code>, <code>08</code> written first; TLA+ <code>Deliver</code> action and Lean <code>VectorClockInput</code> added and green; property tests written and failing; then <code>isValidVectorClock</code> and a guard at the top of <code>KnowledgePool.mergeCard</code> in <code>protocol/src/knowledge.ts</code>. An invalid clock makes <code>mergeCard</code> throw; on the wire path <code>handleSyncMessage</code> reports it as <code>sync:error</code> and nothing is stored.</li>
+    <li><b>Gate fix</b> — <code>check-verification</code> walked other sessions' worktrees under <code>.claude/</code> and failed on their unregistered IDs; it now skips <code>.claude</code>.</li>
+  </ul>
+<pre>Class: A
+Property     TLA+ (3 replicas, 3 ticks; 25,000 distinct states)  Lean (no bound)                 PBT (cases x seeds)   Mutation caught
+P-VCLOCK-07  VectorClock.tla AllCountsNatural                    valid_merge, counts_natural     1,000 x 10            TLC yes, Lean yes, PBT yes (3 breaks)
+P-VCLOCK-08  VectorClock.tla InvalidChangesNothing               deliver_invalid                 1,000 x 10            TLC yes, Lean yes, PBT yes
+TLC and lake build: 2 clean runs each. Protocol unit suite 384 passed, twice; tsc build clean.
+Not verified: a peer sending a well-formed clock with false counts; cards loaded from local storage are not re-validated;
+in the two models one marker stands for every bad count (fractions, NaN, strings are exercised by the property tests only);
+the three real-agents-e2e tests still fail locally (need live LLMs), with or without this change.</pre>
+
   <!-- ============================ SESSION 31 ============================ -->
   <h2>Session 31 — 2026‑11‑23 · “Bring the public wiki in line with what runs”</h2>
   <p class="sub">Follow-up to the README source audit (<code>.planning/research/wiring-audit-2026-11.md</code>, ASKKPOP/Noesis#69): the wiki still described not-wired parts as system behaviour.</p>

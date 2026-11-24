@@ -271,6 +271,16 @@ export function compareVectorClocks(
 /**
  * Merge two vector clocks by taking component-wise maximum.
  */
+/**
+ * Whether a value is a usable vector clock: an object whose every count is a
+ * whole number >= 0. Clocks arrive from remote peers; a negative, fractional or
+ * NaN count breaks the merge laws, so such a clock is rejected whole.
+ */
+export function isValidVectorClock(value: unknown): value is Record<string, number> {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+    return Object.values(value).every((count) => Number.isSafeInteger(count) && count >= 0);
+}
+
 export function mergeVectorClocks(
     a: Record<string, number>,
     b: Record<string, number>
@@ -601,8 +611,12 @@ export class KnowledgePool extends EventEmitter {
      * 5. Tombstone wins: if either copy is tombstoned, result is tombstoned.
      *
      * Returns the merged card, or null if the remote was stale.
+     * Throws if the remote's vector clock is not valid (see isValidVectorClock).
      */
     mergeCard(remote: KnowledgeCard): KnowledgeCard | null {
+        if (!isValidVectorClock(remote.crdt?.vectorClock)) {
+            throw new Error(`Rejected card ${remote.id}: invalid vector clock`);
+        }
         const local = this.cards.get(remote.id);
 
         // Case 1: New card — accept remote entirely

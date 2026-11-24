@@ -865,6 +865,13 @@ The first property-test run found a real defect: a node id naming an `Object.pro
 `brain/uv.lock` stale since June (no `trafilatura`, `h2`); regenerated. Open: counts from remote peers are not validated.
 No research page changed.
 
+## [2026-11-23] fix | Invalid vector clocks from the network are rejected
+
+`P-VCLOCK-07`/`08`: `isValidVectorClock` + a guard in `KnowledgePool.mergeCard` (`protocol/src/knowledge.ts`); a clock with a
+negative, fractional, NaN or non-number count is rejected whole and nothing is stored. Done properties-first under the
+verification rule. Open: well-formed but false counts from a peer; stored cards are not re-validated on load.
+No research page changed.
+
 ## [2026-11-23] fix | Social cycle: a Nous now learns its trusted peers and has a lore store
 
 Root cause of the dead social acts: the Grid never sends relationship weights to a live Brain, and `MemoryStream` hid the
