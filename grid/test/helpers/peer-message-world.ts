@@ -9,7 +9,7 @@ import { NousRegistry } from '../../src/registry/registry.js';
 import { AuditChain } from '../../src/audit/chain.js';
 import { SpatialMap } from '../../src/space/map.js';
 import { EconomyManager } from '../../src/economy/config.js';
-import { PeerMessageRouter } from '../../src/integration/peer-messages.js';
+import { PeerMessageRouter, registeredCivicDidOf } from '../../src/integration/peer-messages.js';
 import { PresenceService } from '../../src/civic-presence/presence-service.js';
 import { registerCivicInboxRoutes } from '../../src/api/routes/civic-inbox.js';
 import { registerCivicMessageRoute } from '../../src/api/routes/civic-message.js';
@@ -18,6 +18,8 @@ import type { IBrainBridge } from '../../src/integration/types.js';
 import { InMemoryMessageQueue } from './in-memory-message-queue.js';
 
 export const GRID = 'genesis';
+/** Holds an active Civic-DID but is not a Nous: the registry has never seen it. */
+export const OUTSIDER = 'human';
 
 const STUB_BRIDGE: IBrainBridge = {
     connected: false,
@@ -61,11 +63,12 @@ export async function makeWorld(names: readonly string[], opts: { depthMax?: num
     const router = new PeerMessageRouter({
         gridName: GRID,
         queue,
-        civicDidOf: async (nousDid) => {
-            if (registry.get(nousDid)?.status === 'deleted') return null;
+        // The production rule (main.ts) over a map instead of the Civic-DID table.
+        civicDidOf: registeredCivicDidOf(registry, async (nousDid) => {
+            if (nousDid === didOf(OUTSIDER)) return civicOf(OUTSIDER);
             const name = names.find((n) => didOf(n) === nousDid);
             return name !== undefined && citizens.has(name) ? civicOf(name) : null;
-        },
+        }),
     });
 
     const runners = new Map<string, NousRunner>();

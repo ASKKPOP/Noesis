@@ -12,7 +12,11 @@
  * `POST /api/v1/civic/message` route refuses that kind, so a Brain can trust the
  * `sender_did` inside the envelope.
  *
- * Verified under the Triple Verification Rule as P-DM-01..06
+ * A lore request and a lore response travel the same way and leave the same audit
+ * record; the runner sends them only in their exact wire form (`isLoreHash`,
+ * `isLoreResponsePayload`).
+ *
+ * Verified under the Triple Verification Rule as P-DM-01..09
  * (verification/PROPERTIES.md).
  */
 
@@ -81,6 +85,37 @@ export function checkPeerText(text: unknown): PeerTextVerdict {
     if (typeof text !== 'string' || text.length === 0) return 'empty';
     if (text.length > PEER_MESSAGE_MAX_CHARS) return 'too_long';
     return 'ok';
+}
+
+/** A lore content hash: sha-256 as 64 lowercase hex characters. */
+export function isLoreHash(value: unknown): value is string {
+    return typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
+}
+
+/**
+ * A lore response as the Brain builds it: `__lore_response:<hash>:<base64 of the entry>`.
+ * Nothing else may travel as a lore response — not free text, not a taught skill.
+ */
+export function isLoreResponsePayload(value: unknown): value is string {
+    return typeof value === 'string'
+        && /^__lore_response:[0-9a-f]{64}:(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)
+        && !value.endsWith(':');
+}
+
+/**
+ * The `civicDidOf` rule: a DID can write and be written to only if this Grid's registry
+ * knows it as a Nous that is not deleted, and it holds an active Civic-DID. A DID the
+ * registry has never seen — a human's, a typo — holds no inbox any Brain reads.
+ */
+export function registeredCivicDidOf(
+    registry: { get(did: string): { status: string } | undefined },
+    activeCivicDidOf: (nousDid: string) => Promise<string | null>,
+): (nousDid: string) => Promise<string | null> {
+    return async (nousDid) => {
+        const record = registry.get(nousDid);
+        if (record === undefined || record.status === 'deleted') return null;
+        return activeCivicDidOf(nousDid);
+    };
 }
 
 export class PeerMessageRouter implements PeerMessageSink {

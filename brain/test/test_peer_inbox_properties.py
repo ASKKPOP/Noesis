@@ -1,4 +1,4 @@
-"""Property tests for the Brain's peer inbox (P-DM-01, P-DM-02, P-DM-04, P-DM-06).
+"""Property tests for the Brain's peer inbox (P-DM-01, P-DM-02, P-DM-04, P-DM-06, P-DM-09).
 
 Generated inputs only. The same IDs mark the TLA+ invariants in
 verification/tla/PeerMessages.tla and the Lean theorems in
@@ -6,8 +6,8 @@ verification/lean/Verification/PeerMessages.lean. The Grid side of the same
 properties (and P-DM-03, P-DM-05, which are the Grid's alone) runs in
 grid/test/integration/peer-messages.property.test.ts.
 
-What runs for real: peer_inbox.parse_peer_message, BrainHandler._run_peer_inbox_cycle
-and BrainHandler.on_message. The Grid's inbox is replaced by FakeGrid, which keeps the
+What runs for real: peer_inbox.parse_peer_message, peer_inbox.parse_system_notice,
+BrainHandler._run_peer_inbox_cycle and BrainHandler.on_message. The Grid's inbox is replaced by FakeGrid, which keeps the
 rule "a row is claimed once, and only by the Nous it is addressed to".
 
 Seed: set PBT_SEED to repeat a run; it is printed in the test header either way.
@@ -25,7 +25,9 @@ from hypothesis import HealthCheck, given, seed, settings
 from hypothesis import strategies as st
 from hypothesis.stateful import RuleBasedStateMachine, invariant, rule
 
-from noesis_brain.peer_inbox import PEER_MESSAGE_MAX_CHARS, message_id, parse_peer_message
+from noesis_brain.peer_inbox import (
+    PEER_MESSAGE_MAX_CHARS, SYSTEM_NOTICE_MAX_CHARS, message_id, parse_peer_message, parse_system_notice,
+)
 
 from test.peer_inbox_support import FakeGrid, make_handler
 
@@ -78,7 +80,30 @@ bodies = _mostly(
     junk, 8,
 )
 ids = _mostly(st.integers(1, 50), st.one_of(st.sampled_from([0, -1, True, False, 1.0, "7", None]), junk), 6)
-rows = _mostly(st.fixed_dictionaries({"message": bodies}, optional={"id": ids, "sender_civic_did": st.text(max_size=5)}), junk, 8)
+SYSTEM = "did:civic:noesis:system"
+PEER_SENDER = "did:civic:noesis:x"
+# What the Grid itself writes (escalation-check.ts): a kind and a `message` string.
+# Hostile variants: no message, an empty one, junk, and one that is also shaped like a direct message.
+notice_bodies = _mostly(
+    st.fixed_dictionaries(
+        {"kind": _mostly(st.sampled_from(["absent_escalation_notice", "direct_message"]), junk), "message": _mostly(texts, junk, 6)},
+        optional={"escalated_at_tick": st.integers(), "sender_did": dids, "text": _mostly(texts, junk, 6)},
+    ),
+    junk, 8,
+)
+senders = st.one_of(st.just(SYSTEM), st.just(PEER_SENDER), st.sampled_from(["did:civic:noesis:System", SYSTEM + " ", ""]), junk)
+rows = _mostly(
+    st.fixed_dictionaries({"message": st.one_of(bodies, notice_bodies)}, optional={"id": ids, "sender_civic_did": senders}),
+    junk, 8,
+)
+
+
+def is_notice(body: Any, sender: Any) -> bool:
+    """Written out apart from the code under test: a notice from the Grid itself."""
+    return (
+        type(sender) is str and sender == SYSTEM
+        and type(body) is dict and type(body.get("message")) is str and body["message"] != ""
+    )
 
 
 def well_formed(body: Any, to: str) -> bool:
@@ -116,6 +141,21 @@ def test_p_dm_04_only_a_well_formed_direct_message_from_another_nous_is_accepted
         assert isinstance(parsed.channel, str) and parsed.channel
 
 
+@seed(SEED)
+@pbt
+@given(row=rows)
+def test_p_dm_09_only_a_row_from_the_grid_itself_with_a_text_is_a_notice(row):
+    """P-DM-09 (Brain side): a row is a system notice only if the Grid's system sender
+    wrote it and it carries a text; the text is kept, cut to the memory limit."""
+    notice = parse_system_notice(row)
+    expected = good_id(row) and is_notice(row.get("message"), row.get("sender_civic_did"))
+    assert (notice is not None) == expected
+    if notice is not None:
+        assert notice.message_id == row["id"]
+        assert notice.text == row["message"]["message"][:SYSTEM_NOTICE_MAX_CHARS]
+        assert isinstance(notice.kind, str) and notice.kind
+
+
 # ── over time ────────────────────────────────────────────────────────────────
 # Brain processes: one per Nous, and a second one for the first Nous.
 PROC_OWNER = [0, 1, 2, 0]
@@ -126,15 +166,18 @@ class PeerInboxMachine(RuleBasedStateMachine):
     """Random sequences of the TLA+ actions seen from the Brain: messages arrive
     (Send, already through the Grid's checks or not), Brains run their inbox cycle
     (Poll + Claim), sometimes on a stale or foreign snapshot, sometimes with the
-    claim refused or its answer lost (Crash: the message is claimed and never handled)."""
+    claim refused or its answer lost (Crash: the message is claimed and never handled).
+    The Grid itself also writes notices into the same inboxes (Notify)."""
 
     def __init__(self) -> None:
         super().__init__()
         self.loop = asyncio.new_event_loop()
         self.grid = FakeGrid()
         self.wires = [self.grid.wire(NOUS[o]) for o in PROC_OWNER]
-        self.sent: dict[int, tuple[str, Any]] = {}       # id → (to, body as sent)
+        self.sent: dict[int, tuple[str, Any]] = {}       # id → (to, body as sent), rows a Nous sent
+        self.notices: dict[int, tuple[str, Any]] = {}    # id → (to, body as sent), rows the Grid sent
         self.handed: list[tuple[int, int]] = []          # (process, id) per on_message call
+        self.remembered: list[tuple[int, int]] = []      # (process, id) per notice written to memory
         self.lost: set[int] = set()                      # claimed, answer lost
         self.snapshots: list[list[Any]] = []
         self.tick = 0
@@ -142,6 +185,14 @@ class PeerInboxMachine(RuleBasedStateMachine):
         for p, h in enumerate(HANDLERS):
             h._grid_wire_client = self.wires[p]
             h.on_message = self._spy(p, type(h).on_message.__get__(h))
+            h.memory.record_event = self._memory_spy(p)
+
+    def _memory_spy(self, p: int):
+        def record_event(content: str = "", **_: Any) -> None:
+            # Every generated notice text starts with "<id>#".
+            if content.startswith("The Grid sent me a notice"):
+                self.remembered.append((p, int(content.split('): "', 1)[1].split("#", 1)[0])))
+        return record_event
 
     def _spy(self, p: int, inner):
         async def spy(params: dict[str, Any]):
@@ -162,6 +213,13 @@ class PeerInboxMachine(RuleBasedStateMachine):
         handed_ids = {mid for _, mid in self.handed}
         for mid, (to, body) in self.sent.items():
             assert (mid in handed_ids) == (well_formed(body, to) and mid not in self.lost)
+        # P-DM-09: every notice with a text was written to memory, unless its claim was lost to a crash.
+        remembered_ids = {mid for _, mid in self.remembered}
+        for mid, (to, body) in self.notices.items():
+            if is_notice(body, SYSTEM):
+                assert (mid in remembered_ids) == (mid not in self.lost), f"P-DM-09: notice {mid} dropped unread"
+            else:
+                assert (mid in handed_ids) == (well_formed(body, to) and mid not in self.lost)
         assert all(r["state"] == "delivered" for r in self.grid.rows)
         self.loop.close()
 
@@ -176,6 +234,17 @@ class PeerInboxMachine(RuleBasedStateMachine):
             body = {**body, "text": body["text"][: PEER_MESSAGE_MAX_CHARS - 8] + f"#{mid}"}
         self.grid.enqueue(NOUS[to], body)
         self.sent[mid] = (NOUS[to], body if type(body) is not dict else dict(body))
+
+    @rule(to=st.integers(0, len(NOUS) - 1), body=notice_bodies)
+    def notify(self, to, body):
+        """The Grid itself writes a row into a Nous's inbox."""
+        mid = self.grid._next_id
+        if type(body) is dict and type(body.get("message")) is str and body["message"]:
+            body = {**body, "message": f"{mid}#" + body["message"][: PEER_MESSAGE_MAX_CHARS]}
+        if type(body) is dict and type(body.get("text")) is str and body["text"]:
+            body = {**body, "text": body["text"][: PEER_MESSAGE_MAX_CHARS - 8] + f"#{mid}"}
+        self.grid.enqueue(NOUS[to], body, sender=SYSTEM)
+        self.notices[mid] = (NOUS[to], body if type(body) is not dict else dict(body))
 
     @rule(p=st.integers(0, len(PROC_OWNER) - 1))
     def cycle(self, p):
@@ -215,14 +284,22 @@ class PeerInboxMachine(RuleBasedStateMachine):
         for p, mid in self.handed:
             assert mid not in seen, f"P-DM-01: message {mid} handed twice"
             seen.add(mid)
-            to, body = self.sent[mid]
+            to, body = self.sent[mid] if mid in self.sent else self.notices[mid]
             assert NOUS[PROC_OWNER[p]] == to, f"P-DM-02: message {mid} for {to} handed to process {p}"
             assert well_formed(body, to), f"P-DM-04: message {mid} is not a direct message from another Nous"
+            assert mid in self.sent or not is_notice(body, SYSTEM), f"P-DM-09: notice {mid} handed to on_message"
             assert mid not in self.lost
+        noted: set[int] = set()
+        for p, mid in self.remembered:
+            assert mid not in noted, f"P-DM-09: notice {mid} remembered twice"
+            noted.add(mid)
+            to, body = self.notices[mid]
+            assert NOUS[PROC_OWNER[p]] == to, f"P-DM-09: notice {mid} for {to} remembered by process {p}"
+            assert is_notice(body, SYSTEM) and mid not in self.lost
 
 
 PeerInboxMachine.TestCase.settings = settings(
     max_examples=CASES, stateful_step_count=30, deadline=None, database=None,
     suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large, HealthCheck.filter_too_much],
 )
-test_p_dm_01_02_04_06_peer_inbox_over_time = seed(SEED)(PeerInboxMachine.TestCase)
+test_p_dm_01_02_04_06_09_peer_inbox_over_time = seed(SEED)(PeerInboxMachine.TestCase)

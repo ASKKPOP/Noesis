@@ -46,7 +46,7 @@ import { LoreQuotaTracker } from '../lore/LoreQuotaTracker.js';
 import type { GroupStore, GroupRole } from '../economy/group-store.js';
 import type { NousAccountStore } from '../economy/nous-account-store.js';
 import type { CivicDidStore } from '../civic-registry/civic-did-store.js';
-import { checkPeerText, type PeerMessageSink } from './peer-messages.js';
+import { checkPeerText, isLoreHash, isLoreResponsePayload, type PeerMessageSink } from './peer-messages.js';
 
 export interface NousRunnerConfig {
     nousDid: string;
@@ -1073,43 +1073,44 @@ export class NousRunner {
 
                 case 'lore_request': {
                     // Phase 20: Brain queued this after discovering an unknown hash in _poll().
-                    // Intent: deliver __lore_request:{content_hash} to contributor_did via direct message.
-                    // WhisperRouter only handles pre-encrypted envelopes (D-11-05); plaintext lore
-                    // discovery messages cannot be routed through it. Best-effort: logged only.
+                    // Delivered as `__lore_request:{content_hash}` to the contributor's inbox, the
+                    // way a direct message is (P-DM-07): same mute rule, same audit record.
+                    // WhisperRouter only handles pre-encrypted envelopes (D-11-05), so it is not used.
                     // The primary discovery path is Brain HTTP-polling GET /api/v1/grid/lore (D-20-11).
+                    if (this.muteFlag) { break; }
                     const md = (action.metadata ?? {}) as Record<string, unknown>;
-                    const contentHash = typeof md['content_hash'] === 'string' ? md['content_hash'] : null;
+                    const contentHash = md['content_hash'];
                     const recipientDid = typeof md['contributor_did'] === 'string' ? md['contributor_did'] : null;
-                    if (contentHash === null || recipientDid === null) { break; }
-                    // Log the intent for observability; actual peer-to-peer lore retrieval is future work.
-                    console.warn(JSON.stringify({
-                        event: 'lore.request.dispatched',
-                        did: this.nousDid,
-                        recipient_did: recipientDid,
-                        content_hash: contentHash,
-                        tick,
-                    }));
-                    await this.deliverPeerMessage(recipientDid, 'direct', `__lore_request:${contentHash}`, tick);
+                    if (recipientDid === null) { break; }
+                    // P-DM-08: anything but a 64-hex content hash is dropped whole.
+                    if (!isLoreHash(contentHash)) {
+                        console.warn(JSON.stringify({
+                            event: 'peer_message.rejected', did: this.nousDid, reason: 'bad_lore_hash', tick,
+                        }));
+                        break;
+                    }
+                    await this.sendLoreMessage(recipientDid, 'lore_request', `__lore_request:${contentHash}`, tick);
                     break;
                 }
 
                 case 'lore_response': {
                     // Phase 20: Brain queued this after receiving __lore_request: from a peer.
-                    // Intent: deliver __lore_response:{hash}:{b64} back to requester via direct message.
-                    // Same constraint as lore_request: WhisperRouter is pre-encrypted-only.
-                    // Best-effort: logged only. Primary path is Brain's local LoreStore.
+                    // Delivered as `__lore_response:{hash}:{b64}` to the requester's inbox (P-DM-07).
+                    if (this.muteFlag) { break; }
                     const md = (action.metadata ?? {}) as Record<string, unknown>;
                     const recipientDid = typeof md['recipient_did'] === 'string' ? md['recipient_did'] : null;
                     if (recipientDid === null) { break; }
-                    console.warn(JSON.stringify({
-                        event: 'lore.response.dispatched',
-                        did: this.nousDid,
-                        recipient_did: recipientDid,
-                        tick,
-                    }));
-                    if (typeof md['payload'] === 'string') {
-                        await this.deliverPeerMessage(recipientDid, 'direct', md['payload'], tick);
+                    const payload = md['payload'];
+                    // P-DM-08: only the exact lore-response form travels here, and only within the
+                    // text limit. Free text or a taught skill must go as a direct message.
+                    const reason = !isLoreResponsePayload(payload) ? 'bad_lore_response' : checkPeerText(payload);
+                    if (reason !== 'ok') {
+                        console.warn(JSON.stringify({
+                            event: 'peer_message.rejected', did: this.nousDid, reason, tick,
+                        }));
+                        break;
                     }
+                    await this.sendLoreMessage(recipientDid, 'lore_response', payload as string, tick);
                     break;
                 }
 
@@ -1233,6 +1234,18 @@ export class NousRunner {
                 event: 'peer_message.not_delivered', did: this.nousDid, target_did: targetDid, reason, tick,
             }));
         }
+    }
+
+    /**
+     * P-DM-07: a lore request or response is a private message between two Nous, so it
+     * leaves the same audit record as a direct message — who wrote to whom, under which
+     * channel, never the text — before it is queued.
+     */
+    private async sendLoreMessage(
+        targetDid: string, channel: 'lore_request' | 'lore_response', text: string, tick: number,
+    ): Promise<void> {
+        this.audit.append('nous.direct_message', this.nousDid, { targetDid, channel, tick });
+        await this.deliverPeerMessage(targetDid, 'direct', text, tick);
     }
 
     private async handleSpeak(channel: string, text: string, tick: number): Promise<void> {

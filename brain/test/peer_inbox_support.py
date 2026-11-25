@@ -59,19 +59,19 @@ class FakeGrid:
     """The inbox rows, and one wire per Brain process."""
 
     def __init__(self) -> None:
-        self.rows: list[dict[str, Any]] = []   # {id, to, message, state}
+        self.rows: list[dict[str, Any]] = []   # {id, to, sender, message, state}
         self.posted: list[tuple[str, list[dict[str, Any]], int]] = []
         self._next_id = 1
 
-    def enqueue(self, to: str, message: Any) -> int:
+    def enqueue(self, to: str, message: Any, sender: str = "did:civic:noesis:x") -> int:
         mid = self._next_id
         self._next_id += 1
-        self.rows.append({"id": mid, "to": to, "message": message, "state": "pending"})
+        self.rows.append({"id": mid, "to": to, "sender": sender, "message": message, "state": "pending"})
         return mid
 
     def pending(self, did: str) -> list[dict[str, Any]]:
         return [
-            {"id": r["id"], "sender_civic_did": "did:civic:noesis:x", "message": r["message"], "sent_at_tick": 0}
+            {"id": r["id"], "sender_civic_did": r["sender"], "message": r["message"], "sent_at_tick": 0}
             for r in self.rows if r["to"] == did and r["state"] == "pending"
         ]
 

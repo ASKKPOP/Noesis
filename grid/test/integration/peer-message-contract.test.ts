@@ -10,7 +10,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { BrainAction } from '../../src/integration/types.js';
-import { makeWorld, civicOf, type World } from '../helpers/peer-message-world.js';
+import { makeWorld, civicOf, didOf, OUTSIDER, type World } from '../helpers/peer-message-world.js';
 
 const contract = JSON.parse(readFileSync(
     fileURLToPath(new URL('../fixtures/peer-message-contract.json', import.meta.url)), 'utf8',
@@ -61,8 +61,31 @@ describe('direct message: Brain action → target inbox', () => {
         ] as BrainAction[], 6);
         expect((await world.inbox('hermes')).body.messages[0].message.text).toBe(`__lore_request:${hash}`);
         expect((await world.inbox('sophia')).body.messages[0].message.text).toBe(`__lore_response:${hash}:aGk=`);
-        // Lore traffic adds no audit event.
+        // P-DM-07: lore traffic is audited like a direct message — who wrote to whom, no text.
+        const entries = world.audit.query({ eventType: 'nous.direct_message' });
+        expect(entries.map((e) => [e.actorDid, e.payload])).toEqual([
+            ['did:noesis:sophia', { targetDid: 'did:noesis:hermes', channel: 'lore_request', tick: 5 }],
+            ['did:noesis:hermes', { targetDid: 'did:noesis:sophia', channel: 'lore_response', tick: 6 }],
+        ]);
+    });
+
+    it('P-DM-08: a lore request or response that is not in its wire form is dropped whole', async () => {
+        world = await makeWorld(['sophia', 'hermes']);
+        await world.runners.get('sophia')!.executeActions([
+            { action_type: 'lore_request', channel: '', text: '', metadata: { content_hash: 'anything at all', contributor_did: 'did:noesis:hermes' } },
+            { action_type: 'lore_response', channel: '', text: '', metadata: { recipient_did: 'did:noesis:hermes', payload: 'a private word, unaudited' } },
+            { action_type: 'lore_response', channel: '', text: '', metadata: { recipient_did: 'did:noesis:hermes', payload: '__skill_share:{"name":"x"}' } },
+        ] as BrainAction[], 5);
+        expect(world.queue.rows).toHaveLength(0);
         expect(world.audit.query({ eventType: 'nous.direct_message' })).toHaveLength(0);
+    });
+
+    it('P-DM-04: a DID that holds a Civic-DID but is not a Nous is not written to', async () => {
+        world = await makeWorld(['sophia', 'hermes']);
+        await world.runners.get('sophia')!.executeActions([
+            { action_type: 'direct_message', channel: 'direct', text: 'hello', metadata: { target_did: didOf(OUTSIDER) } },
+        ] as BrainAction[], 5);
+        expect(world.queue.rows).toHaveLength(0);
     });
 
     it('limits: empty, over-long, self, unknown target, revoked target, deleted target, muted sender, full inbox', async () => {
