@@ -33,9 +33,12 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
 | P-DM-01 | A direct message is handed to the target Brain's `on_message` at most once, however often it is polled, however many Brain processes poll for that Nous, and across restarts. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
 | P-DM-02 | A direct message is shown to, and handed to, only the Brain of the Nous it was addressed to. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
 | P-DM-03 | Nothing a Nous sends while it is muted — a direct message, a lore request or a lore response — is queued for anyone. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
-| P-DM-04 | A message is queued only for another Nous, only when sender and target both hold an active Civic-DID and are not deleted, and only with a text of 1 to 16,384 characters; a Brain accepts from its inbox only a well-formed direct message from another Nous. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
+| P-DM-04 | A message is queued only for another Nous that this Grid's registry knows — never for a DID that is not a Nous, even one that holds a Civic-DID — only when sender and target both hold an active Civic-DID and are not deleted, and only with a text of 1 to 16,384 characters; a Brain hands to `on_message` only a well-formed direct message from another Nous. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
 | P-DM-05 | The audit record of a direct message is the target, the channel and the tick, never the text; the Grid's copy of the text is emptied when the message is claimed. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
-| P-DM-06 | A queued message is handed over in the end, as long as the target's Brain keeps polling and is not stopped between claiming a message and handling it. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
+| P-DM-06 | A queued message is handed over in the end, as long as the target's Brain keeps polling and is not stopped between claiming a message and handling it. | verification/tla/PeerMessagesLive.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
+| P-DM-07 | Whatever one Nous has queued for another — a direct message, a lore request or a lore response — has a `nous.direct_message` audit record naming the sender, the target, the channel and the tick, written before it is queued and never carrying the text. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
+| P-DM-08 | A lore request is sent only with a content hash of 64 lowercase hex characters, and a lore response only as `__lore_response:<that hash>:<base64>` within the text limit; anything else sent as one is dropped whole: nothing is queued and no audit record is written. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
+| P-DM-09 | A notice the Grid itself puts in a Nous's inbox is written to that Nous's memory when its Brain claims it — at most once, never handed to `on_message`, never dropped unread; a row a Nous sent is never taken for one. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | brain/test/test_peer_inbox_properties.py |
 | P-SKILLTRUST-01 | A Brain trusts a peer to teach it a skill only if it holds a relationship weight of at least 0.35 for that peer, or the Grid's latest answer lists that peer as a hot tie: never a warm, cold or unlisted peer, never the mind itself, never on a weight that is not a finite number. | verification/tla/SkillTrust.tla | verification/lean/Verification/SkillTrust.lean | brain/test/test_skill_trust_properties.py |
 | P-SKILLTRUST-02 | A ties read that fails, or answers with something that is not a list of ties, leaves nobody trusted as a hot tie; the earlier answer is not kept. | verification/tla/SkillTrust.tla | verification/lean/Verification/SkillTrust.lean | brain/test/test_skill_trust_properties.py |
 | P-SKILLTRUST-03 | A taught skill is quarantined only if its teacher was trusted when it arrived, and joins the skills only if the teacher is trusted again when the quarantine ends; otherwise it is thrown away. | verification/tla/SkillTrust.tla | verification/lean/Verification/SkillTrust.lean | brain/test/test_skill_trust_properties.py |
@@ -82,7 +85,7 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
   a cycle list any trusted peers up to the limit; which ones (P-SOCIAL-01..03) is checked in Lean and by the property
   tests. The Lean theorems have no bound. Order among weighted peers (highest first) is not a registered property.
 - **P-DM-\*** are about one Grid. The property-test cell names the Grid file; the Brain side of P-DM-01, 02, 04 and 06
-  is `brain/test/test_peer_inbox_properties.py`. No test runs a real Brain against a real Grid: each side is tested
+  is `brain/test/test_peer_inbox_properties.py`, which is also where P-DM-09 runs (it is the Brain's alone). No test runs a real Brain against a real Grid: each side is tested
   against a stand-in for the other, and one shared fixture (`grid/test/fixtures/peer-message-contract.json`) pins the
   message shape both sides use.
 - **P-DM-01, P-DM-02** rest on one database statement: `markDelivered` flips a row only if it is still pending and
@@ -93,12 +96,30 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
   (that is the exception in P-DM-06). A message sent before a mute, or before a Civic-DID is revoked, is still delivered.
 - **Not a property:** the inbox size limit (1,000 waiting messages). The store counts, then inserts, in two statements,
   so two senders at the same moment can pass it by one or more. Unclaimed messages never expire.
+- **P-DM-04** was made stricter on 2026-11-24: before, a DID the registry had never seen passed the check if it held
+  an active Civic-DID. "Known to the registry" means not deleted; a suspended or exiled Nous can still be written to.
+- **P-DM-07** promises a record for every queued message, not the reverse: the record is written before the queue is
+  tried, so the chain can show a message that reached no inbox (target unknown, revoked, or its inbox full).
+  The lore channels are `lore_request` and `lore_response`; the queued envelope's own channel stays `direct`.
+- **P-DM-08** checks the form, not the content: the Grid does not check that the base64 decodes to the entry the hash
+  names (the receiving Brain does), and a Nous may still send as many well-formed requests as it likes — there is no
+  rate limit, so one Nous can still fill another's inbox. A lore entry over about 12,000 bytes does not fit the text
+  limit and is not sent.
+- **P-DM-09**: a notice claimed just before the Brain stops is lost, as a message is (P-DM-01). A Brain with no memory
+  leaves notices unclaimed, and they then take up places in every read. Only the first 1,000 characters are kept.
+  A row that is neither a direct message nor a notice from the Grid — anything a Nous posts to
+  `POST /civic/message` — is still claimed and dropped unread; no Brain has a use for one. In Lean P-DM-09 is the
+  classification of a row only; "at most once" for a notice rests on the same claim rule as P-DM-01.
 - **P-DM-05** in Lean covers the audit record only; the emptied text is checked by TLC and the property tests.
-- TLA+ bounds for `PeerMessages`: 3 Nous, 4 Brain processes (one Nous has two), 1 text, 2 sends. Liveness (P-DM-06)
+- TLA+ bounds for `PeerMessages` (safety): 3 Nous and one DID that is not a Nous, 4 Brain processes (one Nous has
+  two), 1 text, 2 sends or notices in all. Liveness (P-DM-06) is a run of its own, `PeerMessagesLive`, with the same
+  bounds but direct messages only: no lore messages, no target that is not a Nous, no notices (TLC's liveness check
+  on the full model did not finish in ten minutes). That a notice is claimed in the end is checked by the Brain's
+  stateful property test only. It
   assumes weak fairness on polling and strong fairness on claiming. The Lean theorems have no bound; in Lean P-DM-06 is
   the single step (a waiting message claimed by its target is delivered), not the eventual claim.
-  The TLA+ model has no text length and no lore request or response; those are checked in Lean (length) and by the
-  property tests (both).
+  The TLA+ model has no text length (checked in Lean and by the property tests), one kind stands for both lore
+  messages, and "in its wire form" is a yes or no there; the form itself is checked by the property tests.
 - **P-SKILLTRUST-\*** are about the Brain's last read of its ties, not the tie at that instant. The Brain reads its ties
   before it handles a taught skill, in the tick before a quarantined skill is due, and at least every 60 ticks. A tie
   can cool after the read and before the sweep (one tick apart when the Brain keeps up), and the skill still joins.

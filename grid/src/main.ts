@@ -29,7 +29,7 @@ import { CivicDidStore, BusinessDidStore } from './civic-registry/index.js';
 import { BrainTokenStore } from './db/stores/brain-token-store.js';
 import { PresenceStore } from './civic-presence/presence-store.js';
 import { MessageQueueStore } from './civic-presence/message-queue-store.js';
-import { PeerMessageRouter } from './integration/peer-messages.js';
+import { PeerMessageRouter, registeredCivicDidOf } from './integration/peer-messages.js';
 import { GraceTimerRegistry } from './civic-presence/grace-timer-registry.js';
 import { PresenceService } from './civic-presence/presence-service.js';
 import { ZoneRegistry } from './zoning/zone-registry.js';
@@ -273,13 +273,12 @@ export async function createGridApp(config: GridAppConfig): Promise<GridApp> {
             peerMessages = new PeerMessageRouter({
                 gridName: config.genesisConfig.gridName,
                 queue: messageQueueStore,
-                // A Nous can be written to (and can write) only while it is alive and
-                // holds an active Civic-DID.
-                civicDidOf: async (nousDid) => {
-                    if (launcher.registry.get(nousDid)?.status === 'deleted') return null;
+                // A Nous can be written to (and can write) only while the registry knows
+                // it, it is alive, and it holds an active Civic-DID.
+                civicDidOf: registeredCivicDidOf(launcher.registry, async (nousDid) => {
                     const record = await civicDids.getByExistenceDid(config.genesisConfig.gridName, nousDid);
                     return record?.status === 'active' ? record.civicDid : null;
-                },
+                }),
             });
         }
         businessDidStore = new BusinessDidStore(presencePool);

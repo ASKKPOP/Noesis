@@ -60,7 +60,9 @@ from noesis_brain.prompts.property_decision import (
 )
 from noesis_brain import property_logic
 from noesis_brain.social_logic import hot_ties, skill_trust_weight, trusted_peers
-from noesis_brain.peer_inbox import message_id as peer_message_id, parse_peer_message
+from noesis_brain.peer_inbox import (
+    message_id as peer_message_id, parse_peer_message, parse_system_notice,
+)
 from noesis_brain.iris.priors import seed_priors
 from pathlib import Path
 from noesis_brain.iris.store import IrisStore
@@ -1763,8 +1765,10 @@ class BrainHandler:
         only when the Grid confirms the claim (P-DM-01): two cycles in flight, a
         second Brain process for the same Nous, or a restart cannot handle one
         message twice. The price is that a message claimed just before a crash
-        is lost. Rows that are not a direct message from another Nous are claimed
-        and dropped (P-DM-04). Background; never fatal."""
+        is lost. A notice from the Grid itself is written to memory, not handed to
+        on_message, and is left waiting while there is no memory to write it to
+        (P-DM-09). Other rows that are not a direct message from another Nous are
+        claimed and dropped (P-DM-04). Background; never fatal."""
         wire = self._grid_wire_client
         fetch = getattr(wire, "fetch_peer_inbox", None)
         claim = getattr(wire, "claim_peer_message", None)
@@ -1785,7 +1789,22 @@ class BrainHandler:
                 await self._refresh_hot_ties(tick)
             for row in rows[: self._PEER_INBOX_PER_CYCLE]:
                 mid = peer_message_id(row)
-                if mid is None or (await claim(mid)) is not True:
+                if mid is None:
+                    continue
+                notice = parse_system_notice(row)
+                if notice is not None:
+                    record = getattr(self.memory, "record_event", None)
+                    if record is None or (await claim(mid)) is not True:
+                        continue
+                    try:
+                        record(
+                            content=f"The Grid sent me a notice ({notice.kind}): \"{notice.text}\"",
+                            tick=tick,
+                        )
+                    except Exception:
+                        log.warning("[Brain] peer inbox: notice %s could not be remembered", mid, exc_info=True)
+                    continue
+                if (await claim(mid)) is not True:
                     continue
                 message = parse_peer_message(row, self.did)
                 if message is None:

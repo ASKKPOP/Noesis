@@ -1,8 +1,10 @@
 /-
 Model of how a direct message from one Nous reaches another Nous's Brain.
 
-  grid/src/integration/peer-messages.ts            `checkPeerMessage`, `PeerMessageRouter.deliver`
-  grid/src/integration/nous-runner.ts              `case 'direct_message'` (audit payload)
+  grid/src/integration/peer-messages.ts            `checkPeerText`, `PeerMessageRouter.deliver`,
+                                                   `registeredCivicDidOf`, `isLoreHash`, `isLoreResponsePayload`
+  grid/src/integration/nous-runner.ts              `case 'direct_message'`, `case 'lore_request'`,
+                                                   `case 'lore_response'` (audit record, then queue)
   grid/src/civic-presence/message-queue-store.ts   `enqueue`, `markDelivered`
   brain/src/noesis_brain/rpc/handler.py            `_run_peer_inbox_cycle`
 
@@ -43,21 +45,51 @@ structure Send (Did : Type) where
   muted : Bool
   senderGood : Bool
   targetGood : Bool
+  /-- The target is a Nous this Grid's registry knows (`registeredCivicDidOf`). -/
+  targetRegistered : Bool
+  /-- A lore request or response is in its exact wire form; always true for a direct message. -/
+  formOk : Bool
 
 /-- `PEER_MESSAGE_MAX_CHARS`. -/
 def maxChars : Nat := 16384
 
 /-- The checks before a message is queued: sender not muted, target is another Nous,
-both in good standing, text not empty and not over the limit. -/
+both in good standing, text not empty and not over the limit, the target known to the
+registry, a lore message in its wire form. -/
 def accepts (m : Send Did) : Bool :=
   !m.muted && decide (m.target ≠ m.sender) && m.senderGood && m.targetGood
-    && decide (0 < m.len) && decide (m.len ≤ maxChars)
+    && decide (0 < m.len) && decide (m.len ≤ maxChars) && m.targetRegistered && m.formOk
+
+/-- The runner's checks before it writes the audit record: not muted, the text within
+the limit, a lore message in its wire form. They do not look at the target. -/
+def audited (m : Send Did) : Bool :=
+  !m.muted && decide (0 < m.len) && decide (m.len ≤ maxChars) && m.formOk
 
 /-- Sender side: queue `m` under `id` if it passes the checks and the id is unused. -/
 def route (g : Grid Did) (id : Nat) (m : Send Did) : Grid Did :=
   match accepts m, g.slot id with
   | true, .empty => { g with slot := fun i => if i = id then .pending m.target else g.slot i }
   | _, _ => g
+
+/-- The runner, whole: the audit record (sender, target) first, then the queue. -/
+def send (g : Grid Did) (log : List (Did × Did)) (id : Nat) (m : Send Did) :
+    Grid Did × List (Did × Did) :=
+  (route g id m, if audited m then (m.sender, m.target) :: log else log)
+
+/-- What the Brain does with a claimed inbox row. -/
+inductive Fate where
+  | remember
+  | onMessage
+  | drop
+  deriving DecidableEq
+
+/-- `_run_peer_inbox_cycle`: a row the Grid itself sent, with a text, is a notice and goes
+to memory; otherwise a well-formed direct message from another Nous goes to `on_message`;
+anything else is dropped. -/
+def fate (fromGrid hasNoticeText isPeerMessage : Bool) : Fate :=
+  if fromGrid && hasNoticeText then .remember
+  else if isPeerMessage then .onMessage
+  else .drop
 
 /-- One ack: flips the row only if it is pending and addressed to the caller. The flag is
 what the Grid answers; the Brain hands the message over only when it is `true`. -/
@@ -174,11 +206,12 @@ theorem muted_routes_nothing (g : Grid Did) (id : Nat) (m : Send Did) (h : m.mut
   · rfl
 
 /-- P-DM-04: a send that put a row in the queue passed every check — the target is another
-Nous, sender and target are in good standing, and the text is neither empty nor too long. -/
+Nous the registry knows, sender and target are in good standing, and the text is neither
+empty nor too long. -/
 theorem queued_only_if_accepted {g : Grid Did} {id : Nat} {m : Send Did} {t : Did}
     (hempty : g.slot id = .empty) (h : (route g id m).slot id = .pending t) :
     t = m.target ∧ m.muted = false ∧ m.target ≠ m.sender ∧ m.senderGood = true
-      ∧ m.targetGood = true ∧ 0 < m.len ∧ m.len ≤ maxChars := by
+      ∧ m.targetGood = true ∧ 0 < m.len ∧ m.len ≤ maxChars ∧ m.targetRegistered = true := by
   unfold route at h
   split at h
   · rename_i hacc _
@@ -186,8 +219,8 @@ theorem queued_only_if_accepted {g : Grid Did} {id : Nat} {m : Send Did} {t : Di
       simp at h
       exact h.symm
     simp [accepts] at hacc
-    obtain ⟨⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩, h6⟩ := hacc
-    exact ⟨ht, h1, h2, h3, h4, h5, h6⟩
+    obtain ⟨⟨⟨⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩, h6⟩, h7⟩, _⟩ := hacc
+    exact ⟨ht, h1, h2, h3, h4, h5, h6, h7⟩
   · rw [hempty] at h
     cases h
 
@@ -206,6 +239,51 @@ theorem pending_claim_succeeds {g : Grid Did} {caller : Did} {id : Nat}
   rw [h]
   simp
 
+/-- P-DM-07: a send that put a row in the queue also left its audit record — the sender
+and the target — whichever kind of message it was. -/
+theorem queued_is_audited {g : Grid Did} {log : List (Did × Did)} {id : Nat} {m : Send Did} {t : Did}
+    (hempty : g.slot id = .empty) (h : (send g log id m).1.slot id = .pending t) :
+    (m.sender, m.target) ∈ (send g log id m).2 := by
+  have hacc : accepts m = true := by
+    unfold send route at h
+    split at h
+    · rename_i hacc _
+      exact hacc
+    · rw [hempty] at h
+      cases h
+  have haud : audited m = true := by
+    simp [accepts] at hacc
+    obtain ⟨⟨⟨⟨⟨⟨⟨h1, _⟩, _⟩, _⟩, h5⟩, h6⟩, _⟩, h8⟩ := hacc
+    simp [audited, h1, h5, h6, h8]
+  simp [send, haud]
+
+/-- P-DM-08: a lore message that is not in its wire form is dropped whole — nothing is
+queued and no audit record is written. -/
+theorem malformed_sends_nothing (g : Grid Did) (log : List (Did × Did)) (id : Nat) (m : Send Did)
+    (h : m.formOk = false) : send g log id m = (g, log) := by
+  have ha : accepts m = false := by simp [accepts, h]
+  have hu : audited m = false := by simp [audited, h]
+  have hr : route g id m = g := by
+    unfold route
+    split
+    · rename_i hacc _
+      rw [ha] at hacc
+      cases hacc
+    · rfl
+  simp [send, hr, hu]
+
+/-- P-DM-09: a row the Grid itself sent, with a text, is written to memory — never
+dropped, never handed to `on_message` — whatever else it looks like. -/
+theorem notice_is_remembered (isPeerMessage : Bool) : fate true true isPeerMessage = .remember := rfl
+
+/-- P-DM-09: only a row that is not a notice from the Grid reaches `on_message`, and a
+row is written to memory only if the Grid itself sent it. -/
+theorem fate_sound (fromGrid hasNoticeText isPeerMessage : Bool) :
+    (fate fromGrid hasNoticeText isPeerMessage = .onMessage →
+        (fromGrid && hasNoticeText) = false ∧ isPeerMessage = true)
+    ∧ (fate fromGrid hasNoticeText isPeerMessage = .remember → fromGrid = true ∧ hasNoticeText = true) := by
+  cases fromGrid <;> cases hasNoticeText <;> cases isPeerMessage <;> simp [fate]
+
 end PeerMessages
 
 #print axioms PeerMessages.handed_at_most_once
@@ -214,3 +292,7 @@ end PeerMessages
 #print axioms PeerMessages.queued_only_if_accepted
 #print axioms PeerMessages.audit_ignores_text
 #print axioms PeerMessages.pending_claim_succeeds
+#print axioms PeerMessages.queued_is_audited
+#print axioms PeerMessages.malformed_sends_nothing
+#print axioms PeerMessages.notice_is_remembered
+#print axioms PeerMessages.fate_sound

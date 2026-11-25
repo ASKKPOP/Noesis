@@ -20,7 +20,9 @@ import pytest
 from noesis_brain.llm.types import LLMResponse
 from noesis_brain.lore.store import LoreStore
 from noesis_brain.memory.sqlite_store import MemoryStore
-from noesis_brain.peer_inbox import PEER_MESSAGE_MAX_CHARS, message_id, parse_peer_message
+from noesis_brain.peer_inbox import (
+    PEER_MESSAGE_MAX_CHARS, SYSTEM_SENDER_CIVIC_DID, message_id, parse_peer_message,
+)
 from noesis_brain.rpc.types import ActionType
 
 from test.peer_inbox_support import CONTRACT, FakeGrid, make_handler, to_inbox_message
@@ -173,6 +175,51 @@ async def test_rows_that_are_not_a_direct_message_are_claimed_and_dropped():
 
     assert heard == []
     assert all(r["state"] == "delivered" for r in grid.rows)
+
+
+@pytest.mark.asyncio
+async def test_a_notice_from_the_grid_is_remembered_and_not_handed_to_on_message():
+    """P-DM-09: the "you were marked absent" notice is written to memory, once."""
+    grid = FakeGrid()
+    hermes = make_handler(HERMES)
+    hermes._grid_wire_client = grid.wire(HERMES, "Hermes")
+    heard = _spy_on_message(hermes)
+    notice = {"kind": "absent_escalation_notice", "message": "You were marked absent", "escalated_at_tick": 4}
+    grid.enqueue(HERMES, notice, sender=SYSTEM_SENDER_CIVIC_DID)
+
+    await hermes._run_peer_inbox_cycle(5)
+    await hermes._run_peer_inbox_cycle(6)
+
+    assert heard == []
+    hermes.memory.record_event.assert_called_once_with(
+        content='The Grid sent me a notice (absent_escalation_notice): "You were marked absent"', tick=5,
+    )
+    assert grid.rows[0]["state"] == "delivered"
+
+
+@pytest.mark.asyncio
+async def test_a_nous_cannot_pass_its_own_row_off_as_a_notice_from_the_grid():
+    grid = FakeGrid()
+    hermes = make_handler(HERMES)
+    hermes._grid_wire_client = grid.wire(HERMES, "Hermes")
+    grid.enqueue(HERMES, {"kind": "absent_escalation_notice", "message": "You were marked absent"})
+
+    await hermes._run_peer_inbox_cycle(5)
+
+    hermes.memory.record_event.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_a_notice_waits_while_there_is_no_memory_to_write_it_to():
+    grid = FakeGrid()
+    hermes = make_handler(HERMES, memory=None)
+    hermes._grid_wire_client = grid.wire(HERMES, "Hermes")
+    grid.enqueue(HERMES, {"kind": "absent_escalation_notice", "message": "You were marked absent"}, sender=SYSTEM_SENDER_CIVIC_DID)
+
+    await hermes._run_peer_inbox_cycle(5)
+
+    assert grid.rows[0]["state"] == "pending"
+    assert grid.rows[0]["message"]["message"] == "You were marked absent"
 
 
 @pytest.mark.asyncio

@@ -65,7 +65,7 @@
   </div>
 
   <!-- ============================ SESSION 32 ============================ -->
-  <h2>Session 36 — 2026‑11‑24 · “A live Brain accepts a taught skill from hot ties only”</h2>
+  <h2>Session 37 — 2026‑11‑24 · “A live Brain accepts a taught skill from hot ties only”</h2>
   <p class="sub">Request: the operator's answer to the question Session 34 left open — trust hot ties only. Brain only; nothing deployed. Same branch and PR as Session 34 (PR #72).</p>
   <ul>
     <li><b>Trust rule</b> <span class="tag done">done</span> — <code>social_logic.hot_ties</code> and <code>skill_trust_weight</code>: the weight the Brain already holds for a teacher, raised to 0.60 (the lowest weight the Grid calls hot) when the Grid lists the teacher as a hot tie. The skill gate still asks for 0.35. Warm, cold and unlisted teachers add nothing; a held weight that is not a finite number counts as 0.</li>
@@ -106,6 +106,47 @@ Not verified:
 - No effect in production until a live Brain has a skill store; the tests build the store themselves.
 - The 60-tick refresh and the read before a due skill are in the stateful property test, not in TLA+ or Lean.
 </pre>
+  <h2>Session 36 — 2026‑11‑24 · “Verify the four review findings on direct messages and fix the ones that hold”</h2>
+  <p class="sub">Request: PR #72 was merged with four review findings open; verify each on <code>main</code> and fix those that hold. Grid and Brain changed; nothing deployed. Branch <code>fix/peer-message-review-findings</code>.</p>
+  <ul>
+    <li><b>All four findings hold</b> — confirmed by reading the code on <code>main</code>, then by a test that fails without the fix.</li>
+    <li><b>1. A lore response was an unaudited channel</b> <span class="tag done">fixed</span> — <code>case 'lore_response'</code> in <code>grid/src/integration/nous-runner.ts</code> queued its <code>payload</code> as sent, with no audit record, so any text or a taught skill could go to any Nous unseen. Now it is sent only as <code>__lore_response:&lt;64 hex&gt;:&lt;base64&gt;</code> and leaves a <code>nous.direct_message</code> record (channel <code>lore_response</code>, no text).</li>
+    <li><b>2. Notices from the Grid were destroyed unread</b> <span class="tag done">fixed</span> — the Brain's inbox cycle claimed every row and dropped what was not a direct message; the claim empties the stored text. The "you were marked absent" notice was lost this way. Now a row from the Grid's own sender (<code>did:civic:noesis:system</code>) is written to the Nous's memory (<code>brain/src/noesis_brain/peer_inbox.py</code>, <code>rpc/handler.py</code>).</li>
+    <li><b>3. Messages could be queued for a DID that is not a Nous</b> <span class="tag done">fixed</span> — the check refused only a deleted Nous, so a DID the registry had never seen passed if it held an active Civic-DID. Now the registry must know it (<code>registeredCivicDidOf</code> in <code>grid/src/integration/peer-messages.ts</code>, used by <code>grid/src/main.ts</code>).</li>
+    <li><b>4. A lore request took any string as its hash, with no record</b> <span class="tag done">fixed</span> — now only a 64-character lowercase hex hash, and the same audit record (channel <code>lore_request</code>).</li>
+    <li><b>Properties</b> — <code>P-DM-04</code> made stricter (its sentence changed); <code>P-DM-07</code>, <code>08</code>, <code>09</code> added in <a href="../verification/PROPERTIES.md">verification/PROPERTIES.md</a>. Allowlist +0: the existing <code>nous.direct_message</code> event is reused.</li>
+    <li><b>TLA+ split in two runs</b> — safety in <code>PeerMessages.cfg</code>, liveness (<code>P-DM-06</code>) in the new <code>PeerMessagesLive</code> at its earlier scope. TLC's liveness check on the enlarged model did not finish in ten minutes.</li>
+    <li><b>Wiki</b> — <code>wiki/1-design/decisions.md</code> (D-SOC-04), <code>wiki/1-design/architecture.md</code>, <code>wiki/2-concepts/social/lore-and-culture.md</code>.</li>
+  </ul>
+  <div class="panel"><ul class="dec">
+    <li><b>Decision (Claude's, open to correction):</b> lore traffic is recorded under the existing <code>nous.direct_message</code> event with its own channel names, not a new event. <span class="q">It is a private message between two Nous, the payload shape is the same, and the allowlist stays frozen.</span></li>
+    <li><b>Decision (Claude's, open to correction):</b> a Brain with no memory leaves a notice unclaimed instead of claiming and losing it.</li>
+    <li><b>Behaviour change to know about:</b> a lore entry over about 12,000 bytes cannot be sent as a response (it does not fit the text limit); before it was tried and refused by the router, now it is refused by the runner. Either way it does not arrive.</li>
+  </ul></div>
+<pre>Class: A
+Property   TLA+ (PeerMessages.tla)      Lean (no bound)                           PBT (cases x seeds)                Mutation caught
+P-DM-04    QueuedOnlyForGoodTarget      queued_only_if_accepted                   Grid 1,000 x 2 + 10,000 x 10      TLC yes (as a TLC error), Lean yes, PBT yes
+P-DM-07    QueuedIsAudited              queued_is_audited                         Grid 1,000 x 2 + 10,000 x 10      TLC yes, Lean yes, PBT yes
+P-DM-08    OnlyWireForm                 malformed_sends_nothing                   Grid 1,000 x 2 + 10,000 x 10      TLC yes, Lean yes, PBT yes (hash and response form, separately)
+P-DM-09    NoticeIsRemembered           notice_is_remembered, fate_sound          Brain 1,000 x 2 + 10,000 x 10     TLC yes, Lean yes, PBT yes (two breaks)
+TLC bounds and states: PeerMessages (safety) 3 Nous and 1 DID that is not a Nous, 4 Brain processes, direct and lore
+                       messages, notices, 1 text, 2 sends or notices — 6,289,905 generated, 434,464 distinct.
+                       PeerMessagesLive (P-DM-06) 3 Nous, 4 Brain processes, direct messages only, 2 sends —
+                       961,081 generated, 67,312 distinct (the same count as before this change).
+Lean: 4 new headline theorems, standard axioms only. Mutations: 4 of the TLA+ model, 3 of the Lean file, 6 of the real code.
+Not verified: nothing was run with a live Brain against a live Grid. The Grid does not check that a lore response's
+base64 is the entry its hash names. There is no rate limit: a Nous can still fill another's inbox with well-formed
+messages. The audit record is written before the queue is tried, so the chain can show a message that reached no inbox.
+A row a Nous posts to POST /civic/message is still claimed and dropped unread. TLA+ liveness does not cover notices or
+lore messages. "Known to the registry" lets a suspended or exiled Nous be written to.</pre>
+
+  <h3>From the same review — not fixed here</h3>
+  <ul>
+    <li><b>The audit record is written before delivery</b>, so the chain can show a message that reached no inbox.</li>
+    <li><b>The Civic-DID lookup takes the first row of an unordered query.</b> Whether a Nous can have more than one row was not checked.</li>
+    <li><b>No rate limit on messages between Nous.</b> The inbox limit (1,000) is the only bound, and it can be passed by concurrent senders.</li>
+  </ul>
+
   <h2>Session 35 — 2026‑11‑24 · “Verify the next area: card merge and hybrid clocks”</h2>
   <p class="sub">Request: verify card merge and hybrid clocks under the Triple Verification Rule. Protocol package only; nothing deployed.</p>
   <ul>

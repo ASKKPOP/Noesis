@@ -1,5 +1,5 @@
 /**
- * Peer-message properties — the code leg of the Triple Verification Rule for P-DM-01..06.
+ * Peer-message properties — the code leg of the Triple Verification Rule for P-DM-01..08.
  *
  * Model legs: verification/tla/PeerMessages.tla, verification/lean/Verification/PeerMessages.lean.
  * Registry:   verification/PROPERTIES.md.
@@ -16,10 +16,11 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import * as fc from 'fast-check';
 import {
-    PeerMessageRouter, checkPeerText, PEER_MESSAGE_MAX_CHARS, PEER_MESSAGE_KIND,
+    PeerMessageRouter, checkPeerText, isLoreHash, isLoreResponsePayload, registeredCivicDidOf,
+    PEER_MESSAGE_MAX_CHARS, PEER_MESSAGE_KIND,
 } from '../../src/integration/peer-messages.js';
 import type { BrainAction } from '../../src/integration/types.js';
-import { makeWorld, civicOf, didOf, displayName, GRID } from '../helpers/peer-message-world.js';
+import { makeWorld, civicOf, didOf, displayName, GRID, OUTSIDER } from '../helpers/peer-message-world.js';
 
 const seed = process.env.PBT_SEED ? Number(process.env.PBT_SEED) : Date.now() | 0;
 const numRuns = process.env.PBT_RUNS ? Number(process.env.PBT_RUNS) : 1000;
@@ -33,12 +34,45 @@ afterAll(() => { vi.restoreAllMocks(); });
 const NAMES = ['a', 'b', 'c'] as const;
 const DEPTH_MAX = 3;
 
+// Lore wire forms, valid and nearly valid.
+const HEX = '0123456789abcdef';
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+const arbHash = fc.string({ unit: fc.constantFrom(...HEX), minLength: 64, maxLength: 64 });
+const arbLoreResponse = fc.tuple(arbHash, fc.uint8Array({ minLength: 1, maxLength: 30 }))
+    .map(([h, bytes]) => `__lore_response:${h}:${Buffer.from(bytes).toString('base64')}`);
+const arbLoreNearMiss: fc.Arbitrary<string> = fc.oneof(
+    arbHash.map((h) => h.toUpperCase()),
+    arbHash.map((h) => h.slice(1)),
+    arbHash.map((h) => `${h}0`),
+    arbHash.map((h) => `${h}\n`),
+    arbHash.map((h) => `__lore_response:${h}:`),
+    arbHash.map((h) => `__lore_response:${h}:aGk`),
+    arbHash.map((h) => `__lore_response:${h}:aGk=:x`),
+    arbHash.map((h) => `__lore_response:${h}:a b=`),
+    arbHash.map((h) => `__lore_response:${h.slice(2)}:aGk=`),
+    arbHash.map((h) => `__lore_request:${h}`),
+    // A well-formed response that is over the text limit.
+    arbHash.map((h) => `__lore_response:${h}:${'QUJD'.repeat(PEER_MESSAGE_MAX_CHARS / 4)}`),
+    fc.constantFrom('__skill_share:{"name":"x"}', 'a private word'),
+);
+// Written out apart from the code under test.
+const hashOk = (t: unknown): t is string => typeof t === 'string' && t.length === 64 && [...t].every((c) => HEX.includes(c));
+const loreResponseOk = (t: unknown): t is string => {
+    if (typeof t !== 'string') return false;
+    const parts = t.split(':');
+    if (parts.length !== 3 || parts[0] !== '__lore_response' || !hashOk(parts[1])) return false;
+    const pad = parts[2]!.endsWith('==') ? 2 : parts[2]!.endsWith('=') ? 1 : 0;
+    const data = parts[2]!.slice(0, parts[2]!.length - pad);
+    return data.length > 0 && [...data].every((c) => B64.includes(c)) && (data.length + pad) % 4 === 0;
+};
+
 // Texts: empty, one character, the limit, one over it, unicode (also astral, two code
 // units each), the Brain's own payload prefixes, and free text.
 const arbText: fc.Arbitrary<string> = fc.oneof(
     { weight: 6, arbitrary: fc.string({ minLength: 1, maxLength: 40 }) },
     { weight: 2, arbitrary: fc.string({ unit: 'grapheme', minLength: 1, maxLength: 20 }) },
     { weight: 2, arbitrary: fc.constantFrom('__skill_share:{"name":"x"}', '__lore_response:ab:aGk=', '__lore_request:ab', '안녕 🌍') },
+    { weight: 3, arbitrary: fc.oneof(arbHash, arbLoreResponse, arbLoreNearMiss) },
     { weight: 1, arbitrary: fc.constantFrom('', 'x', 'x'.repeat(PEER_MESSAGE_MAX_CHARS), 'x'.repeat(PEER_MESSAGE_MAX_CHARS + 1), '🌍'.repeat(PEER_MESSAGE_MAX_CHARS / 2), '🌍'.repeat(PEER_MESSAGE_MAX_CHARS / 2 + 1)) },
 );
 // What a broken or hostile Brain might put where the text belongs.
@@ -55,6 +89,37 @@ describe('peer message text check', () => {
                 const verdict = checkPeerText(text);
                 expect(verdict === 'ok').toBe(textOk(text));
                 if (typeof text === 'string' && text.length > PEER_MESSAGE_MAX_CHARS) expect(verdict).toBe('too_long');
+            }),
+            params,
+        );
+    });
+});
+
+describe('lore wire forms', () => {
+    it('P-DM-08: a lore hash is 64 lowercase hex characters; a lore response is __lore_response:<hash>:<base64>', () => {
+        fc.assert(
+            fc.property(fc.oneof(arbText, arbHash, arbLoreResponse, arbLoreNearMiss, arbHostileText), (value) => {
+                expect(isLoreHash(value)).toBe(hashOk(value));
+                expect(isLoreResponsePayload(value)).toBe(loreResponseOk(value));
+            }),
+            params,
+        );
+    });
+});
+
+describe('registeredCivicDidOf', () => {
+    it('P-DM-04: only a Nous the registry knows, and has not deleted, has a Civic-DID to write to', async () => {
+        const arbStatus = fc.constantFrom('active', 'suspended', 'exiled', 'deleted', undefined);
+        await fc.assert(
+            fc.asyncProperty(fc.string({ maxLength: 12 }), arbStatus, fc.option(fc.string({ minLength: 1, maxLength: 12 }), { nil: null }), async (did, status, civic) => {
+                let asked = 0;
+                const lookup = registeredCivicDidOf(
+                    { get: (d) => (d === did && status !== undefined ? { status } : undefined) },
+                    async () => { asked++; return civic; },
+                );
+                const known = status !== undefined && status !== 'deleted';
+                expect(await lookup(did)).toBe(known ? civic : null);
+                expect(asked).toBe(known ? 1 : 0);
             }),
             params,
         );
@@ -116,15 +181,15 @@ const arbProc = fc.nat({ max: PROC_OWNER.length - 1 });
 const arbOp: fc.Arbitrary<Op> = fc.oneof(
     { weight: 2, arbitrary: fc.record({ t: fc.constant('SetMute' as const), n: arbNous, on: fc.boolean() }) },
     { weight: 1, arbitrary: fc.record({ t: fc.constant('Retire' as const), n: arbNous }) },
-    // `to` 3 is a DID nobody holds.
-    { weight: 8, arbitrary: fc.record({ t: fc.constant('Send' as const), via: fc.constantFrom('dm' as const, 'dm' as const, 'lore_request' as const, 'lore_response' as const), s: arbNous, to: fc.nat({ max: NAMES.length }), text: fc.oneof({ weight: 9, arbitrary: arbText }, { weight: 1, arbitrary: arbHostileText }) }) },
+    // `to` 3 is a DID nobody holds; `to` 4 holds an active Civic-DID but is not a Nous.
+    { weight: 8, arbitrary: fc.record({ t: fc.constant('Send' as const), via: fc.constantFrom('dm' as const, 'dm' as const, 'lore_request' as const, 'lore_response' as const), s: arbNous, to: fc.nat({ max: NAMES.length + 1 }), text: fc.oneof({ weight: 9, arbitrary: arbText }, { weight: 1, arbitrary: arbHostileText }) }) },
     { weight: 5, arbitrary: fc.record({ t: fc.constant('Poll' as const), p: arbProc }) },
     { weight: 8, arbitrary: fc.record({ t: fc.constant('Claim' as const), p: arbProc, fromSeen: fc.boolean(), pick: fc.nat({ max: 40 }) }) },
     { weight: 1, arbitrary: fc.record({ t: fc.constant('Crash' as const), p: arbProc }) },
 );
 
 describe('peer messages over time', () => {
-    it('P-DM-01 P-DM-02 P-DM-03 P-DM-04 P-DM-05 P-DM-06: any sequence of mute, retire, send, poll, claim and crash keeps every invariant', async () => {
+    it('P-DM-01 P-DM-02 P-DM-03 P-DM-04 P-DM-05 P-DM-06 P-DM-07 P-DM-08: any sequence of mute, retire, send, poll, claim and crash keeps every invariant', async () => {
         await fc.assert(
             fc.asyncProperty(fc.array(arbOp, { maxLength: 40 }), async (ops) => {
                 const world = await makeWorld(NAMES, { depthMax: DEPTH_MAX });
@@ -164,7 +229,7 @@ describe('peer messages over time', () => {
                             const sender = NAMES[op.s]!;
                             const runner = world.runners.get(sender)!;
                             const targetName: string | undefined = NAMES[op.to];
-                            const targetDid = targetName !== undefined ? didOf(targetName) : 'did:noesis:nobody';
+                            const targetDid = targetName !== undefined ? didOf(targetName) : op.to === NAMES.length ? 'did:noesis:nobody' : didOf(OUTSIDER);
                             const before = world.queue.rows.length;
                             const depth = targetName !== undefined ? await world.queue.depth(GRID, civicOf(targetName)) : 0;
                             // A direct message, or the two lore actions that travel the same way.
@@ -174,8 +239,12 @@ describe('peer messages over time', () => {
                                     ? { action_type: 'lore_request', channel: '', text: '', metadata: { content_hash: op.text, contributor_did: targetDid } }
                                     : { action_type: 'lore_response', channel: '', text: '', metadata: { recipient_did: targetDid, payload: op.text } };
                             const carried: unknown = op.via === 'lore_request' && typeof op.text === 'string' ? `__lore_request:${op.text}` : op.text;
-                            const audited = op.via === 'dm' && !runner.muteFlag && textOk(op.text);
-                            const queued = !runner.muteFlag && textOk(carried) && typeof op.text === 'string'
+                            // P-DM-08: a lore request or response goes out only in its exact wire form.
+                            const formOk = op.via === 'dm' ? true : op.via === 'lore_request' ? hashOk(op.text) : loreResponseOk(op.text);
+                            const auditChannel = op.via === 'dm' ? 'direct' : op.via;
+                            // P-DM-07: every message that may be queued is audited first, whichever of the three it is.
+                            const audited = !runner.muteFlag && textOk(carried) && formOk;
+                            const queued = audited
                                 && op.to !== op.s && targetName !== undefined
                                 && world.citizens.has(sender) && world.citizens.has(targetName) && depth < DEPTH_MAX;
 
@@ -197,10 +266,11 @@ describe('peer messages over time', () => {
                             const audits = world.audit.query({ eventType: 'nous.direct_message' });
                             if (audited) dmAudits++;
                             expect(audits.length).toBe(dmAudits);
+                            expect(queued && !audited).toBe(false);                      // P-DM-07
                             if (audited) {
                                 const last = audits[audits.length - 1]!;
                                 expect(last.actorDid).toBe(didOf(sender));
-                                expect(last.payload).toEqual({ targetDid, channel: 'direct', tick });
+                                expect(last.payload).toEqual({ targetDid, channel: auditChannel, tick });
                             }
                         } else if (op.t === 'Poll') {
                             const owner = NAMES[PROC_OWNER[op.p]!]!;
