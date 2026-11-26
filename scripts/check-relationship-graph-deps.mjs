@@ -66,7 +66,8 @@ const ALLOWLIST_FILE = resolve(repoRoot, 'grid/src/audit/broadcast-allowlist.ts'
 // W-C3 (2026-07-04): +7 lines for orbital.object_upgraded (allowlist 157 → 158). Re-pinned.
 // 2026-07-06: re-pinned 1063 → 1065 to match merged QA commits (+2 lines); allowlist members unchanged.
 // 2026-11-17: +8 lines for zoning.zone_set_changed (allowlist 159 → 160, D-V3-40 free zones). Re-pinned.
-const ALLOWLIST_BASELINE_LINES = 1087;
+// 2026-11-25: +8 lines for work.stage_changed (allowlist 161 → 162, Work Card). Re-pinned.
+const ALLOWLIST_BASELINE_LINES = 1095;
 
 let hadError = false;
 

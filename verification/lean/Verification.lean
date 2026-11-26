@@ -3,3 +3,5 @@ import Verification.SocialPeers
 import Verification.PeerMessages
 import Verification.HybridClock
 import Verification.CardMerge
+import Verification.Work
+import Verification.NousWork

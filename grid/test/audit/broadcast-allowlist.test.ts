@@ -8,16 +8,21 @@ import {
 } from '../../src/audit/broadcast-allowlist.js';
 
 describe('broadcast-allowlist: default-deny membership', () => {
-    it('has 161 locked event types (v1..Phase 55 + W-C3 orbital.object_upgraded + Phase 62 portal.account_linked + D-V3-40 zoning.zone_set_changed + D-V3-41 operator.grid_visibility_changed)', () => {
-        expect(ALLOWLIST.size).toBe(161);
+    it('has 162 locked event types (v1..Phase 55 + W-C3 orbital.object_upgraded + Phase 62 portal.account_linked + D-V3-40 zoning.zone_set_changed + D-V3-41 operator.grid_visibility_changed)', () => {
+        expect(ALLOWLIST.size).toBe(162);
     });
 
-    it('has frozen 161-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(161);
+    it('has frozen 162-member allowlist (ALLOWLIST_MEMBERS array length)', () => {
+        expect(ALLOWLIST_MEMBERS.length).toBe(162);
     });
 
     it('Phase 62 appends portal.account_linked at position 159 (index 158)', () => {
         expect(ALLOWLIST_MEMBERS[158]).toBe('portal.account_linked');
+    });
+
+    it('Work Card appends work.stage_changed at position 162 (index 161)', () => {
+        expect(ALLOWLIST_MEMBERS[161]).toBe('work.stage_changed');
+        expect(ALLOWLIST.has('work.stage_changed')).toBe(true);
     });
 
     it('D-V3-41 appends operator.grid_visibility_changed at position 161 (index 160)', () => {
@@ -185,7 +190,7 @@ describe('broadcast-allowlist: default-deny membership', () => {
         expect(() => (ALLOWLIST as Set<string>).add('law.bypassed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).delete('trade.reviewed')).toThrow(TypeError);
         expect(() => (ALLOWLIST as Set<string>).clear()).toThrow(TypeError);
-        expect(ALLOWLIST.size).toBe(161);
+        expect(ALLOWLIST.size).toBe(162);
     });
 
     it('Phase 6 operator.* tuple order: inspected < paused < resumed < law_changed < telos_forced', () => {
@@ -315,7 +320,7 @@ describe('broadcast-allowlist: Phase 6 operator.* payload privacy (representativ
 
 describe('ALLOWLIST_MEMBERS Phase 42 (Plan 03)', () => {
     it('has count 81 after Phase 46 adds gov.* events (Phase 42 added p2p.*, Phase 43 added operator.nous_forked)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(161);
+        expect(ALLOWLIST_MEMBERS.length).toBe(162);
     });
     it('includes p2p.peer_announced at position 65 (index 64)', () => {
         expect(ALLOWLIST_MEMBERS[64]).toBe('p2p.peer_announced');
@@ -333,7 +338,7 @@ describe('ALLOWLIST_MEMBERS Phase 42 (Plan 03)', () => {
 
 describe('ALLOWLIST_MEMBERS Phase 43 (Plan 01 — FORK-04)', () => {
     it('has count 81 after Phase 46 adds gov.* events (Phase 43 base was 68)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(161);
+        expect(ALLOWLIST_MEMBERS.length).toBe(162);
     });
     it('includes operator.nous_forked at position 68 (index 67)', () => {
         expect(ALLOWLIST_MEMBERS[67]).toBe('operator.nous_forked');
@@ -348,7 +353,7 @@ describe('ALLOWLIST_MEMBERS Phase 44 (Plan 01 — MKT-06 / D-44-01 / D-44-03)', 
     // This combined assertion is ACTIVE and will FAIL until Plan 03 adds the 4 market.* entries
     // to ALLOWLIST_MEMBERS, growing the array from 68 to 72. Plan 03 turns it GREEN.
     it('Phase 44 allowlist grows to 72 with 4 market.* additions — market.listing_created, market.bid_placed, market.settled, market.disputed (FAILS until Plan 03 — D-44-01)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(161);
+        expect(ALLOWLIST_MEMBERS.length).toBe(162);
         expect(ALLOWLIST_MEMBERS).toContain('market.listing_created');
         expect(ALLOWLIST_MEMBERS).toContain('market.bid_placed');
         expect(ALLOWLIST_MEMBERS).toContain('market.settled');
@@ -445,7 +450,7 @@ describe('broadcast-allowlist: payloadPrivacyCheck', () => {
 
 describe('ALLOWLIST_MEMBERS Phase 45 (IRS-04)', () => {
     it('Phase 45 allowlist grows to 75 with 3 IRS additions (72 → 75)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(161);
+        expect(ALLOWLIST_MEMBERS.length).toBe(162);
         expect(ALLOWLIST_MEMBERS).toContain('irs.tax_collected');
         expect(ALLOWLIST_MEMBERS).toContain('irs.disbursement_authorized');
         expect(ALLOWLIST_MEMBERS).toContain('irs.disbursement_executed');
@@ -476,7 +481,7 @@ describe('ALLOWLIST_MEMBERS Phase 46 (CIVGOV-06)', () => {
     // Phase 46 D-46 / numbering reconciliation: ROADMAP literal "74 → 80" is stale
     // (Phase 45 actually shipped at 75). Correct delta is +6 → 75 → 81.
     it('Phase 46 allowlist grows to 81 with 6 gov.* additions (75 → 81)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(161);
+        expect(ALLOWLIST_MEMBERS.length).toBe(162);
         expect(ALLOWLIST_MEMBERS).toContain('gov.bill_drafted');
         expect(ALLOWLIST_MEMBERS).toContain('gov.bill_cosponsored');
         expect(ALLOWLIST_MEMBERS).toContain('gov.session_opened');
@@ -518,7 +523,7 @@ describe('ALLOWLIST_MEMBERS Phase 46 (CIVGOV-06)', () => {
 
 describe('ALLOWLIST_MEMBERS Phase 48b (LAND-01..05) — Civic Land & Property', () => {
     it('Phase 48b allowlist grows to 86 with 5 zoning.*/treasury.* additions (81 → 86)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(161);
+        expect(ALLOWLIST_MEMBERS.length).toBe(162);
     });
     it('the 5 new members are present', () => {
         for (const e of [
@@ -680,8 +685,8 @@ describe('ALLOWLIST_MEMBERS L3b (D-MONEY-08 / L3b) — orbital.object_built', ()
     });
 
     it('allowlist total is 120 after O2b (117 L3b + 3 human.approval.*)', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(161);
-        expect(ALLOWLIST.size).toBe(161);
+        expect(ALLOWLIST_MEMBERS.length).toBe(162);
+        expect(ALLOWLIST.size).toBe(162);
     });
 });
 
@@ -716,8 +721,8 @@ describe('ALLOWLIST_MEMBERS O2b — human.approval_* audit events', () => {
     });
 
     it('allowlist total is 121 after O2b + W4', () => {
-        expect(ALLOWLIST_MEMBERS.length).toBe(161);
-        expect(ALLOWLIST.size).toBe(161);
+        expect(ALLOWLIST_MEMBERS.length).toBe(162);
+        expect(ALLOWLIST.size).toBe(162);
     });
 });
 

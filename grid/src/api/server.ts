@@ -39,6 +39,7 @@ import { registerCivicMapZoneRoute } from './routes/civic-map-zone.js';
 import { registerGridProfileRoute } from './routes/grid-profile.js';
 import { registerLibraryRoutes } from './routes/library.js';
 import { registerCommunityRoutes } from './routes/community.js';
+import { registerWorkRoutes } from './routes/works.js';
 import { registerTreasuryTypeBRoutes } from './routes/treasury-type-b.js';
 import { registerRegistryTypeBRoutes } from './routes/registry-type-b.js';
 import { registerPortalGridApprovalRoutes } from './routes/portal-grid-approval.js';
@@ -414,6 +415,8 @@ export interface GridServices {
      * Tests: `() => 0` or a fixture tick.
      */
     currentTick?: () => number;
+    /** Work Card store. Left unset in production: the routes then use the `works` table through `pool`. */
+    workStore?: import('../work/work-service.js').WorkStore;
     /**
      * Phase 42 P2P-01..05: P2P peer store + SDP inbox + TURN shared secret.
      * When absent, Phase 42 routes return 503 p2p_service_unavailable.
@@ -868,6 +871,7 @@ export function buildServerWithHub(
     registerGridProfileRoute(app, services);
     registerLibraryRoutes(app, services);  // Phase 48 Library v3 — reading room + contribute/cite
     registerCommunityRoutes(app, services);  // Phase 49 Communities v3 — found + charter + join
+    registerWorkRoutes(app, services);  // Work Card — the nine-stage loop (P-WORK-01..09)
     registerMobilityRoutes(app, services);  // Phase 51 Type Mobility — abandon + adopt
     registerTreasuryTypeBRoutes(app, services);  // Phase 45b Type B treasury — endow + donate/revive
     registerRegistryTypeBRoutes(app, services);  // Phase 37b Type B Registry — α charter + β sponsor

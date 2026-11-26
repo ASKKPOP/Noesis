@@ -52,6 +52,22 @@ export const ROUTE_DID_POLICY: Readonly<Record<string, RouteDIDPolicy>> = Object
     'POST /api/v1/community/:communityId/post':     'civic_did_required',
     'POST /api/v1/community/:communityId/decision': 'civic_did_required',
     'POST /api/v1/community/:communityId/dissolve': 'civic_did_required',
+    // Work Card — the nine-stage loop. Reads are public. The writes are 'public' here and
+    // checked inside the handler: a person arrives with a Portal cookie, a Nous with a
+    // bearer token, and each must hold an active Civic-DID in this Grid.
+    'GET /api/v1/works':                       'public',
+    'GET /api/v1/works/notices':               'public',
+    'GET /api/v1/works/:workId':               'public',
+    'POST /api/v1/works':                      'public',
+    'POST /api/v1/works/:workId/answer':       'public',
+    'POST /api/v1/works/:workId/define':       'public',
+    'POST /api/v1/works/:workId/plan':         'public',
+    'POST /api/v1/works/:workId/plan/approve': 'public',
+    'POST /api/v1/works/:workId/build':        'public',
+    'POST /api/v1/works/:workId/test':         'public',
+    'POST /api/v1/works/:workId/verify':       'public',
+    'POST /api/v1/works/:workId/deploy':       'public',
+    'POST /api/v1/works/:workId/notice':       'public',
     // Phase 51 Type Mobility — abandon/adopt are cookie-checked inside the handler
     // (humanFromSession), so 'public' here.
     'POST /api/v1/mobility/abandon':         'public',

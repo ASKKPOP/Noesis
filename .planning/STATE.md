@@ -321,6 +321,42 @@ Next action: operator's choice — remaining v3.0 work includes the Wave-1 Type 
   - **Open follow-ups (tracked):** authenticated Brain-key rotation path (D-SEC-05); fixing the exact Police fine amount/duration at conviction time so `fine` regains monetary teeth (D-SEC-07). Both are latent-until-write-back-milestone (brain_tokens + civic_did_registry currently EMPTY in prod).
   - **DEPLOYED to prod 2026-07-10** (commit `a9dfa1f5`, `./deploy.sh grid` with `NOESIS_DEPLOY_KEY=~/.ssh/sierrabiolab-aws.pem` — the deploy.sh default key path is wrong). Prod fast-forwarded `a4d8bf9→a9dfa1f` (also carried the already-merged D-SEC-04 governance fix `fe9942c8` + PR #11 registry census). +0 migrations (code-only rebuild). Verified: `noesis-grid` container healthy, internal `/health` 200, public `https://api.noesiis.com/health` → 200 `{"status":"ok"}`, `https://noesiis.com` 200. The whole `x-operator-tier` header-trust class + the 3 QA-round auth findings are now closed in production.
 
+## Work Card — the nine-stage loop BUILT 2026-11-25 (D-WORK-01..10; not committed, not deployed)
+
+Operator, in three steps the same day: (1) "implement all step functions" of the Grid extension loop (enter → goal →
+define → plan → build → test → verify → deploy → notice); (2) scope = the Work Card with all nine stages, on the plan's
+recommended answers; (3) **stages 2–4 are set and monitored in the Nous Mac app, stages 5–8 are for the Nous and only
+monitored, nothing in the Portal** (D-WORK-08/09). Branch `feat/work-card`, staged, not committed (commit was blocked by
+the permission check).
+
+- **Grid:** `grid/src/work/work-logic.ts` (pure rules: `createWork`, `applyWorkOp`, `allowedOps`; verify and announce
+  are Nous-only), `work-service.ts` (membership, version check, audit), `mysql-work-store.ts`, routes
+  `grid/src/api/routes/works.ts` (`/api/v1/works…`, `?role=owner|builder|verify`, 13 policy entries, all `public` with
+  in-handler membership), migration **v82** `works`, event `work.stage_changed` (**allowlist 162, baseline lines 1095**),
+  real-MySQL gate `grid/scripts/check-works-real-mysql.ts` (in CI).
+- **Brain:** `brain/src/noesis_brain/work_logic.py` (which step is this Nous's; any model answer → a well-formed body or
+  nothing), `work_cycle.py` (`WorkCycle`: one write per Work per cycle on the version read), `wire/client.py`
+  (`fetch_works`, `post_work_step`), `rpc/handler.py` (`_should_run_work_cycle` every 5 ticks for a wire-connected mind
+  with a model; `_work_think` = model in JSON mode, `_work_act` = `ToolRunner`).
+- **Mac app:** `apps/nous-mac/Sources/NousMac/Works.swift` (`WorkCard`, `WorksModel`), `WorksPane.swift` (forms for
+  goal, define, plan, approve; 5 s refresh), `WorkCardView.swift` (`WorkMonitorView`, read-only), `GridAccount.call`.
+- **Portal:** no Works pages (built in the first pass, removed in the third step; the dashboard has no change vs main).
+- **Verified:** `P-WORK-01..09` (Grid) and `P-NOUSWORK-01..03` (Brain): TLA+ `Work.tla`, Lean `Work.lean` +
+  `NousWork.lean`, fast-check `grid/test/work/work.property.test.ts`, Hypothesis `brain/test/test_work_properties.py`,
+  shared fixture `grid/test/fixtures/work-brain-contract.json`.
+- **Run for real twice, locally:** real Grid + MySQL, two people through the Portal join flow, Sophia and Hermes through
+  the registration pipeline and the Brain's own enrollment, the Mac app's Works code as the person, the Brain's work
+  cycle on `gpt-oss:20b` as both Nous. Both runs reached done. Report: `docs/reports/noesis-work-card-report-2026-11-25.html`.
+- **Seen in those runs (open):** the Nous named a place for the result that it never wrote to (Deploy prompt tightened
+  afterwards, not re-run); it flipped a failed check to passed without rebuilding; nothing forces a rebuild between tests.
+- **Not exercised:** a full Brain process whose tick starts the cycle (gate unit-tested only); the Mac app's window
+  against a live Grid (needs https); the three server Brains.
+- **Not built:** a place for a result other than the card's notes; cancel or pause; appeal; shared Works; Works tied to
+  Grid actions (land, structures); catalog (X3), founding a Grid (X6), other Grids (X7).
+- **Found again, not fixed (X0 of that plan):** `POST /portal/nous/:nousId/claim` still records any signed-in person as
+  owner of any Nous; the ballot commit/reveal routes still read `voter_did` from the body. The Work Card depends on
+  neither.
+
 ## World view in Bevy — option C BUILT 2026-11-22 (D-V3-45)
 
 - Operator chose option C of `docs/reports/noesis-godot-rust-migration-analysis-2026-11-21.html` (Bevy, pure Rust) over the report's recommendation (A, keep three.js). Scope agreed: the orbital (outside) level first, three.js kept as fallback; the district level stays three.js.
@@ -1014,6 +1050,12 @@ Every task is verified by **TLA+ (TLC), Lean 4, and property-based tests with ge
 workflow `verification.yml`. Verified so far: vector clocks (`P-VCLOCK-01…08`), hybrid clocks and knowledge-card merge
 (`P-HLC-01…05`, `P-CARD-01…06`), the social cycle's trusted peers
 (`P-SOCIAL-01…04`), direct-message delivery (`P-DM-01…06`). All other existing code is unverified by this rule.
+
+### Invariant — a Work Card's wording never enters the audit chain; the builder is always a Nous; stages 5–9 are Nous-only (2026-11-25, D-WORK-03/06/08)
+`work.stage_changed` carries the work id, two stage names, the tick, a hashed actor and the sha256 of the stored card.
+New code that writes a Work goes through `WorkService` (one write per version) and takes the actor from the request's
+identity, never from the body. A person may write stages 2–4 only; Verify is a Nous other than the builder. The person's
+screen for Works is the Nous Mac app, never the Portal (D-WORK-09). Properties `P-WORK-01..09`, `P-NOUSWORK-01..03`.
 
 ### Invariant — `nous.direct_message` carries no text (2026-11-23, D-SOC-04)
 
