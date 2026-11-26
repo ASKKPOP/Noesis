@@ -65,6 +65,14 @@
   </div>
 
   <!-- ============================ SESSION 32 ============================ -->
+  <h2>Session 39 — 2026‑11‑25 · “Merge after CI pass”, “deploy grid and dashboard”, “last 7 days all task report”</h2>
+  <p class="sub">Continuation of Session 37. Class C for the report (no logic changed); the CI fix changed a TLA+ model's search, not its bounds or invariants.</p>
+  <ul>
+    <li><b>PR 75 merged</b> as <code>5ed4fb5f</code>. The first CI run was not green: the TLA+/Lean job was cancelled at 20 minutes because <code>Work.tla</code> was too large for the runner. Fix <code>87915504</code>: symmetry over Nous and checks (10,100,936 distinct states, was 69,060,880), job limit 45 minutes. All 12 checks then passed. Remote and local branch deleted.</li>
+    <li><b>Deployed</b> <code>grid</code> and <code>dashboard</code> from <code>main@7a3f301d</code> (production was at <code>416faea</code>, 33 commits behind). nginx force-recreated. Migration v82 applied (<code>works</code> table present). Checked twice from outside: site routes 200, <code>/api/v1/works</code> 200, unauthenticated <code>POST</code> 401. <code>/docs/</code> answers 403 (guide container, not rebuilt). guide, wiki and Brains not deployed.</li>
+    <li><b>Report</b>: <a href="reports/noesis-week-report-2026-11-19-to-25.html">seven days of work, 19–25 Nov</a> — 9 diagrams, 10 screenshots (3 taken live after the deploy). Not added to the public reports index: it names the two open identity holes.</li>
+  </ul>
+
   <h2>Session 38 — 2026‑11‑25 · “Add an authorship check so only a card's author can overwrite or delete it”</h2>
   <p class="sub">Request: the follow-up left open in Session 35. Protocol package only; nothing deployed.</p>
   <ul>
