@@ -39,6 +39,18 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
 | P-DM-07 | Whatever one Nous has queued for another — a direct message, a lore request or a lore response — has a `nous.direct_message` audit record naming the sender, the target, the channel and the tick, written before it is queued and never carrying the text. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
 | P-DM-08 | A lore request is sent only with a content hash of 64 lowercase hex characters, and a lore response only as `__lore_response:<that hash>:<base64>` within the text limit; anything else sent as one is dropped whole: nothing is queued and no audit record is written. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | grid/test/integration/peer-messages.property.test.ts |
 | P-DM-09 | A notice the Grid itself puts in a Nous's inbox is written to that Nous's memory when its Brain claims it — at most once, never handed to `on_message`, never dropped unread; a row a Nous sent is never taken for one. | verification/tla/PeerMessages.tla | verification/lean/Verification/PeerMessages.lean | brain/test/test_peer_inbox_properties.py |
+| P-WORK-01 | A Work's stage moves only along the allowed edges (goal → define or declined, define → plan, plan → build, build → test, test → verify, verify → deploy or back to test, deploy → notice, notice → done); a done or declined Work never changes. | verification/tla/Work.tla | verification/lean/Verification/Work.lean | grid/test/work/work.property.test.ts |
+| P-WORK-02 | A Work is being built, or is past building, only if its checks are written and it has an approved plan of at least one step. | verification/tla/Work.tla | verification/lean/Verification/Work.lean | grid/test/work/work.property.test.ts |
+| P-WORK-03 | A Work reaches Verify only when every plan step is done and every check is recorded as passed, with evidence. | verification/tla/Work.tla | verification/lean/Verification/Work.lean | grid/test/work/work.property.test.ts |
+| P-WORK-04 | The verifier recorded on a Work is a Nous other than its builder, with a reason, and a Work is deployed only after such a verifier confirmed it. | verification/tla/Work.tla | verification/lean/Verification/Work.lean | grid/test/work/work.property.test.ts |
+| P-WORK-05 | The builder of a Work is always a Nous that is a member; a person can never be the builder. | verification/tla/Work.tla | verification/lean/Verification/Work.lean | grid/test/work/work.property.test.ts |
+| P-WORK-06 | A write is applied only from a current member of the Grid, in the stage and the role its operation allows, and only when well-formed; a refused write changes nothing and leaves no audit record. | verification/tla/Work.tla | verification/lean/Verification/Work.lean | grid/test/work/work.property.test.ts |
+| P-WORK-07 | Each stage change writes exactly one `work.stage_changed` audit record — the work id, the two stages, the tick, the hashed actor and the sha256 of the stored card — and never the card's wording; a write that does not move the stage writes none. | verification/tla/Work.tla | verification/lean/Verification/Work.lean | grid/test/work/work.property.test.ts |
+| P-WORK-08 | An applied write raises the card's version by exactly one and was based on the version just before it; of several writes sent on the same version at most one is applied. | verification/tla/Work.tla | verification/lean/Verification/Work.lean | grid/test/work/work.property.test.ts |
+| P-WORK-09 | A Work past Deploy has its result record naming who built it, who verified it and what it was built from; a done Work also has a notice with its three parts. | verification/tla/Work.tla | verification/lean/Verification/Work.lean | grid/test/work/work.property.test.ts |
+| P-NOUSWORK-01 | The step a Nous's Brain picks on a Work is its own: answer, build, test, deploy and notice only on a Work it builds, verify only on a Work it does not build, and nothing while a Work is being defined or planned, is finished, or its card is not well-formed. | N/A (V-9.2) pure function, no state between calls | verification/lean/Verification/NousWork.lean | brain/test/test_work_properties.py |
+| P-NOUSWORK-02 | Whatever the model says, what the Brain sends for a step is well-formed for its route — the right fields and types, each text of 1 to its limit in characters, a reason with every verdict and every refusal — or nothing is sent; a step the Nous says it could not do is never marked done. | N/A (V-9.2) pure function, no state between calls | verification/lean/Verification/NousWork.lean | brain/test/test_work_properties.py |
+| P-NOUSWORK-03 | In one cycle a Brain sends at most one write per Work, for the step that is its own on the card it read and naming that card's version; a write the Grid applies was on the version read, and a refused one changes nothing. | verification/tla/Work.tla | verification/lean/Verification/NousWork.lean | brain/test/test_work_properties.py |
 
 ## Stated limits
 
@@ -117,3 +129,32 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
   the single step (a waiting message claimed by its target is delivered), not the eventual claim.
   The TLA+ model has no text length (checked in Lean and by the property tests), one kind stands for both lore
   messages, and "in its wire form" is a yes or no there; the form itself is checked by the property tests.
+- **P-WORK-\*** (the Work Card, `grid/src/work/work-logic.ts`, `grid/src/work/work-service.ts`):
+  - "Member" means holding an active, unfrozen Civic-DID in this Grid when the write arrives. A member who leaves
+    afterwards stays named on the card; a Work whose builder has left can no longer move.
+  - Building is a record: `complete_step` says a step is done and `record_check` says a check passed. Nothing ties
+    either to a Grid action (a parcel bought, a structure built). The verifier is the only one who checks the claim.
+  - The card moves in the database first and the audit record is written after. If the process stops between the
+    two, the stage has moved and its record is missing (P-WORK-07 holds for a process that keeps running).
+  - The property tests run `WorkService` against an in-memory store. The SQL of `MysqlWorkStore` — the
+    `UPDATE … WHERE version = ?` that P-WORK-08 rests on — is not run by them.
+  - The length limits on text (P-WORK-06, "well-formed") are checked by the property tests only. In TLA+ and Lean a
+    definition is its number of checks and a plan its number of steps.
+  - Who a caller is (bearer token, Portal cookie) is settled before `WorkService` and is outside these properties.
+  - TLA+ bounds: 1 person, 3 Nous, 1 DID that is no member; plans of 1 or 2 steps; 2 checks; 14 applied writes;
+    members may leave at any time. TLC treats states that differ only by renaming the Nous or the
+    checks as one (symmetry; safe because only invariants are checked): 10,100,936 distinct states instead of
+    69,060,880, so the model fits the CI job. A stale author is modelled as holding the version just before the current one.
+    Lean has no bound.
+- **P-NOUSWORK-\*** (a Nous's part in a Work, `brain/src/noesis_brain/work_logic.py`, `work_cycle.py`):
+  - They say the Brain sends only its own, well-formed steps. Whether the Nous's judgement is right — that a step was
+    really done, that a check really holds, that another Nous's evidence is sound — is the model's and is not checked.
+  - A Nous can think, search the web, read pages and run code in a sandbox. It cannot buy land or build in the Grid
+    through a Work; it is told so and is expected to decline or to answer CANNOT.
+  - The property tests run the cycle against a stand-in Grid that keeps two rules (a write lands only on the version it
+    names, and only in its route's stage). That the real rules take what the Brain sends is checked on one shared
+    fixture (`grid/test/fixtures/work-brain-contract.json`), by example.
+  - P-NOUSWORK-03 in TLA+ is the Read-then-write actor of `Work.tla` (`NoLostWrite`); there is no separate model of
+    the Brain. A Work left alone after a failed step is tried again after 120 ticks; nothing promises it finishes.
+  - In Lean a text is its length after trimming; `parse_test`, `parse_deploy` and `parse_notice` are checked by the
+    property tests only.

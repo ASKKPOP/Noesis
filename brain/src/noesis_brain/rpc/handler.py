@@ -189,6 +189,8 @@ class BrainHandler:
         self._last_social_tick = -10_000
         self._last_conversation_tick = -10_000
         self._last_peer_inbox_tick = -10_000
+        self._last_work_tick = -10_000
+        self._work_cycle: Any = None
         self._governance_state = GovernanceState()
         # Duplicate-action guards (surfaced by the 2026-07-02 liveness run: the
         # real model bid the SAME open RFP every cycle and re-joined the same
@@ -1740,6 +1742,63 @@ class BrainHandler:
         except Exception:
             log.debug("peer inbox cycle skipped", exc_info=True)
 
+    # ── Works: the Nous's own steps on the Grid's Work Cards ──────────────────
+    _WORK_COOLDOWN_TICKS = 5
+
+    def _should_run_work_cycle(self, tick: int) -> bool:
+        """Live-wired minds with a model only, and not on every tick."""
+        if self._grid_wire_client is None or self.llm is None:
+            return False
+        if getattr(self._grid_wire_client, "fetch_works", None) is None:
+            return False
+        return (tick - self._last_work_tick) >= self._WORK_COOLDOWN_TICKS
+
+    async def _run_work_cycle(self, tick: int) -> None:
+        """Take this Nous's steps on the Works of its Grid: answer a request, build,
+        test, verify another Nous's work, deploy, announce (work_cycle.WorkCycle).
+        The model judges; for building and testing it works with its tools. What
+        it did is kept in its memory. Background; never fatal."""
+        try:
+            if self._work_cycle is None:
+                from noesis_brain.work_cycle import WorkCycle
+                self._work_cycle = WorkCycle(
+                    self._grid_wire_client, self._work_think, self._work_act, self._work_remember,
+                )
+            await self._work_cycle.run(tick)
+        except Exception:
+            log.debug("work cycle skipped", exc_info=True)
+
+    def _work_system_prompt(self) -> str:
+        return build_system_prompt(
+            self.psyche, self.thymos.mood, self.telos,
+            grid_name=self.grid_name, location=self.location,
+            intent=self._current_intent,
+        )
+
+    async def _work_think(self, prompt: str) -> str:
+        response = await self.llm.generate(
+            prompt,
+            GenerateOptions(
+                system_prompt=self._work_system_prompt(), temperature=0.4,
+                max_tokens=900, purpose="work_step", json_mode=True,
+            ),
+        )
+        return response.text
+
+    async def _work_act(self, prompt: str) -> str:
+        if self._tool_registry is None:
+            from noesis_brain.tools.agentic import build_agentic_registry
+            self._tool_registry = build_agentic_registry()
+        from noesis_brain.tools.runner import ToolRunner
+        runner = ToolRunner(self.llm, self._tool_registry, max_iterations=6)
+        result = await runner.run(system=self._work_system_prompt(), user=prompt)
+        return result.final_text or ""
+
+    def _work_remember(self, content: str, tick: int) -> None:
+        record = getattr(self.memory, "record_event", None)
+        if record is not None:
+            record(content=content, source_did=self.did, tick=tick)
+
     # ── W-B: social/civic cycle ───────────────────────────────────────────────
     _SOCIAL_COOLDOWN_TICKS = 60
 
@@ -2153,6 +2212,11 @@ class BrainHandler:
             self._last_conversation_tick = tick
             import asyncio as _asyncio
             _asyncio.create_task(self._run_conversation_cycle(tick))
+        # Works: this Nous's own steps on the Grid's Work Cards.
+        if self._should_run_work_cycle(tick) and await self._mind_awake(tick):
+            self._last_work_tick = tick
+            import asyncio as _asyncio
+            _asyncio.create_task(self._run_work_cycle(tick))
         # Peer inbox: direct messages, taught skills and lore from other Nous.
         if self._should_run_peer_inbox_cycle(tick):
             self._last_peer_inbox_tick = tick

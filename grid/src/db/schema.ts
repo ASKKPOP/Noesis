@@ -1908,4 +1908,31 @@ export const MIGRATIONS: Migration[] = [
         `,
         down: `DROP TABLE IF EXISTS civic_catalog_entries`,
     },
+    {
+        // The Work Card: one row per Work, the card kept whole as text. card_json is TEXT
+        // and not JSON because MySQL rewrites JSON values and card_hash is the sha256 of
+        // the exact text. `version` counts applied writes; a write changes the row only
+        // while it still holds the version the write was based on. stage, owner and
+        // builder are copies of fields inside the card, kept for lookups.
+        version: 82,
+        name: 'create_works',
+        up: `
+            CREATE TABLE IF NOT EXISTS works (
+                grid_name          VARCHAR(63)  NOT NULL,
+                work_id            CHAR(36)     NOT NULL,
+                stage              VARCHAR(16)  NOT NULL,
+                owner_civic_did    VARCHAR(255) NOT NULL,
+                builder_civic_did  VARCHAR(255) NOT NULL,
+                version            INT UNSIGNED NOT NULL,
+                card_json          MEDIUMTEXT   NOT NULL,
+                card_hash          CHAR(64)     NOT NULL,
+                created_tick       BIGINT       NOT NULL,
+                updated_tick       BIGINT       NOT NULL,
+                PRIMARY KEY (grid_name, work_id),
+                KEY idx_works_stage (grid_name, stage, updated_tick),
+                KEY idx_works_updated (grid_name, updated_tick)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `,
+        down: `DROP TABLE IF EXISTS works`,
+    },
 ];

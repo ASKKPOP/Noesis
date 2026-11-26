@@ -2,7 +2,7 @@
 canonical: true
 topic: decisions
 status: live
-last_verified: 2026-11-23
+last_verified: 2026-11-25
 owners: [henry, claude]
 ---
 
@@ -183,6 +183,25 @@ See [[groups-and-holdings]].
 | ID | Decision |
 |----|----------|
 | D-ID-01 | **A 64-hex hash is valid in either case, and every id pattern has one home (2026-11-23).** Every audit producer and route checks hashes (`*_hash` fields) and DIDs against the named patterns in `grid/src/util/id-patterns.ts` (`HEX64_RE`, `NOESIS_DID_RE`, `CIVIC_DID_RE`, `HUMAN_DID_RE`, …). Before this, ~190 inline copies had drifted: some producers accepted an uppercase hash that others rejected. The operator chose to accept both cases, so `HEX64_RE` is `/^[0-9a-f]{64}$/i`. The Grid's own hashes are still produced lowercase (`sha256` hex digest). The DID shapes were kept exactly as each producer had them (two copies that also let a backslash through were tightened), so which DID kinds a producer accepts is unchanged. The CI gate `scripts/check-ratchet.mjs` fails the build when an inline copy is added. |
+
+## The Work Card — `D-WORK-*` (2026-11-25)
+
+Operator decisions of 2026-11-25 on the Grid extension discussion (the nine-stage work loop). Concept page: [Works](../2-concepts/institutions/works.md).
+
+| ID | Decision |
+|----|----------|
+| D-WORK-01 | **A Grid is also a place to get work done.** A Grid is a shared place where people and Nous enter, each bring a goal, and turn it into finished, checked and announced work together, in steps both read the same way. This widens the Grid; it removes nothing. |
+| D-WORK-02 | **The object is called a Work; its record is the Work Card.** One record per Work, stored once (`works`, card kept as text with its sha256). The page a person sees is drawn from the record and adds nothing; a Nous reads the same record. Nine stages: Enter (membership), Goal, Define, Plan, Build, Test, Verify, Deploy, Notice. |
+| D-WORK-03 | **A person sets a Work up; from Build on it belongs to Nous (amended 2026-11-25 by D-WORK-08).** A person holding an active Civic-DID may state a goal, define, and plan and approve (stages 2 to 4). The builder of a Work is always a Nous. The Work write routes take the caller from the request's own identity (Portal session cookie for a person, bearer token for a Nous), never from the body. Every other civic write route stays as it was. |
+| D-WORK-04 | **A goal for a Nous is a request, not an order.** The Nous named as builder accepts or declines in the open, and declining needs a reason. Any member may ask any Nous member; owning the Nous is not required and gives no extra right. |
+| D-WORK-05 | **A Nous other than the builder verifies (amended 2026-11-25 by D-WORK-08; first: any member).** A verifier gives reasons either way. A refusal sends the Work back to Test with every result cleared. A Polis-appointed inspector is for promotion to a shared catalog, which is not built. |
+| D-WORK-06 | **The card's wording never enters the audit chain.** One `work.stage_changed` per stage change: work id, the two stages, tick, hashed actor, sha256 of the stored card (allowlist 161 → 162, new prefix `work.*`). The card moves in the database first, then the record is written. |
+| D-WORK-07 | **Every write names the version it was based on.** A write on a stale version is refused and changes nothing; of several sent on one version at most one is applied. Verified as P-WORK-01..09 (TLA+, Lean, property tests) and on real MySQL. |
+| D-WORK-08 | **Stages 5 to 9 are for Nous and take no action from a person (operator, 2026-11-25).** Build, Test, Deploy and Notice are the builder's; Verify is another Nous's. A person only monitors them. This overturns the first form of D-WORK-03 and D-WORK-05, under which a person could verify and announce. |
+| D-WORK-09 | **A person sets and watches Works in the Nous Mac app, not in the Portal (operator, 2026-11-25).** The app's Works screen states a goal for the person's own Nous, defines, plans and approves, and shows stages 5 to 9 as they happen. The Portal's Works pages are removed. |
+| D-WORK-10 | **A Nous takes its own steps by itself.** Its Brain has a work cycle: every few ticks it reads the Works it builds and the ones waiting for a verifier, takes the one step that is its own on each with its model (and its tools for Build and Test), and sends it on the version of the card it read. Whatever the model says, only a well-formed step is sent. Verified as P-NOUSWORK-01..03. |
+
+**Still open from that discussion:** who may found a Grid and who approves; whether the catalog is per Grid or shared; adopting A2A and MCP; whether Brains run in production (a Nous acts on a Work only where its Brain runs: today the local one the Mac app starts).
 
 ## 🔗 Related
 

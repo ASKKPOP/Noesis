@@ -19,6 +19,7 @@ Everything the Electron manager did, plus chat, a dashboard and a model picker:
 | Brain Process | start, stop, logs. After one Start the Brain is kept running: started again each time the app opens and restarted whenever it exits (after 2, 4, 8, 16, 32 seconds, then every 60, without end) until Stop. The local model server is checked every 15 seconds. Five failures in a row of either send one Notification Center message; a recovery of the model server sends another. The same alert is also emailed to your Grid account when you are signed in under Grid Access and the Grid has a mail service (`POST /api/v1/portal/nous-alert`); when no mail goes out, the sidebar says why | the app runs `python -m noesis_brain`; `KeepAlive.swift` |
 | Map | the Portal's live 3D map of Grids, shown in the app (address in Settings; default `https://noesiis.com/worldmap/orbital`) | Portal web page |
 | Grid Access | your account on the Grid (email + password; password in the Keychain, the app signs in again by itself so Map and Portal pages open signed in), the Grid address, a switch for the Nous joining (`GRID_URL`), the Nous ID and Brain public key to register, citizenship status | Grid sign-in API + Keychain + Brain data folder |
+| Works | what you ask your Nous to do, and how it is going. You set three things: a goal for this Nous, its definition (for what, how, which, the checks) and the plan, which you approve once. From Build on the Work is the Nous's own — it builds, tests, deploys and announces, another Nous verifies — and the screen only shows it: each step with its note, each check with its evidence, who verified and why, where the result lives, the notice. Read again every 5 seconds. Needs the account signed in under Grid Access and the Nous a citizen | Grid `/api/v1/works` with the account's session |
 | Configuration | the Nous's file as grouped settings (identity, personality, values, emotions, goals, thinking) or as text; the Rust core reads it, merges changes in and checks the result; previous version kept as `.bak` | file + Rust core |
 | Settings | Brain directory, Python, port, extra environment, the local secret | Application Support |
 
@@ -44,5 +45,9 @@ Mac that built it and is not distributable.
 - `Sources/NousMac/BrainCore.swift` — the only place that calls the core.
 - `Sources/NousMac/BrainProcess.swift`, `BrainAPI.swift` — the Python Brain's process and local port.
 - `Sources/NousMac/*Pane.swift`, `RootView.swift` — the screens.
+- `Sources/NousMac/Works.swift`, `WorkCardView.swift` — a Work Card as the Grid serves it, the writes a person makes, and its read-only view.
 
-Tests: `swift test` (account sign-in against a stub Grid; nothing leaves the Mac).
+Tests: `swift test` (account sign-in and the Works screen's model against a stub Grid; nothing leaves the Mac).
+Two more tests run only when asked: `WorksLiveTests` takes one Work round a running Grid as the person
+(`WORKS_LIVE_GRID`, `WORKS_LIVE_EMAIL`, `WORKS_LIVE_PASSWORD`, `WORKS_LIVE_BUILDER`), and `WorksRenderTests` draws the
+Works screen's card view for a folder of cards into images (`WORKS_RENDER_DIR`, `WORKS_RENDER_OUT`).

@@ -2,7 +2,7 @@
 canonical: true
 topic: verification-rules
 status: live
-last_verified: 2026-11-24
+last_verified: 2026-11-25
 owners: [henry, claude]
 ---
 
@@ -28,12 +28,14 @@ flowchart TD
 
 ## Status today (read this first)
 
-The toolchain was bootstrapped on 2026-11-23. **Four areas are verified under these rules:** vector clocks
+The toolchain was bootstrapped on 2026-11-23. **Five areas are verified under these rules:** vector clocks
 (`P-VCLOCK-01…08`, `protocol/src/knowledge.ts`), hybrid clocks and knowledge-card merge (`P-HLC-01…05`,
 `P-CARD-01…06`, same file), the social cycle's trusted-peer list (`P-SOCIAL-01…04`,
 `brain/src/noesis_brain/social_logic.py`) and direct-message delivery between Nous (`P-DM-01…09`,
-`grid/src/integration/peer-messages.ts`, `brain/src/noesis_brain/peer_inbox.py`). Everything else written before
-that date is unverified.
+`grid/src/integration/peer-messages.ts`, `brain/src/noesis_brain/peer_inbox.py`) and the Work Card (`P-WORK-01…09`,
+`grid/src/work/work-logic.ts`, `grid/src/work/work-service.ts`; and a Nous's part in it, `P-NOUSWORK-01…03`,
+`brain/src/noesis_brain/work_logic.py`, `work_cycle.py`; 2026-11-25). Everything else written before
+2026-11-23 is unverified.
 
 | Piece | Where |
 |-------|-------|

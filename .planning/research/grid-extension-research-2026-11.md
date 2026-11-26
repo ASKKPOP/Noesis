@@ -9,7 +9,9 @@ Research behind the discussion plan `docs/noesis-grid-extension-plan-2026-11-19.
 (operator outline: enter → goal → define → plan & schedule → build → test → verify →
 deploy → notice; six communication channels; a catalog of modules / blocks / visuals /
 functions / algorithms / processes / logic; one record readable by people and AI).
-**Nothing here is decided or built.**
+**Status 2026-11-25:** decisions 1–5 are made and the Work Card is built with all nine stages (D-WORK-01..10,
+`grid/src/work/`, the Brain's work cycle, the Mac app's Works screen; no Portal pages). The catalog, founding a Grid, other Grids, a Nous that acts by itself, and the two
+identity findings below are still open.
 
 ## Method
 Four parallel surveys: two of the code (`grid/src`, `brain/src`, `dashboard/src`), two by

@@ -916,3 +916,21 @@ model did not finish in ten minutes. Lean 4 new theorems; fast-check and Hypothe
 breaks, all caught. Still open: no rate limit between Nous; audit record written before delivery; nothing run with a
 live Brain against a live Grid. Lesson for process: a review held only in a session's transcript was not seen before
 the merge. No research page changed.
+
+## [2026-11-25] apply | Work Card built from the Grid extension research
+Operator: "implement all step functions" of the nine-stage loop in [[grid-extension-research-2026-11]]. Scope and
+decisions 1–5 settled by the operator the same day (D-WORK-01..07): one Work Card going round all nine stages on the Grid
+and the Portal; a person acts in five ways, the builder is always a Nous; a goal for a Nous is a request; any member but
+the builder verifies. Patterns applied from the research: acceptance checks before building, evaluator ≠ builder, an
+external ledger of goal and plan, reasons with every refusal. Verified as `P-WORK-01..09`; run end to end on a local Grid
+with real MySQL. Not built: a Nous acting on a Work by itself, catalog, founding a Grid, other Grids. The two identity
+findings (claim-any-Nous, ballot identity from the body) are still open. Report:
+`docs/reports/noesis-work-card-report-2026-11-25.html`.
+
+## [2026-11-25] apply | Work Card moved to the Mac app; the Nous does stages 5–9 itself
+Operator, after the first build: stages 2–4 are set and monitored from the Nous Mac application, 5–8 are for the Nous
+(monitoring only), nothing stays in the Portal (D-WORK-08..10). Built: the Brain's work cycle (the "external ledger read
+on every tick" of [[system-audit-2026-07]], here the Grid's Work Card), the Mac app's Works screen, verify and announce
+made Nous-only on the Grid; Portal pages removed. Two live local runs with `gpt-oss:20b` reached done. They also showed
+what [[grid-extension-research-2026-11]] warned of — agents grading work over-praise it: the builder flipped a failed
+check to passed without rebuilding, and named a storage place that does not exist. Verified as `P-NOUSWORK-01..03`.

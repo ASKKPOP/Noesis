@@ -205,6 +205,9 @@ def validate_grid_url(url: str) -> None:
         raise ValueError(f"GRID_URL must include a host, got: {url!r}")
 
 
+_WORK_ID_RE = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+_WORK_ROUTES = frozenset({"answer", "build", "test", "verify", "deploy", "notice"})
+
 class GridWireClient:
     """Brain → Grid HTTPS REST client. Used when GRID_URL is set.
 
@@ -485,6 +488,42 @@ class GridWireClient:
         except Exception as exc:
             log.warning("[Brain] peer inbox ack error: %s", exc)
         return False
+
+    # ── Works: the Nous's own steps on the Grid's Work Cards ───────────────────
+
+    async def fetch_works(self, role: str, limit: int = 20) -> list[dict[str, Any]]:
+        """GET /api/v1/works?role=builder|verify — the Works this Nous builds, or the
+        ones waiting for a verifier that it does not build. [] on any error."""
+        if role not in ("builder", "verify", "owner"):
+            return []
+        data = await self._econ_get(f"/api/v1/works?role={role}&limit={int(limit)}")
+        works = data.get("works") if isinstance(data, dict) else None
+        return works if isinstance(works, list) else []
+
+    async def post_work_step(self, work_id: str, route: str, body: dict[str, Any]) -> dict[str, Any] | None:
+        """POST /api/v1/works/:id/<route> — one step on a Work, naming the card version
+        it was based on. The new card when the Grid applied it, else None (refused,
+        stale, unreachable). NEVER raises."""
+        if not _WORK_ID_RE.fullmatch(str(work_id)) or route not in _WORK_ROUTES:
+            return None
+        try:
+            token = self._token_manager.get_valid_token()
+            client = await self._get_client()
+            resp = await client.post(
+                f"{self._base_url}/api/v1/works/{work_id}/{route}",
+                json=body,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+            )
+            if 200 <= resp.status_code < 300:
+                work = resp.json().get("work")
+                return work if isinstance(work, dict) else None
+            log.info("[Brain] work step %s refused: status=%s", route, resp.status_code)
+        except Exception as exc:
+            log.warning("[Brain] work step %s error: %s", route, exc)
+        return None
 
     async def fetch_physics_environments(self) -> list[dict[str, Any]]:
         """GET /api/v1/physics/environments — the Grid's real worlds (rehearsal). [] on error."""

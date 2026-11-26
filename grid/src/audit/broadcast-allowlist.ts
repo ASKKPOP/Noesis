@@ -741,6 +741,14 @@ export const ALLOWLIST_MEMBERS: readonly string[] = [
     // creation. Under the pre-cleared operator.* prefix; sole producer appendOperatorEvent
     // (tier required). Payload {action, grid_id, operator_id, tier, visibility}.
     'operator.grid_visibility_changed',    // (161)
+    // Work Card — Allowlist 161 → 162. NEW prefix work.*. A Work's stage moved: a goal was
+    // stated, or the Work took one step round the nine-stage loop. The card's wording stays
+    // in the `works` table; only its sha256 crosses. Actor DID hashed.
+    // work.stage_changed (162): actorDid = actor_did_hash.
+    //   sole-producer grid/src/audit/append-work-stage-changed.ts
+    //   closed 6-key {actor_did_hash, card_hash, from_stage, tick, to_stage, work_id}
+    //   from_stage is 'enter' when the Work is created.
+    'work.stage_changed',                  // (162)
 ] as const;
 
 /**
