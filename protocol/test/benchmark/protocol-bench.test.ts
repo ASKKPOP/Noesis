@@ -15,8 +15,8 @@ import {
     KnowledgePool,
     mergeVectorClocks,
     compareVectorClocks,
-    type KnowledgeCard,
-} from '../../src/knowledge.js';
+    type KnowledgeCard, } from '../../src/knowledge.js';
+import { signCardAuthorship } from '../../src/knowledge.js';
 import { InMemoryMetricsCollector } from '../../src/benchmark/collector.js';
 import { evaluateScenario, aggregateScenarios, formatBenchmarkReport } from '../../src/benchmark/reporter.js';
 import type { BenchmarkScenarioResult, ProtocolBenchReport } from '../../src/benchmark/types.js';
@@ -119,6 +119,7 @@ describe('ProtocolBench — Society Protocol', () => {
                     tombstone: false,
                 },
             };
+            signCardAuthorship(card, identity);
             const qStart = performance.now();
             pool.mergeCard(card);
             const qEnd = performance.now();
@@ -236,6 +237,7 @@ describe('ProtocolBench — Society Protocol', () => {
                         tombstone: false,
                     },
                 };
+                signCardAuthorship(card, nodes[n].identity);
                 nodes[n].pool.mergeCard(card);
                 allCards.push(card);
             }
@@ -318,6 +320,7 @@ describe('ProtocolBench — Society Protocol', () => {
                     tombstone: false,
                 },
             };
+            signCardAuthorship(card, pools[0].identity);
             sharedCards.push(card);
             pools[0].pool.mergeCard(card);
             pools[1].pool.mergeCard(card);
@@ -327,7 +330,7 @@ describe('ProtocolBench — Society Protocol', () => {
         collector.recordFault('network_partition');
         const partitionStart = performance.now();
 
-        // Pool 0 updates cards with its own vector clock
+        // Pool 0, the author, updates cards with its own vector clock
         for (let c = 0; c < 3; c++) {
             const update: KnowledgeCard = {
                 ...sharedCards[c],
@@ -339,18 +342,20 @@ describe('ProtocolBench — Society Protocol', () => {
                     tombstone: false,
                 },
             };
+            signCardAuthorship(update, pools[0].identity);
             pools[0].pool.mergeCard(update);
         }
 
-        // Pool 1 updates same cards with its own vector clock (concurrent!)
+        // Pool 1 writes to the same cards at the same time (concurrent!). It is not their
+        // author, so it changes only what any node may change; the author's fields and
+        // signature stay as it received them.
         for (let c = 0; c < 3; c++) {
             const update: KnowledgeCard = {
                 ...sharedCards[c],
-                title: `Updated by Pool 1 - Card ${c}`,
-                version: 2,
+                confidence: 0.95,
                 crdt: {
                     hlc: { wallTime: Date.now() + 60000 + c, logical: 0, nodeId: pools[1].identity.did },
-                    vectorClock: { [pools[1].identity.did]: c + 2 },
+                    vectorClock: { [pools[0].identity.did]: c + 1, [pools[1].identity.did]: 1 },
                     tombstone: false,
                 },
             };

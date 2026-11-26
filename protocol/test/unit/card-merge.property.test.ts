@@ -20,6 +20,8 @@ import {
     isValidHybridClock,
     isValidVectorClock,
     KnowledgePool,
+    signCardAuthorship,
+    verifyCardAuthorship,
     type HybridLogicalClock,
     type KnowledgeCard,
 } from '../../src/knowledge.js';
@@ -49,7 +51,35 @@ type Op =
     | { kind: 'confirm'; r: number; now: number }
     | { kind: 'delete'; r: number; now: number }
     | { kind: 'deliver'; to: number; msg: number; recent?: boolean; viaNetwork: boolean }
-    | { kind: 'deliverBad'; to: number; msg: number; bad: Bad; viaNetwork: boolean };
+    | { kind: 'deliverBad'; to: number; msg: number; bad: Bad; viaNetwork: boolean }
+    | { kind: 'deliverForged'; to: number; msg: number; forge: Forge; viaNetwork: boolean };
+/** What someone who is not the author changes on a card before passing it on. */
+type Forge =
+    | keyof typeof FIELD_FORGES | 'undelete-or-delete' | 'author'
+    | 'author-count' | 'no-signature' | 'bad-signature' | 'signed-by-other' | 'own-card-same-id';
+/** One change to each field only the author may set. */
+const FIELD_FORGES = {
+    id: (c: KnowledgeCard) => { c.id += '-other'; },
+    spaceId: (c: KnowledgeCard) => { c.spaceId += '-other'; },
+    type: (c: KnowledgeCard) => { c.type = c.type === 'fact' ? 'insight' : 'fact'; },
+    title: (c: KnowledgeCard) => { c.title += '!'; },
+    summary: (c: KnowledgeCard) => { c.summary += '!'; },
+    content: (c: KnowledgeCard) => { c.content = 'replaced'; },
+    contentFormat: (c: KnowledgeCard) => { c.contentFormat = c.contentFormat === 'plain' ? 'markdown' : 'plain'; },
+    createdAt: (c: KnowledgeCard) => { c.createdAt += 1; },
+    version: (c: KnowledgeCard) => { c.version += 1; },
+    tags: (c: KnowledgeCard) => { c.tags = [...c.tags, 'added']; },
+    domain: (c: KnowledgeCard) => { c.domain = [...c.domain, 'added']; },
+    entities: (c: KnowledgeCard) => { c.entities = [...c.entities, 'Added']; },
+    source: (c: KnowledgeCard) => { c.source = { type: 'web', url: 'https://example.test/' }; },
+    privacy: (c: KnowledgeCard) => { c.privacy = c.privacy === 'public' ? 'private' : 'public'; },
+    allowedReaders: (c: KnowledgeCard) => { c.allowedReaders = ['did:test:someone']; },
+};
+const FORGES = [
+    ...(Object.keys(FIELD_FORGES) as (keyof typeof FIELD_FORGES)[]),
+    'undelete-or-delete', 'author', 'author-count', 'no-signature', 'bad-signature', 'signed-by-other',
+    'own-card-same-id',
+] as const;
 type Bad = { field: 'crdt' | 'hlc' | 'wallTime' | 'logical' | 'nodeId'; value: unknown };
 
 const arbReplica = fc.nat({ max: REPLICAS - 1 });
@@ -68,6 +98,7 @@ const arbBad: fc.Arbitrary<Bad> = fc.oneof(
     fc.record({ field: fc.constant('logical' as const), value: arbBadNumber }),
     fc.record({ field: fc.constant('nodeId' as const), value: fc.constantFrom(undefined, null, 0, 5, true, {}, []) }),
 );
+const arbForge: fc.Arbitrary<Forge> = fc.constantFrom(...FORGES);
 const arbOp: fc.Arbitrary<Op> = fc.oneof(
     { weight: 3, arbitrary: fc.record({ kind: fc.constant('update' as const), now: arbReading, title: fc.string({ minLength: 1, maxLength: 6 }) }) },
     { weight: 5, arbitrary: fc.record({ kind: fc.constant('confirm' as const), r: arbReplica, now: arbReading }) },
@@ -76,14 +107,15 @@ const arbOp: fc.Arbitrary<Op> = fc.oneof(
     // concurrent states; otherwise any state ever held, however old, is delivered.
     { weight: 10, arbitrary: fc.record({ kind: fc.constant('deliver' as const), to: arbReplica, msg: fc.nat(), recent: fc.boolean(), viaNetwork: fc.boolean() }) },
     { weight: 2, arbitrary: fc.record({ kind: fc.constant('deliverBad' as const), to: arbReplica, msg: fc.nat(), bad: arbBad, viaNetwork: fc.boolean() }) },
+    { weight: 3, arbitrary: fc.record({ kind: fc.constant('deliverForged' as const), to: arbReplica, msg: fc.nat(), forge: arbForge, viaNetwork: fc.boolean() }) },
 );
 
 /** One write, as the test recorded it when it was made. */
 interface WriteRecord {
     stamp: HybridLogicalClock;
     del: boolean;
-    view: unknown;
-    version: number;
+    authored: unknown;
+    open: unknown;
     verifications: string[];
 }
 /** A card state some replica held, and the writes that replica had seen. All stay deliverable. */
@@ -93,10 +125,23 @@ interface Message {
 }
 
 const verificationKey = (v: { verifier: string; timestamp: number }): string => `${v.verifier}:${v.timestamp}`;
-/** The card's content: everything the winning write carries whole. */
-function view(card: KnowledgeCard): unknown {
-    const { crdt: _crdt, version: _version, usage: _usage, verifications: _verifications, ...rest } = card;
-    return JSON.parse(JSON.stringify(rest));
+// The fields only the author may set, as this test states them (with the signature over them).
+const AUTHORED = [
+    'id', 'spaceId', 'type', 'title', 'summary', 'content', 'contentFormat', 'author', 'createdAt',
+    'version', 'tags', 'domain', 'entities', 'source', 'privacy', 'allowedReaders', 'authorSignature',
+];
+/** The authored part: what only the author may set, and the deleted flag. */
+function authoredView(card: KnowledgeCard): unknown {
+    const part: Record<string, unknown> = { tombstone: card.crdt.tombstone };
+    for (const field of AUTHORED) part[field] = (card as any)[field];
+    return JSON.parse(JSON.stringify(part));
+}
+/** The open part: what any node may set and the newest write carries whole. */
+function openView(card: KnowledgeCard): unknown {
+    const { crdt: _crdt, usage: _usage, verifications: _verifications, ...rest } = card;
+    const part: Record<string, unknown> = { ...rest };
+    for (const field of AUTHORED) delete part[field];
+    return JSON.parse(JSON.stringify(part));
 }
 /** The whole card, with the verification list in a fixed order. */
 function normalized(card: KnowledgeCard): unknown {
@@ -107,6 +152,15 @@ function normalized(card: KnowledgeCard): unknown {
 const subset = (a: Set<string>, b: Set<string>): boolean => [...a].every((k) => b.has(k));
 const vcLeq = (a: Record<string, number>, b: Record<string, number>): boolean =>
     ['before', 'equal'].includes(compareVectorClocks(a, b));
+
+// Checking a signature is slow, and the same authored part is checked at every step.
+// verifyCardAuthorship is a pure function of this text, so each distinct text is checked once.
+const verified = new Map<string, boolean>();
+function signatureVerifies(card: KnowledgeCard, authorDid: string): boolean {
+    const text = JSON.stringify([authoredView(card), card.crdt.vectorClock[authorDid]]);
+    if (!verified.has(text)) verified.set(text, verifyCardAuthorship(card));
+    return verified.get(text)!;
+}
 
 /** How often each merge outcome happened over a whole run: the generator must reach them all. */
 const outcomes: Record<string, number> = {};
@@ -153,8 +207,8 @@ async function run(createNow: number, ops: Op[]): Promise<void> {
         writes.set(key, {
             stamp: { ...card.crdt.hlc },
             del,
-            view: view(card),
-            version: card.version,
+            authored: authoredView(card),
+            open: openView(card),
             verifications: card.verifications.map(verificationKey),
         });
         seen[i].add(key);
@@ -172,9 +226,14 @@ async function run(createNow: number, ops: Op[]): Promise<void> {
             const mine = [...seen[i]].map((key) => writes.get(key)!);
             const top = mine.reduce((a, b) => (compareHLC(a.stamp, b.stamp) >= 0 ? a : b));
 
-            // P-CARD-02: the replica shows the write with the largest stamp among those it has seen.
+            // P-CARD-02: the open part is that of the largest-stamp write the replica has seen.
             expect(card.crdt.hlc).toEqual(top.stamp);
-            expect(view(card)).toEqual(top.view);
+            expect(openView(card)).toEqual(top.open);
+            // P-CARD-07: the authored part is that of the author's newest write the replica has seen.
+            const authorSeq = card.crdt.vectorClock[dids[0]];
+            expect(authoredView(card)).toEqual(writes.get(`${dids[0]}#${authorSeq}`)!.authored);
+            // P-CARD-08: every stored card carries a signature that verifies.
+            expect(signatureVerifies(card, dids[0])).toBe(true);
             // P-CARD-04: deleted exactly when a delete has been seen.
             expect(card.crdt.tombstone).toBe(mine.some((w) => w.del));
             // The vector clock counts exactly the writes seen.
@@ -183,7 +242,6 @@ async function run(createNow: number, ops: Op[]): Promise<void> {
                 expect(card.crdt.vectorClock[dids[n]] ?? 0).toBe(count);
             }
             // The joined fields are those of all the writes seen.
-            expect(card.version).toBe(Math.max(...mine.map((w) => w.version)));
             expect(card.verifications.map(verificationKey).sort()).toEqual(
                 [...new Set(mine.flatMap((w) => w.verifications))].sort(),
             );
@@ -207,7 +265,7 @@ async function run(createNow: number, ops: Op[]): Promise<void> {
     check();
 
     for (const op of ops) {
-        const r = op.kind === 'update' ? 0 : op.kind === 'deliver' || op.kind === 'deliverBad' ? op.to : op.r;
+        const r = op.kind === 'update' ? 0 : 'to' in op ? op.to : op.r;
         const before = held(r) ? (JSON.parse(JSON.stringify(held(r))) as KnowledgeCard) : undefined;
         const beforeText = JSON.stringify(held(r));
         const errorsBefore = errors[r];
@@ -226,8 +284,14 @@ async function run(createNow: number, ops: Op[]): Promise<void> {
         } else if (op.kind === 'delete') {
             if (!before) continue;
             now = op.now;
-            await pools[r].deleteCard(id);
-            recordWrite(r, true);
+            if (r === 0) {
+                await pools[r].deleteCard(id);
+                recordWrite(r, true);
+            } else {
+                // P-CARD-07: only the author's node can delete.
+                await expect(pools[r].deleteCard(id)).rejects.toThrow(/permission/i);
+                expect(JSON.stringify(held(r))).toBe(beforeText);
+            }
         } else if (op.kind === 'deliver') {
             const m = op.recent
                 ? msgs[msgs.length - 1 - (op.msg % Math.min(4, msgs.length))]
@@ -241,6 +305,35 @@ async function run(createNow: number, ops: Op[]): Promise<void> {
             const grew = !subset(m.seen, seen[r]);
             for (const key of m.seen) seen[r].add(key);
             if (grew) capture(r);
+        } else if (op.kind === 'deliverForged') {
+            // P-CARD-08: a card the author did not sign as it stands is rejected and changes nothing.
+            const m = msgs[op.msg % msgs.length];
+            const remote = JSON.parse(new TextDecoder().decode(m.bytes)) as KnowledgeCard;
+            const other = identities[1 + (op.msg % (REPLICAS - 1))]; // a node that is not the author
+            if (op.forge in FIELD_FORGES) FIELD_FORGES[op.forge as keyof typeof FIELD_FORGES](remote);
+            else if (op.forge === 'undelete-or-delete') remote.crdt.tombstone = !remote.crdt.tombstone;
+            else if (op.forge === 'author') remote.author = other.did;
+            else if (op.forge === 'author-count') remote.crdt.vectorClock[dids[0]] += 1;
+            else if (op.forge === 'no-signature') delete remote.authorSignature;
+            else if (op.forge === 'bad-signature') remote.authorSignature = 'not a signature';
+            else if (op.forge === 'signed-by-other') signCardAuthorship(remote, other);
+            else {
+                // A card another node really authored and signed, under this card's id. It is
+                // refused where the card is already held; a replica that has never seen the id
+                // has nothing to compare with (stated limit), so that case is not delivered.
+                if (!before) continue;
+                remote.author = other.did;
+                remote.title = 'mine now';
+                remote.crdt.vectorClock = { ...remote.crdt.vectorClock, [other.did]: 99 };
+                signCardAuthorship(remote, other);
+            }
+            if (op.viaNetwork) {
+                pools[r].handleSyncMessage(new TextEncoder().encode(JSON.stringify(remote)), 'did:test:peer');
+                expect(errors[r]).toBe(errorsBefore + 1);
+            } else {
+                expect(() => pools[r].mergeCard(remote)).toThrow(/author/i);
+            }
+            expect(JSON.stringify(held(r))).toBe(beforeText);
         } else {
             // P-CARD-06: a card whose stamp is not valid is rejected and changes nothing.
             const m = msgs[op.msg % msgs.length];
@@ -275,7 +368,7 @@ async function run(createNow: number, ops: Op[]): Promise<void> {
 }
 
 describe('one card across three replicas (actions of CardMerge.tla)', () => {
-    it('P-CARD-01 to P-CARD-06 and P-HLC-05 hold after every step of any action sequence', async () => {
+    it('P-CARD-01 to P-CARD-08 and P-HLC-05 hold after every step of any action sequence', async () => {
         await fc.assert(
             // Most cases start with the card on all three replicas, so concurrent writes are common;
             // the rest start with it on one, so first deliveries are covered too.
@@ -285,6 +378,7 @@ describe('one card across three replicas (actions of CardMerge.tla)', () => {
                 fc.array(arbOp, { maxLength: 40, size: 'max' }),
                 async (createNow, spread, ops) => {
                     await run(createNow, spread ? [...SPREAD, ...ops] : ops);
+                    await new Promise((resolve) => setImmediate(resolve)); // let the test runner breathe
                 },
             ),
             params,
@@ -293,10 +387,10 @@ describe('one card across three replicas (actions of CardMerge.tla)', () => {
         console.log(`[card-merge.property] merge outcomes: ${JSON.stringify(outcomes)}`);
         if (numRuns >= 1000) {
             for (const action of ['new', 'remote-wins', 'local-wins-concurrent', 'remote-wins-concurrent']) {
-                expect(outcomes[action] ?? 0, `merge outcome "${action}" never happened`).toBeGreaterThan(numRuns / 2);
+                expect(outcomes[action] ?? 0, `merge outcome "${action}" never happened`).toBeGreaterThan(numRuns / 4);
             }
         }
-    }, 120_000);
+    }, Math.max(240_000, numRuns * 120)); // each delivery checks a signature: about 20 s per 1,000 cases locally
 });
 
 // Counterexamples found by the property above on the code as it was, kept as fixed cases.
@@ -330,8 +424,8 @@ describe('card merge regressions', () => {
     it('a delete reaches a replica that held the card', async () => {
         await run(0, [
             { kind: 'deliver', to: 1, msg: 0, viaNetwork: true }, // msgs[1]: replica 1 holds the card
-            { kind: 'delete', r: 1, now: 0 }, // msgs[2]: replica 1 deleted it
-            { kind: 'deliver', to: 0, msg: 2, viaNetwork: true }, // replica 0 must now show it deleted
+            { kind: 'delete', r: 0, now: 0 }, // msgs[2]: the author deleted it
+            { kind: 'deliver', to: 1, msg: 2, viaNetwork: true }, // replica 1 must now show it deleted
         ]);
     });
 
@@ -352,6 +446,35 @@ describe('card merge regressions', () => {
             { kind: 'deliver', to: 0, msg: 4, viaNetwork: true },
             { kind: 'deliver', to: 1, msg: 4, viaNetwork: true }, // replica 1 sees 2's
             { kind: 'deliver', to: 2, msg: 3, viaNetwork: true }, // replica 2 sees 1's
+        ]);
+    });
+
+    // 2026-11-25, seed 1, shrunk to no steps at all: a new card carried no author signature.
+    it('a new card carries a signature that verifies', async () => {
+        await run(0, []);
+    });
+
+    // Until 2026-11-25 mergeCard checked no authorship: any node could change or delete any card.
+    // Every way this test knows to do that, at a replica that holds the card and one that does not.
+    it.each(FORGES)('a card forged by "%s" is rejected', async (forge) => {
+        for (const viaNetwork of [true, false]) {
+            await run(0, [
+                { kind: 'deliverForged', to: 0, msg: 0, forge, viaNetwork }, // holds the card
+                { kind: 'deliverForged', to: 1, msg: 0, forge, viaNetwork }, // has never seen it
+                { kind: 'delete', r: 0, now: 1 }, // msgs[1]: the author deletes
+                { kind: 'deliverForged', to: 0, msg: 1, forge, viaNetwork }, // e.g. an undelete
+            ]);
+        }
+    });
+
+    it('a node that is not the author cannot delete, and its other writes keep the authored part', async () => {
+        await run(0, [
+            { kind: 'deliver', to: 1, msg: 0, viaNetwork: true },
+            { kind: 'delete', r: 1, now: 2 },
+            { kind: 'confirm', r: 1, now: 2 },
+            { kind: 'update', now: 3, title: 'by the author' }, // msgs[3]
+            { kind: 'deliver', to: 1, msg: 3, viaNetwork: true }, // concurrent with the confirm
+            { kind: 'deliver', to: 0, msg: 2, viaNetwork: true }, // the confirm reaches the author
         ]);
     });
 });

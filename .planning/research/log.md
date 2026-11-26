@@ -934,3 +934,14 @@ on every tick" of [[system-audit-2026-07]], here the Grid's Work Card), the Mac 
 made Nous-only on the Grid; Portal pages removed. Two live local runs with `gpt-oss:20b` reached done. They also showed
 what [[grid-extension-research-2026-11]] warned of — agents grading work over-praise it: the builder flipped a failed
 check to passed without rebuilding, and named a storage place that does not exist. Verified as `P-NOUSWORK-01..03`.
+
+## [2026-11-25] feat | Knowledge cards carry an author signature; only the author changes or deletes a card
+
+`protocol/src/knowledge.ts`: a card's author signs (Ed25519, key read from the author `did:key`) the fields only the
+author may set, the deleted flag and the author's own vector clock count. `mergeCard` rejects a card whose signature does
+not verify or whose author differs from the copy held, and takes the authored part whole from the copy with the newer
+author write; `deleteCard` refuses other nodes. Any node may still set confidence, verification status and usage.
+Verified as `P-CARD-07`, `P-CARD-08`; `P-CARD-02` and `P-CARD-04` reworded to match. TLC `CardMerge` 16,800 distinct
+states with forged cards; Lean 4 new theorems; fast-check 1,000 × 10 seeds and 10,000 once; 18 deliberate breaks caught.
+Still open: a replica that has never seen an id accepts the first signed card under it; cards made earlier have no
+signature; open fields and stamps can still be set by any peer. No research page changed.

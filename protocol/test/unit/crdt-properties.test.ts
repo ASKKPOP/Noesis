@@ -18,6 +18,7 @@ import {
     KnowledgePool,
     type HybridLogicalClock,
     type KnowledgeCard,
+    signCardAuthorship,
 } from '../../src/knowledge.js';
 import { Storage } from '../../src/storage.js';
 import { generateIdentity } from '../../src/identity.js';
@@ -216,7 +217,7 @@ describe('CRDT Formal Verification: KnowledgeCard Merge', () => {
         tombstone?: boolean
     ): KnowledgeCard {
         const identity = (pool as any).identity;
-        return {
+        const card: KnowledgeCard = {
             id,
             spaceId,
             type: 'fact',
@@ -246,6 +247,8 @@ describe('CRDT Formal Verification: KnowledgeCard Merge', () => {
                 tombstone: tombstone ?? false,
             },
         };
+        signCardAuthorship(card, identity);
+        return card;
     }
 
     beforeEach(() => {
@@ -292,16 +295,20 @@ describe('CRDT Formal Verification: KnowledgeCard Merge', () => {
                 const spaceId = `space-tomb-${i}`;
                 setupSpaceInMemory(pool, spaceId);
 
+                // Only the author deletes: both copies are the author's own writes, the
+                // second one newer by the author's count.
+                const did = (pool as any).identity.did;
+
                 // Create a local card (not tombstoned)
                 const localCard = makeCard(pool, `card-tomb-${i}`, spaceId, 'Local',
-                    { 'A': 1 },
+                    { [did]: 1 },
                     { wallTime: Date.now() + 100000, logical: 0, nodeId: 'A' },
                     false);
                 pool.mergeCard(localCard);
 
                 // Merge a remote card with tombstone=true and higher VC
                 const remoteCard = makeCard(pool, `card-tomb-${i}`, spaceId, 'Remote',
-                    { 'A': 1, 'B': 1 },
+                    { [did]: 2, 'B': 1 },
                     { wallTime: Date.now() + 200000, logical: 1, nodeId: 'B' },
                     true);
                 const merged = pool.mergeCard(remoteCard);
@@ -413,6 +420,7 @@ describe('CRDT Formal Verification: N-Node Convergence', () => {
                                 tombstone: false,
                             },
                         };
+                        signCardAuthorship(card, identity);
                         cards.push(card);
                         pool.mergeCard(card);
                     }

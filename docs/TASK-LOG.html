@@ -65,6 +65,41 @@
   </div>
 
   <!-- ============================ SESSION 32 ============================ -->
+  <h2>Session 38 — 2026‑11‑25 · “Add an authorship check so only a card's author can overwrite or delete it”</h2>
+  <p class="sub">Request: the follow-up left open in Session 35. Protocol package only; nothing deployed.</p>
+  <ul>
+    <li><b>Design (Claude's, open to correction)</b> — a card now carries its author's Ed25519 signature (<code>authorSignature</code>) over the fields only the author may set, the deleted flag, and the author's own vector clock count. The author's public key is read from the author DID (<code>did:key</code>), so no key exchange is needed and a card stays checkable when a third node passes it on. <span class="q">A check on who sent the message would not do: cards are relayed by nodes that did not write them.</span></li>
+    <li><b>What only the author may set</b> — <code>id</code>, <code>spaceId</code>, <code>type</code>, <code>title</code>, <code>summary</code>, <code>content</code>, <code>contentFormat</code>, <code>author</code>, <code>createdAt</code>, <code>version</code>, <code>tags</code>, <code>domain</code>, <code>entities</code>, <code>source</code>, <code>privacy</code>, <code>allowedReaders</code>, and the deleted flag. <b>What any node may still set</b> — confidence, verification status and list, usage counters, last-updated time. <code>confirmKnowledge</code> by another node therefore still works.</li>
+    <li><b>Change</b> <span class="tag done">done</span> in <code>protocol/src/knowledge.ts</code>: <code>signCardAuthorship</code> / <code>verifyCardAuthorship</code>; <code>createCard</code> and every author write sign; <code>mergeCard</code> rejects a card whose signature does not verify or whose author differs from the copy held; the merge takes the authored fields, deleted flag and signature together from the copy with the newer author write, whichever copy wins on the open fields; <code>deleteCard</code> refuses a node that is not the author.</li>
+    <li><b>Merge behaviour changed for honest nodes too</b> — before, a confirmation by another node made at the same time as the author's edit could win on its stamp and carry the author's <i>older</i> text to every replica. Now the author's newest text always stays.</li>
+    <li><b>Registered properties reworded (V‑3.4)</b> — <code>P-CARD-02</code> now speaks of the fields any node may change (it spoke of the whole card); <code>P-CARD-04</code> now says "a delete by the author". New: <code>P-CARD-07</code>, <code>P-CARD-08</code>. This is a design change asked for by the user, not a narrowing to make a leg pass.</li>
+    <li><b>Existing tests</b> — 14 tests built cards by hand with no signature and were rejected. They now sign their cards. Three in <code>knowledge.test.ts</code> and one benchmark had a node that is not the author change or delete a card; they were rewritten to do what is now allowed, and two tests were added for what is now refused.</li>
+    <li><b>Found and fixed on the way</b> — <code>real-agents-e2e</code>'s card helper made a fractional wall time, which <code>mergeCard</code> has rejected since Session 35. It only showed in scenarios that need a live LLM, so no run caught it. Now a whole number.</li>
+    <li><b>Wiki</b> — the public wiki has no page on the protocol package's knowledge sync, so no wiki page changed.</li>
+  </ul>
+<pre>Class: A
+Property     TLA+ (CardMerge.tla)                          Lean (CardMerge.lean, no bound)                   PBT (cases x seeds)   Mutation caught
+P-CARD-02    LastWriteWins (reworded)                      mergeCard_good, write_good                        1,000 x 10 + 10,000   PBT yes
+P-CARD-04    DeletedIffDeleteSeen (reworded)               tombstone_sticky, mergeCard_good                  1,000 x 10 + 10,000   TLC yes, Lean yes
+P-CARD-07    AuthoredIsAuthorsNewest, OthersKeepAuthored   mergeCard_good, write_good,                       1,000 x 10 + 10,000   TLC yes, Lean yes, PBT yes
+                                                           write_other_keeps_authored
+P-CARD-08    AllSigned, ForgedChangesNothing               deliver_forged, mergeCard_signed, deliver_signed  1,000 x 10 + 10,000   TLC yes, Lean yes, PBT yes
+P-CARD-01, 03, 05, 06 and P-HLC-05: models and proofs re-run on the changed merge; same test, same counts.
+TLC bounds and states: 3 replicas (replica 1 the author), 1 card, 4 writes in all, clock readings 0..1, any past card state
+                       deliverable, plus each with an invalid stamp or a forged authored part — 2,281,567 generated, 16,800 distinct.
+TLC and lake build: 2 clean runs each (verification/run.sh). Lean: 4 new headline theorems, 10 re-proved, standard axioms only.
+Mutations: 4 breaks of the TLA+ model, 4 of the Lean file, 10 of the real code; every one was caught.
+Forgeries tried by the tests: one change to each of the 15 signed fields other than the author, the deleted flag flipped,
+another author named, the author's count raised, no signature, a garbled one, one made by another node, and another node's
+own signed card under the same id.
+Suites after the change: protocol unit 427 passed, twice; integration and benchmark 108 passed, 3 failed (the three
+real-agents-e2e scenarios that need live LLMs, failing before and after); tsc clean.
+Not verified: Ed25519 itself (in the models a signature is a set only the author's writes extend); a replica that has
+never seen a card id accepts the first validly signed card under it; an author signing two versions under one count; the
+open fields, which any peer can still set; a far-future stamp; cards made before today, which carry no signature and are
+rejected by peers until their author writes again; the three real-agents-e2e scenarios that need live LLMs, whose merge
+steps therefore did not run here.</pre>
+
   <h2>Session 37 — 2026‑11‑25 · “Implement all step functions” of the Grid work loop, then: set in the Mac app, done by the Nous</h2>
   <p class="sub">Three requests the same day. (1) The nine-step loop of the Grid extension plan was a picture; implement every step and write an HTML report with a guide and screenshot per step. (2) Then: steps 2–4 are set and monitored from the Nous Mac application; steps 5–8 are for the Nous and only monitored; remove it from the Portal. (3) “Implement all part.” Grid, Brain and Mac app changed; the dashboard ends unchanged. Nothing committed (the commit was blocked by the permission check), nothing deployed. Branch <code>feat/work-card</code>. Report: <a href="reports/noesis-work-card-report-2026-11-25.html">reports/noesis-work-card-report-2026-11-25.html</a>.</p>
   <ul>

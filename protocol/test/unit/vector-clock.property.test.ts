@@ -16,6 +16,7 @@ import {
     compareVectorClocks,
     isValidVectorClock,
     mergeVectorClocks,
+    signCardAuthorship,
     KnowledgePool,
     type KnowledgeCard,
 } from '../../src/knowledge.js';
@@ -247,8 +248,11 @@ describe('cards from the network (Deliver in VectorClock.tla)', () => {
         return new KnowledgePool(storage, identity);
     }
 
+    // The remote peer authors and signs the cards it sends.
+    const peer = generateIdentity('peer');
+
     function card(id: string, vectorClock: unknown, wallTime: number): KnowledgeCard {
-        return {
+        const made = {
             id,
             spaceId: 'space',
             type: 'fact',
@@ -256,7 +260,7 @@ describe('cards from the network (Deliver in VectorClock.tla)', () => {
             summary: id,
             content: id,
             contentFormat: 'plain',
-            author: 'did:test:peer',
+            author: peer.did,
             createdAt: 1,
             updatedAt: 1,
             version: 1,
@@ -270,6 +274,9 @@ describe('cards from the network (Deliver in VectorClock.tla)', () => {
             privacy: 'public',
             crdt: { hlc: { wallTime, logical: 0, nodeId: 'did:test:peer' }, vectorClock, tombstone: false },
         } as unknown as KnowledgeCard;
+        // An invalid clock cannot be signed over, and is rejected before the signature is read.
+        if (isValidVectorClock(vectorClock)) signCardAuthorship(made, peer);
+        return made;
     }
 
     const snapshot = (pool: KnowledgePool): string =>

@@ -9,6 +9,7 @@ import {
     tickHLC,
     receiveHLC,
     compareHLC,
+    signCardAuthorship,
 } from '../../src/knowledge.js';
 import { Storage } from '../../src/storage.js';
 import { generateIdentity, type Identity } from '../../src/identity.js';
@@ -343,6 +344,39 @@ describe('KnowledgePool', () => {
 
     describe('CRDT: Card Merge', () => {
         let spaceId: string;
+        const remoteAuthor = generateIdentity('Remote Author');
+
+        /** A card another node authored and signed. */
+        function remoteCardBy(author: Identity, space: string, title: string): KnowledgeCard {
+            const card: KnowledgeCard = {
+                id: `know_remote_${title.replace(/\s+/g, '_')}`,
+                spaceId: space,
+                type: 'fact',
+                title,
+                summary: title,
+                content: `${title} content`,
+                contentFormat: 'markdown',
+                author: author.did,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                version: 1,
+                tags: [],
+                domain: [],
+                entities: [],
+                confidence: 0.8,
+                verificationStatus: 'unverified',
+                verifications: [],
+                usage: { views: 0, citations: 0, applications: 0, lastAccessed: Date.now() },
+                privacy: 'room',
+                crdt: {
+                    hlc: { wallTime: Date.now(), logical: 0, nodeId: author.did },
+                    vectorClock: { [author.did]: 1 },
+                    tombstone: false
+                }
+            };
+            signCardAuthorship(card, author);
+            return card;
+        }
 
         beforeEach(async () => {
             const space = await knowledge.createSpace('Merge Test', 'Test', 'team', 'room');
@@ -378,6 +412,8 @@ describe('KnowledgePool', () => {
                 }
             };
 
+            signCardAuthorship(remoteCard, remoteIdentity);
+
             const result = knowledge.mergeCard(remoteCard);
             expect(result).not.toBeNull();
             expect(result!.id).toBe('know_remote_001');
@@ -392,16 +428,18 @@ describe('KnowledgePool', () => {
             const card = await knowledge.createCard(spaceId, 'fact', 'Original', 'Content');
             await knowledge.updateCard(card.id, { title: 'Updated' });
 
-            // Simulate stale remote with lower vector clock
+            // Simulate stale remote with lower vector clock: the author's own first version
             const staleRemote: KnowledgeCard = {
                 ...card,
                 title: 'Stale Remote',
+                version: 1,
                 crdt: {
                     hlc: { wallTime: Date.now() - 5000, logical: 0, nodeId: 'stale-node' },
                     vectorClock: { [identity.did]: 1 }, // lower than local (which is 2)
                     tombstone: false
                 }
             };
+            signCardAuthorship(staleRemote, identity);
 
             const result = knowledge.mergeCard(staleRemote);
             expect(result).toBeNull(); // Discarded
@@ -412,15 +450,35 @@ describe('KnowledgePool', () => {
         });
 
         it('should accept strictly newer remote', async () => {
-            const card = await knowledge.createCard(spaceId, 'fact', 'Local', 'Content');
+            // A card authored on another node, then a newer version from its author.
+            const base = remoteCardBy(remoteAuthor, spaceId, 'Remote Base');
+            knowledge.mergeCard(base);
 
-            // Simulate remote with higher vector clock
             const newerRemote: KnowledgeCard = {
-                ...card,
+                ...base,
                 title: 'Remote Wins',
                 content: 'Remote content wins',
                 summary: 'Remote summary',
                 version: 5,
+                crdt: {
+                    hlc: { wallTime: Date.now() + 1000, logical: 0, nodeId: remoteAuthor.did },
+                    vectorClock: { [remoteAuthor.did]: 3 },
+                    tombstone: false
+                }
+            };
+            signCardAuthorship(newerRemote, remoteAuthor);
+
+            const result = knowledge.mergeCard(newerRemote);
+            expect(result).not.toBeNull();
+            expect(result!.title).toBe('Remote Wins');
+        });
+
+        it('should reject a change to the authored fields by a node that is not the author', async () => {
+            const card = await knowledge.createCard(spaceId, 'fact', 'Local', 'Content');
+
+            const forged: KnowledgeCard = {
+                ...card,
+                title: 'Remote Wins',
                 crdt: {
                     hlc: { wallTime: Date.now() + 1000, logical: 0, nodeId: 'remote-node' },
                     vectorClock: { [identity.did]: 1, 'remote-node': 3 },
@@ -428,43 +486,58 @@ describe('KnowledgePool', () => {
                 }
             };
 
-            const result = knowledge.mergeCard(newerRemote);
-            expect(result).not.toBeNull();
-            expect(result!.title).toBe('Remote Wins');
+            expect(() => knowledge.mergeCard(forged)).toThrow(/author signature/);
+            expect(knowledge.queryCards({ query: 'Local' })).toHaveLength(1);
+            expect(knowledge.queryCards({ query: 'Remote Wins' })).toHaveLength(0);
+        });
+
+        it('should let only the author delete a card', async () => {
+            const base = remoteCardBy(remoteAuthor, spaceId, 'Not Mine');
+            knowledge.mergeCard(base);
+
+            await expect(knowledge.deleteCard(base.id)).rejects.toThrow('No permission to delete');
+            expect(knowledge.queryCards({ query: 'Not Mine' })).toHaveLength(1);
         });
 
         it('should resolve concurrent writes via HLC tie-breaking', async () => {
             const card = await knowledge.createCard(spaceId, 'fact', 'Base', 'Content');
+            const firstVersion = structuredClone(card);
+            await knowledge.updateCard(card.id, { title: 'Updated By Author' });
 
-            // Create concurrent remote: different node updated independently
+            // Concurrent remote: another node, holding the first version, wrote to the
+            // fields any node may change, without seeing the author's update.
             const concurrentRemote: KnowledgeCard = {
-                ...card,
-                title: 'Concurrent Remote',
+                ...firstVersion,
+                confidence: 0.95,
                 crdt: {
                     hlc: { wallTime: Date.now() + 50000, logical: 0, nodeId: 'remote-node' },
-                    vectorClock: { 'remote-node': 2 }, // independent branch
+                    vectorClock: { [identity.did]: 1, 'remote-node': 1 }, // independent branch
                     tombstone: false
                 }
             };
 
             const result = knowledge.mergeCard(concurrentRemote);
             expect(result).not.toBeNull();
-            // Remote has higher wallTime so it should win the LWW tie-break
-            expect(result!.title).toBe('Concurrent Remote');
+            // Remote has higher wallTime so it wins the LWW tie-break on the open fields
+            expect(result!.confidence).toBe(0.95);
+            // ...and the author's newer title stays
+            expect(result!.title).toBe('Updated By Author');
         });
 
         it('should respect tombstone-wins semantics', async () => {
-            const card = await knowledge.createCard(spaceId, 'fact', 'Will Die', 'Content');
+            const card = remoteCardBy(remoteAuthor, spaceId, 'Will Die');
+            knowledge.mergeCard(card);
 
-            // Simulate remote that tombstoned the card
+            // Simulate the remote author deleting its card
             const tombstonedRemote: KnowledgeCard = {
                 ...card,
                 crdt: {
-                    hlc: { wallTime: Date.now() + 1000, logical: 0, nodeId: 'remote-node' },
-                    vectorClock: { [identity.did]: 1, 'remote-node': 1 },
+                    hlc: { wallTime: Date.now() + 1000, logical: 0, nodeId: remoteAuthor.did },
+                    vectorClock: { [remoteAuthor.did]: 2 },
                     tombstone: true
                 }
             };
+            signCardAuthorship(tombstonedRemote, remoteAuthor);
 
             const result = knowledge.mergeCard(tombstonedRemote);
             expect(result).not.toBeNull();
