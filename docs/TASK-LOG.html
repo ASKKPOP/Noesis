@@ -104,7 +104,7 @@ P-NOUSWORK-02   N/A (V-9.2) pure function              verify_body_is_well_forme
 P-NOUSWORK-03   Work.tla NoLostWrite (Read-then-write) applied_write_was_on_the_version_read                 1,000 × 10            tests
 P-WORK-04's sentence changed today: "a member other than its builder" became "a Nous other than its builder" (D-WORK-08).
 TLA+ bounds: 1 person, 3 Nous, 1 non-member, plans of 1–2 steps, 2 checks, 14 applied writes, members may leave.
-             464,642,749 states generated, 69,060,880 distinct; 2 clean runs.
+             464,642,749 states generated, 69,060,880 distinct; 2 clean runs. After PR 75's CI run timed out on this model, symmetry over Nous and checks was added (same bounds and invariants): 67,566,551 generated, 10,100,936 distinct; 2 clean runs; 3 deliberate breaks re-caught.
 Lean: 18 headline theorems (Work 13, NousWork 5), no bound; lake build clean twice, no sorry/admit/axiom, standard axioms only.
 Grid PBT seeds: 111, 222, … 999, 1110. Brain PBT seeds: 11, 22, … 99, 110.
 Mutations: 7 TLA+, 4 Lean, 12 Grid code, 5 Brain code; all 28 caught and reverted. One Brain break (two writes on one Work in a

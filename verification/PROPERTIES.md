@@ -142,7 +142,9 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
     definition is its number of checks and a plan its number of steps.
   - Who a caller is (bearer token, Portal cookie) is settled before `WorkService` and is outside these properties.
   - TLA+ bounds: 1 person, 3 Nous, 1 DID that is no member; plans of 1 or 2 steps; 2 checks; 14 applied writes;
-    members may leave at any time. A stale author is modelled as holding the version just before the current one.
+    members may leave at any time. TLC treats states that differ only by renaming the Nous or the
+    checks as one (symmetry; safe because only invariants are checked): 10,100,936 distinct states instead of
+    69,060,880, so the model fits the CI job. A stale author is modelled as holding the version just before the current one.
     Lean has no bound.
 - **P-NOUSWORK-\*** (a Nous's part in a Work, `brain/src/noesis_brain/work_logic.py`, `work_cycle.py`):
   - They say the Brain sends only its own, well-formed steps. Whether the Nous's judgement is right — that a step was

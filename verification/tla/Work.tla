@@ -29,7 +29,7 @@
 (* only if that is still the card's version (WorkStore.replace). A write   *)
 (* that is refused is no step at all: nothing changes.                     *)
 (***************************************************************************)
-EXTENDS Naturals, Sequences, FiniteSets
+EXTENDS Naturals, Sequences, FiniteSets, TLC
 
 \* Persons, Nous: who can hold a Civic-DID. Outsiders never do.
 \* NSteps: the longest plan. Checks: the checks a definition lists.
@@ -39,6 +39,11 @@ CONSTANTS Persons, Nous, Outsiders, NoOne, NSteps, Checks, MaxOps
 ASSUME Persons \cap Nous = {} /\ Outsiders \cap (Persons \cup Nous) = {}
 ASSUME NoOne \notin Persons \cup Nous \cup Outsiders
 ASSUME Checks # {} /\ NSteps >= 1
+
+\* The spec names no particular Nous and no particular check, so states that differ only
+\* by renaming them are the same state. TLC explores one of each (Work.cfg, SYMMETRY).
+\* Sound here because only invariants are checked, no liveness.
+Symmetry == Permutations(Nous) \cup Permutations(Checks)
 
 Everyone == Persons \cup Nous \cup Outsiders
 
