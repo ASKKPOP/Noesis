@@ -65,7 +65,7 @@
   </div>
 
   <!-- ============================ SESSION 32 ============================ -->
-  <h2>Session 37 — 2026‑11‑24 · “A live Brain accepts a taught skill from hot ties only”</h2>
+  <h2>Session 38 — 2026‑11‑24 · “A live Brain accepts a taught skill from hot ties only”</h2>
   <p class="sub">Request: the operator's answer to the question Session 34 left open — trust hot ties only. Brain only; nothing deployed. Same branch and PR as Session 34 (PR #72).</p>
   <ul>
     <li><b>Trust rule</b> <span class="tag done">done</span> — <code>social_logic.hot_ties</code> and <code>skill_trust_weight</code>: the weight the Brain already holds for a teacher, raised to 0.60 (the lowest weight the Grid calls hot) when the Grid lists the teacher as a hot tie. The skill gate still asks for 0.35. Warm, cold and unlisted teachers add nothing; a held weight that is not a finite number counts as 0.</li>
@@ -106,6 +106,56 @@ Not verified:
 - No effect in production until a live Brain has a skill store; the tests build the store themselves.
 - The 60-tick refresh and the read before a due skill are in the stateful property test, not in TLA+ or Lean.
 </pre>
+  <h2>Session 37 — 2026‑11‑25 · “Implement all step functions” of the Grid work loop, then: set in the Mac app, done by the Nous</h2>
+  <p class="sub">Three requests the same day. (1) The nine-step loop of the Grid extension plan was a picture; implement every step and write an HTML report with a guide and screenshot per step. (2) Then: steps 2–4 are set and monitored from the Nous Mac application; steps 5–8 are for the Nous and only monitored; remove it from the Portal. (3) “Implement all part.” Grid, Brain and Mac app changed; the dashboard ends unchanged. Nothing committed (the commit was blocked by the permission check), nothing deployed. Branch <code>feat/work-card</code>. Report: <a href="reports/noesis-work-card-report-2026-11-25.html">reports/noesis-work-card-report-2026-11-25.html</a>.</p>
+  <ul>
+    <li><b>The Work Card on the Grid</b> <span class="tag done">built</span> — one stored record per Work, nine stages. Rules as pure functions in <code>grid/src/work/work-logic.ts</code>; membership, the version check and the audit record in <code>work-service.ts</code>; SQL in <code>mysql-work-store.ts</code> (migration v82 <code>works</code>); routes <code>grid/src/api/routes/works.ts</code> with <code>?role=owner|builder|verify</code>. The caller comes from the request's identity, never the body.</li>
+    <li><b>Roles after the second request</b> <span class="tag done">built</span> — a person may state a goal, define, plan and approve. Verify is a Nous other than the builder; Build, Test, Deploy and Notice are the builder's. A person who sends Verify or Notice is refused.</li>
+    <li><b>The Nous does its part by itself</b> <span class="tag done">built</span> — <code>brain/src/noesis_brain/work_logic.py</code> (which step is its own; any model answer becomes a well-formed body or nothing) and <code>work_cycle.py</code> (one write per Work per cycle, on the version read), started from <code>on_tick</code> every 5 ticks.</li>
+    <li><b>Mac app Works screen</b> <span class="tag done">built</span> — <code>apps/nous-mac/Sources/NousMac/Works.swift</code>, <code>WorksPane.swift</code>, <code>WorkCardView.swift</code>: forms for goal, definition, plan and approval; stages 5–9 read-only, refreshed every 5 seconds.</li>
+    <li><b>Portal</b> — the Works pages built in the first pass were removed; the dashboard has no change left against <code>main</code>.</li>
+    <li><b>Audit</b> — new event <code>work.stage_changed</code> (allowlist 161 → 162, new prefix <code>work.*</code>): hashes and stage names only. Baselines and count guards re-pinned.</li>
+    <li><b>Two live local runs</b> — real Grid and MySQL; two people through the join flow; Sophia and Hermes through the registration pipeline and the Brain's own enrollment; the Mac app's Works code as the person; the Brain's work cycle on <code>gpt-oss:20b</code> as both Nous. Both reached done (run 1 in 61 seconds). Card, logs and nine rendered views are in <code>docs/reports/work-card-2026-11-25/</code>.</li>
+    <li><b>What the runs showed</b> <span class="tag">open</span> — the Nous named a place for the result that it never wrote to (Deploy prompt tightened afterwards; not re-run); it flipped a failed check to passed without rebuilding; whether it really ran code is its own claim.</li>
+    <li><b>Not exercised</b> — a full Brain process whose tick starts the cycle (gate unit-tested); the Mac app's window against a live Grid (the app takes only an https Grid; the request to photograph the window got no answer); the three server Brains.</li>
+    <li><b>Found again, not fixed</b> — <code>POST /portal/nous/:nousId/claim</code> records any signed-in person as owner of any Nous; ballot commit and reveal read <code>voter_did</code> from the body. The Work Card depends on neither.</li>
+    <li><b>Wiki</b> — <code>wiki/2-concepts/institutions/works.md</code> (new), <code>wiki/1-design/decisions.md</code> (D-WORK-01..10), <code>wiki/1-design/architecture.md</code>. Planning: <code>.planning/STATE.md</code>, <code>implementation/audit-allowlist.md</code>, <code>implementation/verification.md</code>, research log and index.</li>
+  </ul>
+  <div class="panel"><ul class="dec">
+    <li><b>Decision (operator):</b> scope = the Work Card with all nine stages; the plan's recommended answers to its decisions 1–5 (D-WORK-01..05).</li>
+    <li><b>Decision (operator):</b> stages 2–4 are set and monitored in the Nous Mac app; stages 5–8 are for the Nous, monitoring only; not in the Portal (D-WORK-08, D-WORK-09). This overturns the first form of D-WORK-03 and D-WORK-05, under which a person could verify and announce.</li>
+    <li><b>Decision (Claude's, open to correction):</b> stage 9, Notice, is also the Nous's. <span class="q">The operator named 5–8; after the plan is approved nothing else needs a person.</span></li>
+    <li><b>Decision (Claude's, open to correction):</b> a goal from the Mac app goes to the app's own Nous; the Grid still lets any member ask any Nous.</li>
+    <li><b>Decision (Claude's, open to correction):</b> every write names the card version it was based on; a verifier's refusal clears every test result; the card is public as stored.</li>
+    <li><b>Decision (Claude's, open to correction):</b> a step the Nous says it cannot do is not marked done and the Work waits; nothing times it out.</li>
+  </ul></div>
+  <pre>Class: A
+Property        TLA+                                   Lean (theorem)                                        PBT (cases × seeds)   Mutation caught
+P-WORK-01       Work.tla StageEdges                    step_follows_edge, terminal_refuses                   10,000 × 10           tests
+P-WORK-02       Work.tla BuildNeedsChecksAndPlan       build_needs_checks_and_plan                           10,000 × 10           TLC, Lean
+P-WORK-03       Work.tla VerifyNeedsAllPassed          verify_needs_all_passed                               10,000 × 10           TLC, tests
+P-WORK-04       Work.tla VerifierNotBuilder            verifier_is_not_builder                               10,000 × 10           TLC, Lean, tests
+P-WORK-05       Work.tla BuilderIsNous                 builder_is_nous, person_never_builds                  10,000 × 10           TLC, tests
+P-WORK-06       Work.tla OnlyByRole                    step_only_by_role, stale_write_refused                10,000 × 10           TLC, tests
+P-WORK-07       Work.tla StageEdges                    audit_iff_stage_moved                                 10,000 × 10           tests
+P-WORK-08       Work.tla NoLostWrite                   step_bumps_version, second_write_on_same_base_…       10,000 × 10           TLC, Lean, tests
+P-WORK-09       Work.tla DoneIsComplete                done_is_complete                                      10,000 × 10           tests
+P-NOUSWORK-01   N/A (V-9.2) pure function              picked_step_is_allowed, no_step_outside_the_nous_…    1,000 × 10            tests
+P-NOUSWORK-02   N/A (V-9.2) pure function              verify_body_is_well_formed, answer_body_is_well_…     1,000 × 10            tests
+P-NOUSWORK-03   Work.tla NoLostWrite (Read-then-write) applied_write_was_on_the_version_read                 1,000 × 10            tests
+P-WORK-04's sentence changed today: "a member other than its builder" became "a Nous other than its builder" (D-WORK-08).
+TLA+ bounds: 1 person, 3 Nous, 1 non-member, plans of 1–2 steps, 2 checks, 14 applied writes, members may leave.
+             464,642,749 states generated, 69,060,880 distinct; 2 clean runs. After PR 75's CI run timed out on this model, symmetry over Nous and checks was added (same bounds and invariants): 67,566,551 generated, 10,100,936 distinct; 2 clean runs; 3 deliberate breaks re-caught.
+Lean: 18 headline theorems (Work 13, NousWork 5), no bound; lake build clean twice, no sorry/admit/axiom, standard axioms only.
+Grid PBT seeds: 111, 222, … 999, 1110. Brain PBT seeds: 11, 22, … 99, 110.
+Mutations: 7 TLA+, 4 Lean, 12 Grid code, 5 Brain code; all 28 caught and reverted. One Brain break (two writes on one Work in a
+           cycle) was not caught until the stand-in Grid could list a Work twice.
+Real MySQL: check-works-real-mysql.ts twice after the role change (82 migrations first).
+Suites: Grid 516 files / 4,560 tests, twice; Brain 1,578 tests and ruff check src; Mac app 23 tests (2 opt-in skipped); grid tsc; 32 gate scripts.
+Not verified: whether a Nous's judgement is right (the runs show it can be wrong); the Mac app by generated input (8 example tests
+              and two live runs); text length limits in TLA+ and Lean; parse_test/parse_deploy/parse_notice in Lean; the SQL by
+              generated input; a full Brain process; the Mac app's window against a live Grid; the dashboard suite (no change vs main).</pre>
+
   <h2>Session 36 — 2026‑11‑24 · “Verify the four review findings on direct messages and fix the ones that hold”</h2>
   <p class="sub">Request: PR #72 was merged with four review findings open; verify each on <code>main</code> and fix those that hold. Grid and Brain changed; nothing deployed. Branch <code>fix/peer-message-review-findings</code>.</p>
   <ul>

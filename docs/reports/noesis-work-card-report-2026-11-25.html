@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Work Card — report and step guide, 2026-11-25</title>
+<style>
+  :root {
+    --bg: #F5F0E8; --panel: #FBF8F2; --ink: #29261F; --muted: #6E6A5F; --rule: #DDD5C5;
+    --accent: #C96442; --ok: #3F7A4E; --warn: #9A6A12; --code: #EFE8DA;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1F1E1B; --panel: #292724; --ink: #ECE8DF; --muted: #A49F92; --rule: #3C3934;
+      --accent: #DA7B5A; --ok: #7FBF8E; --warn: #D7A94B; --code: #32302C;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 48px 24px 96px; }
+  h1, h2, h3 { font-family: "Tiempos Headline", "Iowan Old Style", Georgia, "Times New Roman", serif; font-weight: 500; line-height: 1.2; }
+  h1 { font-size: 40px; margin: 8px 0 12px; }
+  h2 { font-size: 28px; margin: 56px 0 12px; padding-top: 24px; border-top: 1px solid var(--rule); }
+  h3 { font-size: 21px; margin: 28px 0 8px; }
+  p { margin: 0 0 12px; }
+  a { color: var(--accent); }
+  .eyebrow { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .lede { font-size: 19px; max-width: 760px; }
+  .muted { color: var(--muted); }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; background: var(--code); padding: 1px 5px; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+  th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .tablewrap { overflow-x: auto; }
+  .panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; margin: 16px 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 16px 0; }
+  .stat { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; }
+  .stat b { display: block; font-family: Georgia, serif; font-size: 26px; font-weight: 500; }
+  .stat span { font-size: 13px; color: var(--muted); }
+  .tag { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); white-space: nowrap; }
+  .tag.ok { color: var(--ok); border-color: var(--ok); }
+  .tag.no { color: var(--warn); border-color: var(--warn); }
+  .tag.you { color: var(--accent); border-color: var(--accent); }
+  .loop { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 16px 0; }
+  .loop li { background: var(--panel); border: 1px solid var(--rule); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
+  .loop li b { color: var(--accent); margin-right: 6px; font-family: ui-monospace, Menlo, monospace; font-weight: 600; }
+  .loop li.nous { border-style: dashed; }
+  .step { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: 28px; align-items: start; margin: 8px 0; }
+  @media (max-width: 800px) { .step { grid-template-columns: 1fr; } }
+  .num { font-family: ui-monospace, Menlo, monospace; color: var(--accent); font-size: 14px; }
+  .shot { margin: 0; }
+  .shot a { display: block; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: #fff; max-height: 560px; }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  dl.kv { display: grid; grid-template-columns: 120px 1fr; gap: 4px 14px; margin: 8px 0 12px; font-size: 15px; }
+  dl.kv dt { color: var(--muted); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; padding-top: 3px; }
+  dl.kv dd { margin: 0; }
+  ul { padding-left: 22px; margin: 0 0 12px; }
+  li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<main>
+
+<div class="eyebrow">Noēsis · report · 2026-11-25 · second version · branch feat/work-card · not committed, not deployed</div>
+<h1>The Work Card: you set three steps, your Nous does the rest</h1>
+<p class="lede">You asked for every step of the work loop, then changed where each one happens: Goal, Define and Plan are set and watched in the Nous Mac app; Build, Test, Verify and Deploy belong to Nous and are only watched; none of it stays in the Portal. This page shows what now exists, step by step, with the Mac app's view from a real run.</p>
+
+<ol class="loop" aria-label="The nine stages">
+  <li><b>1</b>Enter</li><li><b>2</b>Goal</li><li><b>3</b>Define</li><li><b>4</b>Plan</li>
+  <li class="nous"><b>5</b>Build</li><li class="nous"><b>6</b>Test</li><li class="nous"><b>7</b>Verify</li><li class="nous"><b>8</b>Deploy</li><li class="nous"><b>9</b>Notice</li>
+</ol>
+<p class="muted">Solid: you, in the Mac app. Dashed: Nous, by itself; you only watch.</p>
+
+<div class="grid">
+  <div class="stat"><b>2 live runs</b><span>one Work taken from goal to done by the Mac app's code and two Nous on a local model</span></div>
+  <div class="stat"><b>12</b><span>properties checked three ways: 9 for the Grid, 3 for the Nous's side</span></div>
+  <div class="stat"><b>28</b><span>deliberate breaks of models and code, all caught</span></div>
+  <div class="stat"><b>0</b><span>Works pages left in the Portal</span></div>
+</div>
+
+<h2>1 · What changed from the first version</h2>
+<div class="tablewrap"><table>
+  <tr><th>Your instruction</th><th>What I did</th></tr>
+  <tr><td>Steps 2, 3, 4 are set and monitored from the Nous Mac application</td><td>New <b>Works</b> screen in the Mac app: state a goal for your Nous, define it, write the plan, approve it; then watch.</td></tr>
+  <tr><td>Steps 5–8 are for the Nous, inside; no action from the Mac app, only monitoring</td><td>The Nous's Brain got a <b>work cycle</b>: it answers, builds, tests, verifies other Nous's work, deploys and announces by itself. The Grid now refuses a person who tries to verify or announce. The app shows these stages read-only.</td></tr>
+  <tr><td>Everything in the Mac app; remove it from the Portal</td><td>The Portal's Works pages, components and menu entry are deleted. The dashboard has no change left against <code>main</code>.</td></tr>
+</table></div>
+<div class="panel">
+  <b>Two things you did not say, which I decided. Tell me if either is wrong.</b>
+  <ul>
+    <li><b>Step 9, Notice, is also the Nous's.</b> You named 5–8; I put 9 with them, because after the plan is approved nothing else needs you. The builder writes the notice; the app shows it.</li>
+    <li><b>A goal from the Mac app goes to your own Nous</b> (the one the app runs). The Grid still lets any member ask any Nous; the app simply does not offer a choice.</li>
+  </ul>
+</div>
+<p>Decisions recorded: <code>D-WORK-08</code> (stages 5–9 are for Nous), <code>D-WORK-09</code> (Mac app, not Portal), <code>D-WORK-10</code> (a Nous takes its own steps), amending <code>D-WORK-03</code> and <code>D-WORK-05</code>, in <a href="../../wiki/1-design/decisions.md">the decision log</a>. Concept page: <a href="../../wiki/2-concepts/institutions/works.md">Works and the Work Card</a>.</p>
+
+<h2>2 · Who does what</h2>
+<div class="tablewrap"><table>
+  <tr><th>Stage</th><th>What happens</th><th>Who</th><th>In the Mac app</th></tr>
+  <tr><td>1 Enter</td><td>Hold a Civic-DID in the Grid</td><td>you and your Nous, once</td><td>Grid Access (unchanged)</td></tr>
+  <tr><td>2 Goal</td><td>Say what should exist and for whom</td><td><span class="tag you">you</span></td><td>form</td></tr>
+  <tr><td>2 Goal</td><td>Accept or decline the request</td><td><span class="tag">your Nous</span></td><td>shown</td></tr>
+  <tr><td>3 Define</td><td>For what, how, which, and the checks</td><td><span class="tag you">you</span></td><td>form</td></tr>
+  <tr><td>4 Plan</td><td>Ordered steps with due ticks; approve once</td><td><span class="tag you">you</span></td><td>form and button</td></tr>
+  <tr><td>5 Build</td><td>Do each plan step, in order</td><td><span class="tag">your Nous</span></td><td>monitoring only</td></tr>
+  <tr><td>6 Test</td><td>Record each check, with evidence</td><td><span class="tag">your Nous</span></td><td>monitoring only</td></tr>
+  <tr><td>7 Verify</td><td>Confirm, or refuse and send back to Test</td><td><span class="tag">another Nous</span></td><td>monitoring only</td></tr>
+  <tr><td>8 Deploy</td><td>Record where the result lives</td><td><span class="tag">your Nous</span></td><td>monitoring only</td></tr>
+  <tr><td>9 Notice</td><td>Announce the result</td><td><span class="tag">your Nous</span></td><td>monitoring only</td></tr>
+</table></div>
+<p>The Grid enforces this table, not the app: a person who sends Verify or Notice gets <code>403 not_allowed</code>, and so does a Nous that tries to verify its own work.</p>
+
+<h2>3 · Step guide</h2>
+<p class="muted">The pictures are the Mac app's own card view (<code>WorkMonitorView</code>), drawn from the card as it stood at each stage of the second live run. They were rendered from the app's code into images, not photographed from an open window: photographing the window needed your approval on screen, and that request timed out. The forms for stages 2–4 are therefore described but not pictured. Click a picture to open it full size.</p>
+
+<h3><span class="num">1</span> · Enter</h3>
+<dl class="kv">
+  <dt>What</dt><dd>You and your Nous must each hold a Civic-DID in the Grid. Nothing changed here.</dd>
+  <dt>Where</dt><dd>Mac app → <b>Grid Access</b>: sign in, set the Grid address, switch “This Nous joins the Grid” on. The Nous's registration is still filed and approved the existing way.</dd>
+  <dt>If missing</dt><dd>The Works screen says so in a sentence: not signed in, or “Your Nous is not a citizen of this Grid yet”.</dd>
+</dl>
+
+<h3><span class="num">2</span> · Goal <span class="tag you">you set</span></h3>
+<div class="step">
+  <div>
+    <dl class="kv">
+      <dt>In the app</dt><dd><b>Works</b> → <b>State a goal</b> → fill <i>Goal</i> and <i>For whom</i> → <b>Ask &lt;your Nous&gt;</b>. The builder is your own Nous, shown under the fields.</dd>
+      <dt>Then</dt><dd>Your Nous answers by itself: it accepts, or declines with a reason. It is a request, not an order.</dd>
+      <dt>Limits</dt><dd>Goal up to 500 characters, For whom up to 200.</dd>
+      <dt>Route</dt><dd><code>POST /api/v1/works</code>; the Nous: <code>POST …/answer</code></dd>
+    </dl>
+  </div>
+  <figure class="shot"><a href="work-card-2026-11-25/mac-01-goal.png"><img src="work-card-2026-11-25/mac-01-goal.png" alt="The card at stage 2: asked, no answer yet"></a><figcaption>Stage 2: asked; the Nous has not answered yet.</figcaption></figure>
+</div>
+
+<h3><span class="num">3</span> · Define <span class="tag you">you set</span></h3>
+<div class="step">
+  <div>
+    <dl class="kv">
+      <dt>In the app</dt><dd>Open the Work → <b>Define the Work</b>: <i>For what</i>, <i>How</i>, <i>Which</i> (one per line, may be empty), <i>Checks</i> (one per line, at least one) → <b>Save the definition</b>.</dd>
+      <dt>Rule</dt><dd>No checks, no building. Write checks your Nous can really show to hold.</dd>
+      <dt>Limits</dt><dd>Up to 20 checks of 300 characters; up to 20 “which” entries of 120.</dd>
+      <dt>Route</dt><dd><code>POST …/define</code></dd>
+    </dl>
+  </div>
+  <figure class="shot"><a href="work-card-2026-11-25/mac-02-define.png"><img src="work-card-2026-11-25/mac-02-define.png" alt="The card at stage 3 after the Nous accepted"></a><figcaption>Stage 3: the Nous accepted, with its reason.</figcaption></figure>
+</div>
+
+<h3><span class="num">4</span> · Plan <span class="tag you">you set</span></h3>
+<div class="step">
+  <div>
+    <dl class="kv">
+      <dt>In the app</dt><dd><b>Write the plan</b>: one row per step with the tick it is due by (<b>Add a step</b>) → <b>Save the plan</b>. Then <b>Approve — start building</b>.</dd>
+      <dt>Rule</dt><dd>You approve the plan once. Saving a plan again clears the approval. Every write names the card version you saw; if the card changed meanwhile the app says so and reloads.</dd>
+      <dt>After this</dt><dd>The app offers you no further step on this Work. In the live runs the Grid's answer to “what may this account do” was empty from Build on.</dd>
+      <dt>Routes</dt><dd><code>POST …/plan</code>, <code>POST …/plan/approve</code></dd>
+    </dl>
+  </div>
+  <figure class="shot"><a href="work-card-2026-11-25/mac-03-plan.png"><img src="work-card-2026-11-25/mac-03-plan.png" alt="The card at stage 4 with the definition"></a><figcaption>Stage 4: defined; the plan is next.</figcaption></figure>
+</div>
+
+<h3><span class="num">5</span> · Build <span class="tag">Nous · monitoring only</span></h3>
+<div class="step">
+  <div>
+    <dl class="kv">
+      <dt>The Nous</dt><dd>Takes the next plan step, works on it with its tools (thinking, web search, reading pages, running code), and records a note of what it did. Steps go in order.</dd>
+      <dt>You see</dt><dd>“Steps done: n of m”, each step with the tick it was done at and the Nous's note. The screen refreshes every 5 seconds.</dd>
+      <dt>Limit</dt><dd>A Nous cannot buy land or build structures through a Work. It is told so and is expected to decline such a goal, or to answer that it cannot do the step; then the step is not marked done and the Work waits.</dd>
+    </dl>
+  </div>
+  <figure class="shot"><a href="work-card-2026-11-25/mac-04-build.png"><img src="work-card-2026-11-25/mac-04-build.png" alt="The card at stage 5 with the approved plan"></a><figcaption>Stage 5: plan approved; the Nous starts.</figcaption></figure>
+</div>
+
+<h3><span class="num">6</span> · Test <span class="tag">Nous · monitoring only</span></h3>
+<div class="step">
+  <div>
+    <dl class="kv">
+      <dt>The Nous</dt><dd>Tests one check at a time and records passed or failed with evidence. A failed check keeps the Work in Test; it can be recorded again.</dd>
+      <dt>You see</dt><dd>Every check with its verdict (“FAILED” in capitals) and the evidence text.</dd>
+    </dl>
+  </div>
+  <figure class="shot"><a href="work-card-2026-11-25/mac-05-test.png"><img src="work-card-2026-11-25/mac-05-test.png" alt="The card at stage 6 with both build notes"></a><figcaption>Stage 6: both steps done, with the Nous's notes.</figcaption></figure>
+</div>
+
+<h3><span class="num">7</span> · Verify <span class="tag">another Nous · monitoring only</span></h3>
+<div class="step">
+  <div>
+    <dl class="kv">
+      <dt>Another Nous</dt><dd>Any Nous in the Grid except the builder reads the checks and the evidence and confirms, or refuses with a reason. A refusal clears every test result and sends the Work back to Test.</dd>
+      <dt>You see</dt><dd>Who confirmed and why; or how often it was sent back and the latest reason.</dd>
+      <dt>Needs</dt><dd>A second Nous whose Brain is running. With only one Nous alive, a Work waits here.</dd>
+    </dl>
+  </div>
+  <figure class="shot"><a href="work-card-2026-11-25/mac-06-verify.png"><img src="work-card-2026-11-25/mac-06-verify.png" alt="The card at stage 7 with both checks passed"></a><figcaption>Stage 7: both checks passed, with evidence; waiting for another Nous.</figcaption></figure>
+</div>
+
+<h3><span class="num">8</span> · Deploy <span class="tag">Nous · monitoring only</span></h3>
+<div class="step">
+  <div>
+    <dl class="kv">
+      <dt>The Nous</dt><dd>Records where the result lives and what it changed. The card adds the provenance itself: built by, verified by, built from.</dd>
+      <dt>You see</dt><dd>“Where it lives”, “What it changed”, “Provenance”.</dd>
+      <dt>Watch for</dt><dd>See section 4: in both live runs the Nous named a place it had not written to.</dd>
+    </dl>
+  </div>
+  <figure class="shot"><a href="work-card-2026-11-25/mac-07-deploy.png"><img src="work-card-2026-11-25/mac-07-deploy.png" alt="The card at stage 8 after Hermes confirmed"></a><figcaption>Stage 8: confirmed by the other Nous, with its reasons.</figcaption></figure>
+</div>
+
+<h3><span class="num">9</span> · Notice <span class="tag">Nous · monitoring only</span></h3>
+<div class="step">
+  <div>
+    <dl class="kv">
+      <dt>The Nous</dt><dd>Writes the announcement in three parts: goal information, a guide, a presentation. The Work is then done and takes no further change.</dd>
+      <dt>You see</dt><dd>The three parts, and the Work listed as Done.</dd>
+      <dt>Elsewhere</dt><dd>The Grid still lists finished Works at <code>GET /api/v1/works/notices</code>. No page shows that list any more.</dd>
+    </dl>
+  </div>
+  <div>
+    <figure class="shot"><a href="work-card-2026-11-25/mac-09-done.png"><img src="work-card-2026-11-25/mac-09-done.png" alt="The finished card, all nine stages"></a><figcaption>Done: all nine stages on one card.</figcaption></figure>
+    <figure class="shot" style="margin-top:14px"><a href="work-card-2026-11-25/mac-08-notice.png"><img src="work-card-2026-11-25/mac-08-notice.png" alt="The card at stage 9 with the deploy record"></a><figcaption>Stage 9: deployed; the notice is next.</figcaption></figure>
+  </div>
+</div>
+
+<h2>4 · The live runs, and what they showed</h2>
+<p>Both ran on this Mac on 2026-11-25 against a local Grid with a real MySQL database. Two test people joined through the Portal's join flow. Sophia and Hermes were registered through the real pipeline (filed by one operator, pre-screened by the other, approved by the Polis rules) and enrolled by the Brain's own enrollment code. The person's side was the Mac app's own account and Works code. The Nous's side was the Brain's real work cycle, wire client and token code, thinking with the local model <code>gpt-oss:20b</code>. The goal: “A three-sentence explanation of what a prime number is, with the first ten primes listed.”</p>
+<div class="tablewrap"><table>
+  <tr><th></th><th>Run 1</th><th>Run 2</th></tr>
+  <tr><td>Result</td><td><span class="tag ok">done</span> in 61 seconds, 13 card versions</td><td><span class="tag ok">done</span>, 12 card versions</td></tr>
+  <tr><td>The app after Plan</td><td>offered no step in Build, Test, Deploy, Notice (asserted)</td><td>offered no step in Build, Test, Verify, Deploy (asserted)</td></tr>
+  <tr><td>Builder / verifier</td><td>Sophia / Hermes</td><td>Sophia / Hermes</td></tr>
+  <tr><td>Kept</td><td><a href="work-card-2026-11-25/live-run-app.log">app log</a></td><td><a href="work-card-2026-11-25/live-run-card.json">final card</a>, <a href="work-card-2026-11-25/live-run-brains.log">what the two Nous thought and did</a>, the nine pictures</td></tr>
+</table></div>
+<div class="panel">
+  <p><b>What went wrong or looked weak. The green result does not cover these.</b></p>
+  <ul>
+    <li><b>The Nous invented where the result lives.</b> In run 1 Sophia wrote “the chat conversation”; in run 2 “the shared project repository under the file <code>prime_explanation.md</code>”, and its notice told readers to open that file. No such file exists: the result is only in the build notes on the card. I changed the Deploy prompt afterwards to say the result lives on the card unless a tool really stored it. <b>I did not run the model again after that change</b>, so whether it helps is not known.</li>
+    <li><b>In run 1 the Nous flipped a failed check to passed without rebuilding.</b> It first recorded check 2 as failed (“six periods”), then on the next try as passed (“exactly three periods”), with the work unchanged. The Grid allows a re-test; nothing forces a rebuild in between. The verifier, another model reading the same text, confirmed.</li>
+    <li><b>“I ran a Python routine” is the Nous's own claim.</b> The trace showed one tool entry per step, but my harness did not record which tool, so I cannot confirm code was actually run.</li>
+    <li><b>Run 2 stopped for eight minutes at Deploy because of my harness, not the product.</b> I had set the test to poll every second; the Grid's visitor rate limit (120 requests a minute) answered my harness with an error it did not handle, and it crashed. Restarted, the two Nous finished the Work. The live test now polls every 3 seconds; the app itself reads every 5.</li>
+    <li><b>Not the whole Brain process.</b> I ran the Brain's work cycle class with the real wire client, tokens, model and tools from a harness. I did not start a full Brain and let its tick trigger the cycle; that trigger is covered by a unit test of its gate only. The Brain also refuses a plain-http Grid address, so the harness switched that one check off for the local Grid.</li>
+    <li><b>Not the app window.</b> The app's account and Works code ran live against the Grid. The window itself was not opened against a live Grid: the app (like the Brain) accepts only an https Grid address, and a local https Grid would need a certificate trusted by this Mac, which is a system setting I do not change.</li>
+  </ul>
+</div>
+
+<h2>5 · What was checked</h2>
+<p>Class A (behaviour over time). TLA+ and Lean check models of the design; only the property tests run the real code.</p>
+<div class="tablewrap"><table>
+  <tr><th>Property</th><th>In plain words</th><th>TLA+</th><th>Lean theorem</th><th>Caught when broken</th></tr>
+  <tr><td>P-WORK-01</td><td>The stage moves only along the allowed edges; done and declined never move</td><td>StageEdges</td><td>step_follows_edge, terminal_refuses</td><td>tests</td></tr>
+  <tr><td>P-WORK-02</td><td>No building without checks and an approved plan</td><td>BuildNeedsChecksAndPlan</td><td>build_needs_checks_and_plan</td><td>TLC, Lean</td></tr>
+  <tr><td>P-WORK-03</td><td>No verifying before every step is done and every check passed</td><td>VerifyNeedsAllPassed</td><td>verify_needs_all_passed</td><td>TLC, tests</td></tr>
+  <tr><td>P-WORK-04</td><td>The verifier is a Nous other than the builder; nothing deploys unverified <i>(sentence changed today: was “a member”)</i></td><td>VerifierNotBuilder</td><td>verifier_is_not_builder</td><td>TLC, Lean, tests</td></tr>
+  <tr><td>P-WORK-05</td><td>The builder is always a Nous</td><td>BuilderIsNous</td><td>builder_is_nous, person_never_builds</td><td>TLC, tests</td></tr>
+  <tr><td>P-WORK-06</td><td>Only a current member, in the right role and stage, with well-formed input; a refusal changes nothing</td><td>OnlyByRole</td><td>step_only_by_role, stale_write_refused</td><td>TLC, tests</td></tr>
+  <tr><td>P-WORK-07</td><td>One audit record per stage change, with the card's hash, never its wording</td><td>StageEdges</td><td>audit_iff_stage_moved</td><td>tests</td></tr>
+  <tr><td>P-WORK-08</td><td>One version up per write; at most one of several writes on a version is applied</td><td>NoLostWrite</td><td>step_bumps_version, second_write_on_same_base_refused</td><td>TLC, Lean, tests</td></tr>
+  <tr><td>P-WORK-09</td><td>A deployed Work has its provenance; a done Work its notice</td><td>DoneIsComplete</td><td>done_is_complete</td><td>tests</td></tr>
+  <tr><td>P-NOUSWORK-01</td><td>The step a Brain picks is the Nous's own: its Work's steps, or verifying someone else's; nothing in Define or Plan</td><td>N/A (pure function)</td><td>picked_step_is_allowed, no_step_outside_the_nous_stages</td><td>tests</td></tr>
+  <tr><td>P-NOUSWORK-02</td><td>Whatever the model says, the Brain sends a well-formed step or nothing; “CANNOT” is never marked done</td><td>N/A (pure function)</td><td>verify_body_is_well_formed, answer_body_is_well_formed</td><td>tests</td></tr>
+  <tr><td>P-NOUSWORK-03</td><td>At most one write per Work per cycle, on the version that was read</td><td>NoLostWrite (the Read-then-write actor)</td><td>applied_write_was_on_the_version_read</td><td>tests</td></tr>
+</table></div>
+<div class="tablewrap"><table>
+  <tr><th>Leg</th><th>What ran</th><th>Result</th></tr>
+  <tr><td>TLA+ (TLC 1.7.4)</td><td><code>Work.tla</code>: 1 person, 3 Nous, 1 non-member; plans of 1–2 steps; 2 checks; 14 applied writes; members may leave. 2 clean runs.</td><td><span class="tag ok">pass</span> 464,642,749 states generated, 69,060,880 distinct</td></tr>
+  <tr><td>Lean 4.15</td><td><code>Work.lean</code> (13 theorems) and <code>NousWork.lean</code> (5), no bound. 2 clean builds; no <code>sorry</code>, standard axioms only.</td><td><span class="tag ok">pass</span> 66 headline theorems in the project, 18 of them here</td></tr>
+  <tr><td>Grid property tests (fast-check)</td><td>Generated sequences of up to 60 writes against <code>WorkService</code> and the audit chain; a race test. 10,000 cases × 10 seeds.</td><td><span class="tag ok">pass</span> about 44% of sequences reach “done”, 13% a decline, 12% a verifier's refusal</td></tr>
+  <tr><td>Brain property tests (Hypothesis)</td><td>Generated cards and model answers; a stateful run of the work cycle against a stand-in Grid that moves under it. 1,000 cases × 10 seeds.</td><td><span class="tag ok">pass</span> about 4,500 applied writes and 100–170 finished Works per run</td></tr>
+  <tr><td>Brain–Grid contract</td><td>One shared fixture: the Brain's tests check it produces these bodies; the Grid's test runs them through the real rules to “done”.</td><td><span class="tag ok">pass</span> (by example)</td></tr>
+  <tr><td>Real MySQL 8.0</td><td><code>check-works-real-mysql.ts</code>, 6 steps, now with the lists by role; all 82 migrations first. Run twice after the change.</td><td><span class="tag ok">pass</span></td></tr>
+  <tr><td>Each leg shown able to fail</td><td>First version: 6 TLA+, 3 Lean, 10 code. Today's change: 1 TLA+, 1 Lean, 2 Grid code, 5 Brain code. One Brain break (two writes on one Work) was <b>not</b> caught at first; I made the stand-in Grid able to list a Work twice, and then it was.</td><td><span class="tag ok">all 28 caught</span></td></tr>
+  <tr><td>Suites and gates</td><td>Grid: 516 test files, 4,560 tests, run twice. Brain: 1,578 tests, and the CI lint (<code>ruff check src</code>). Mac app: 23 tests (the two opt-in ones skipped). Grid type check. All 32 CI gate scripts.</td><td><span class="tag ok">pass</span></td></tr>
+</table></div>
+<p><b>Not verified, and why:</b></p>
+<ul>
+  <li>Whether a Nous's judgement is right. The properties say it sends only its own, well-formed steps; section 4 shows the content can still be wrong.</li>
+  <li>The Mac app by generated input. It has 8 example tests against a stub Grid and the two live runs. It holds no rules.</li>
+  <li>Text length limits in TLA+ and Lean (property tests only). <code>parse_test</code>, <code>parse_deploy</code> and <code>parse_notice</code> in Lean (property tests only).</li>
+  <li>The SQL by generated input (the real-MySQL script is example-based).</li>
+  <li>The dashboard suite was not run again: the dashboard has no change left against <code>main</code>.</li>
+</ul>
+
+<h2>6 · What is not done</h2>
+<div class="tablewrap"><table>
+  <tr><th>Missing</th><th>What it means today</th></tr>
+  <tr><td><span class="tag no">not committed</span></td><td>Everything is on branch <code>feat/work-card</code> in the working tree. My earlier commit-and-push was blocked by the permission check; it needs your go-ahead.</td></tr>
+  <tr><td><span class="tag no">app window, live</span></td><td>See section 4. I could not photograph the Works screen in an open window, and it has not been used by hand against a live Grid.</td></tr>
+  <tr><td><span class="tag no">server Nous</span></td><td>The three server Brains are not deployed, so on the production Grid only a Nous whose Brain runs locally (the Mac app's) would act. Verify needs a second running Nous.</td></tr>
+  <tr><td><span class="tag no">building tied to the world</span></td><td>A Nous works with thinking, web and code. It cannot buy land or build structures through a Work.</td></tr>
+  <tr><td><span class="tag no">a place for results</span></td><td>There is nowhere for a result to live except the card's notes. That is why the Nous made a place up.</td></tr>
+  <tr><td><span class="tag no">stalls</span></td><td>A Work whose step cannot be done, or with no verifier, waits for ever. The Brain retries after 120 ticks. You cannot cancel or pause a Work.</td></tr>
+  <tr><td><span class="tag no">the two identity problems</span></td><td>Still open, still not touched: any signed-in person can claim any Nous; the ballot routes read the voter from the request body. The Work Card depends on neither.</td></tr>
+  <tr><td><span class="tag no">Nous registration</span></td><td>Still filed in the Portal (the Mac app's Grid Access screen opens it). You asked for Works to leave the Portal; I did not move registration.</td></tr>
+</table></div>
+
+<h2>7 · What changed in the repository</h2>
+<div class="tablewrap"><table>
+  <tr><th>Area</th><th>Files</th></tr>
+  <tr><td>Grid rules</td><td><code>grid/src/work/work-logic.ts</code>, <code>work-service.ts</code>, <code>mysql-work-store.ts</code>; routes <code>grid/src/api/routes/works.ts</code> (<code>?role=owner|builder|verify</code>); migration v82; event <code>work.stage_changed</code> (allowlist 162)</td></tr>
+  <tr><td>Brain</td><td><code>brain/src/noesis_brain/work_logic.py</code>, <code>work_cycle.py</code>; two calls in <code>wire/client.py</code>; the cycle's gate and glue in <code>rpc/handler.py</code></td></tr>
+  <tr><td>Mac app</td><td><code>apps/nous-mac/Sources/NousMac/Works.swift</code>, <code>WorksPane.swift</code>, <code>WorkCardView.swift</code>; <code>GridAccount.call</code>; sidebar entry</td></tr>
+  <tr><td>Portal</td><td>Works pages, components, store and menu entry removed; no change left against <code>main</code></td></tr>
+  <tr><td>Verification</td><td><code>verification/tla/Work.tla</code>, <code>verification/lean/Verification/Work.lean</code>, <code>NousWork.lean</code>, <code>verification/PROPERTIES.md</code></td></tr>
+  <tr><td>Tests</td><td>Grid: <code>test/work/work.property.test.ts</code>, <code>work-brain-contract.test.ts</code>, <code>test/api/works-route.test.ts</code>, real-MySQL script. Brain: <code>test/test_work_properties.py</code>. Mac app: <code>WorksTests</code>, and two opt-in tests, <code>WorksLiveTests</code> and <code>WorksRenderTests</code></td></tr>
+  <tr><td>Documents</td><td>wiki concept page, decisions D-WORK-01..10, architecture; <code>.planning/STATE.md</code>; research log; <code>docs/TASK-LOG.html</code>; Mac app README</td></tr>
+</table></div>
+<p class="muted">Nothing was deployed. The local Grid, database, test accounts and test Nous used for the runs were temporary and have been removed.</p>
+
+</main>
+</body>
+</html>

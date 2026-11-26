@@ -149,6 +149,26 @@ final class GridAccount: ObservableObject {
         }
     }
 
+    /// One request to the Grid as the signed-in account: the status and the JSON object
+    /// it answered with. Nil when there is no session or the Grid gave no answer.
+    func call(_ method: String, _ path: String, body: [String: Any]? = nil,
+              email: String, grid: URL) async -> (status: Int, json: [String: Any])? {
+        await restore(email: email, grid: grid)
+        guard case .signedIn = state, let sessionCookie else { return nil }
+        let base = grid.absoluteString.hasSuffix("/") ? String(grid.absoluteString.dropLast()) : grid.absoluteString
+        guard let url = URL(string: base + path) else { return nil }
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.setValue("\(sessionCookie.name)=\(sessionCookie.value)", forHTTPHeaderField: "Cookie")
+        if method != "GET" {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try? JSONSerialization.data(withJSONObject: body ?? [:])
+        }
+        guard let (data, response) = try? await session.data(for: request), let http = response as? HTTPURLResponse else { return nil }
+        let json = (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
+        return (http.statusCode, json)
+    }
+
     /// One stored password per account per Grid.
     private static func key(_ email: String, _ grid: URL) -> String { "\(email)@\(grid.host ?? grid.absoluteString)" }
 

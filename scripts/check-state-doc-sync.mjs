@@ -247,19 +247,24 @@ function checkAllowlistCount() {
   }
   const arrayBody = arrayMatch[1];
   const members = arrayBody.match(/^\s+'[a-z][a-z0-9_.]+'/gm) ?? [];
-  if (members.length !== 161) {
+  if (members.length !== 162) {
     failures.push(
-      `ALLOWLIST_MEMBERS count mismatch: expected 161 entries, found ${members.length}.\n` +
+      `ALLOWLIST_MEMBERS count mismatch: expected 162 entries, found ${members.length}.\n` +
       `  Phase 48b reached 86; the Economic Reality Loop / Organs / Loop-Wiring programs grew it\n` +
       `  to 120 (due.* / procurement.* / orbital.* / human.approval.*); W4 adds\n` +
       `  portal.account_endowed (121, D-MONEY-09); W-C3 adds orbital.object_upgraded (158);\n` +
       `  Phase 62 wallet-proof adds portal.account_linked (159);\n` +
       `  D-V3-40 free zones adds zoning.zone_set_changed (160);\n` +
       `  D-V3-41 adds operator.grid_visibility_changed (161).\n` +
+      `  Work Card adds work.stage_changed (162).\n` +
       `  Bump this literal + append below when extending.`,
     );
   }
 
+  // Work Card: work.stage_changed at position 162.
+  if (!text.includes("'work.stage_changed'")) {
+    failures.push('ALLOWLIST_MEMBERS missing work.stage_changed (Work Card, position 162).');
+  }
   // Phase 45 IRS-04: the 3 irs.* events at positions 73-75.
   if (!text.includes("'irs.tax_collected'")) {
     failures.push('ALLOWLIST_MEMBERS missing irs.tax_collected (Phase 45 IRS-04, position 73).');

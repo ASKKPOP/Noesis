@@ -83,3 +83,13 @@ jobs:
           MYSQL_PASSWORD: root
           MYSQL_DATABASE: noesis_grid
         run: npx tsx scripts/check-catalog-seed-real-mysql.ts
+
+      - name: Work Card on real MySQL 8.0 (card byte for byte, one write per version, lists, Grids apart)
+        working-directory: grid
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: '3306'
+          MYSQL_USER: root
+          MYSQL_PASSWORD: root
+          MYSQL_DATABASE: noesis_grid
+        run: npx tsx scripts/check-works-real-mysql.ts

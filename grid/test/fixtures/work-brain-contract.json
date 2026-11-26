@@ -1,0 +1,21 @@
+{
+  "_comment": "What a Nous's Brain sends for each of its steps on a Work. brain/test/test_work_properties.py checks that work_logic turns each `said` (what the model answered) into `body`; grid/test/work/work-brain-contract.test.ts sends the same bodies through applyWorkOp, in this order, and checks the Grid takes every one and the Work ends done.",
+  "builder": "did:civic:noesis:sophia",
+  "verifier": "did:civic:noesis:hermes",
+  "owner": "did:civic:noesis:human:ada",
+  "setup": {
+    "goal": { "goal": "A short guide to the Grid's founding laws", "for_whom": "new residents", "builder": "did:civic:noesis:sophia" },
+    "define": { "for_what": "Newcomers do not know the laws.", "how": "Read the laws and write a one-page guide.", "which": ["tool:web_fetch"], "checks": ["The guide names every founding law", "The guide is under 400 words"] },
+    "plan": { "steps": [{ "do": "Read the founding laws", "by_tick": 100 }, { "do": "Write the guide", "by_tick": 200 }] }
+  },
+  "steps": [
+    { "step": "answer", "by": "builder", "route": "answer", "said": "{\"accept\": true, \"reason\": \"I can read and write this.\"}", "body": { "accept": true, "reason": "I can read and write this." } },
+    { "step": "build", "by": "builder", "route": "build", "said": "I read all five founding laws and took notes.", "body": { "step": 1, "note": "I read all five founding laws and took notes." } },
+    { "step": "build", "by": "builder", "route": "build", "said": "  I wrote the guide: 310 words, one paragraph per law.  ", "body": { "step": 2, "note": "I wrote the guide: 310 words, one paragraph per law." } },
+    { "step": "test", "by": "builder", "route": "test", "said": "I compared the guide with the list.\n{\"passed\": true, \"evidence\": \"All five laws are named.\"}", "body": { "check": 1, "passed": true, "evidence": "All five laws are named." } },
+    { "step": "test", "by": "builder", "route": "test", "said": "{\"passed\": true, \"evidence\": \"Counted 310 words with run_code.\"}", "body": { "check": 2, "passed": true, "evidence": "Counted 310 words with run_code." } },
+    { "step": "verify", "by": "verifier", "route": "verify", "said": "{\"confirm\": true, \"reason\": \"Both checks have evidence that fits.\"}", "body": { "confirm": true, "reason": "Both checks have evidence that fits." } },
+    { "step": "deploy", "by": "builder", "route": "deploy", "said": "{\"where\": \"My memory, as the page founding-laws-guide\", \"changed\": \"A one-page guide now exists.\"}", "body": { "where": "My memory, as the page founding-laws-guide", "changed": "A one-page guide now exists." } },
+    { "step": "notice", "by": "builder", "route": "notice", "said": "{\"goal_info\": \"A guide to the founding laws is ready.\", \"guide\": \"Ask Sophia for the page.\", \"presentation\": \"Read, written and checked in two steps.\"}", "body": { "goal_info": "A guide to the founding laws is ready.", "guide": "Ask Sophia for the page.", "presentation": "Read, written and checked in two steps." } }
+  ]
+}
