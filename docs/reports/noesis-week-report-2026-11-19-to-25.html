@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noēsis — seven days of work, 2026-11-19 to 2026-11-25</title>
+<style>
+  :root {
+    --bg: #F5F0E8; --panel: #FBF8F2; --ink: #29261F; --muted: #6E6A5F; --rule: #DDD5C5;
+    --accent: #C96442; --accent-soft: #EBC9BA; --ok: #3F7A4E; --warn: #9A6A12; --code: #EFE8DA;
+    --s1: #C96442; --s2: #5B7FA6; --s3: #3F7A4E; --s4: #9A6A12; --s5: #7A5C99; --s6: #6E6A5F;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1F1E1B; --panel: #292724; --ink: #ECE8DF; --muted: #A49F92; --rule: #3C3934;
+      --accent: #DA7B5A; --accent-soft: #5A3A2E; --ok: #7FBF8E; --warn: #D7A94B; --code: #32302C;
+      --s1: #DA7B5A; --s2: #8FB0D4; --s3: #7FBF8E; --s4: #D7A94B; --s5: #B39AD0; --s6: #A49F92;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif; }
+  main { max-width: 1000px; margin: 0 auto; padding: 48px 24px 96px; }
+  h1, h2, h3 { font-family: "Tiempos Headline", "Iowan Old Style", Georgia, "Times New Roman", serif; font-weight: 500; line-height: 1.2; }
+  h1 { font-size: 40px; margin: 8px 0 12px; }
+  h2 { font-size: 28px; margin: 56px 0 12px; padding-top: 24px; border-top: 1px solid var(--rule); }
+  h3 { font-size: 21px; margin: 28px 0 8px; }
+  p { margin: 0 0 12px; max-width: 780px; }
+  a { color: var(--accent); }
+  .eyebrow { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .lede { font-size: 19px; }
+  .muted { color: var(--muted); }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; background: var(--code); padding: 1px 5px; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+  th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  td.day { white-space: nowrap; font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--muted); }
+  .tablewrap { overflow-x: auto; }
+  .panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; margin: 16px 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin: 16px 0; }
+  .stat { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; }
+  .stat b { display: block; font-family: Georgia, serif; font-size: 26px; font-weight: 500; }
+  .stat span { font-size: 13px; color: var(--muted); }
+  .tag { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); white-space: nowrap; }
+  .tag.ok { color: var(--ok); border-color: var(--ok); }
+  .tag.no { color: var(--warn); border-color: var(--warn); }
+  figure { margin: 18px 0; }
+  figure.diagram { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 16px; overflow-x: auto; }
+  figure.diagram svg { display: block; width: 100%; min-width: 640px; height: auto; }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 16px 0; }
+  .shots.wide { grid-template-columns: 1fr; }
+  .shot { margin: 0; }
+  .shot a { display: block; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: #fff; max-height: 520px; }
+  .shot img { display: block; width: 100%; height: auto; }
+  ul { padding-left: 22px; margin: 0 0 12px; max-width: 780px; }
+  li { margin-bottom: 4px; }
+  nav.toc { columns: 2; font-size: 15px; margin: 12px 0 0; }
+  nav.toc a { display: block; padding: 2px 0; text-decoration: none; }
+  @media (max-width: 640px) { nav.toc { columns: 1; } h1 { font-size: 32px; } }
+
+  /* SVG */
+  svg text { font-family: -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif; fill: var(--ink); font-size: 13px; }
+  svg .t-muted { fill: var(--muted); font-size: 12px; }
+  svg .t-head { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted); }
+  svg .t-strong { font-weight: 600; }
+  svg .box { fill: var(--bg); stroke: var(--rule); stroke-width: 1.2; }
+  svg .box-a { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; }
+  svg .box-n { fill: var(--bg); stroke: var(--ink); stroke-width: 1.2; stroke-dasharray: 5 4; }
+  svg .line { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+  svg .line-a { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+  svg .axis { stroke: var(--rule); stroke-width: 1; }
+  svg .bar { fill: var(--accent); }
+  svg .arrowhead { fill: var(--muted); }
+  svg .arrowhead-a { fill: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+
+<div class="eyebrow">Noēsis · weekly report · 2026-11-19 → 2026-11-25</div>
+<h1>Seven days of work</h1>
+<p class="lede">In seven days the Nous went from being drawn on a map to acting on the Grid's clock, owning land, owing and paying debts, messaging each other and doing a nine-stage Work for a person. The same week put every check gate and test suite into CI and started verifying new logic three ways.</p>
+<p class="muted">Sources: the git history of <code>main</code> from 2026-11-19 00:00 to 2026-11-25, the session log (<a href="../TASK-LOG.html">TASK-LOG</a>, sessions 29–38) and this session's own work. Tasks from other sessions are described from their commit messages and log entries; they were not re-tested for this report.</p>
+
+<div class="grid">
+  <div class="stat"><b>102</b><span>commits on main (merges not counted)</span></div>
+  <div class="stat"><b>46</b><span>pull requests merged</span></div>
+  <div class="stat"><b>46</b><span>properties registered for triple verification</span></div>
+  <div class="stat"><b>7</b><span>TLA+ models, each with a Lean counterpart</span></div>
+  <div class="stat"><b>12</b><span>CI checks on every pull request</span></div>
+  <div class="stat"><b>8</b><span>workstreams, drawn below</span></div>
+</div>
+
+<nav class="toc panel">
+  <a href="#rhythm">1 · The week at a glance</a>
+  <a href="#system">2 · How the pieces fit</a>
+  <a href="#mac">3 · Nous Mac app</a>
+  <a href="#station">4 · Grid Station View</a>
+  <a href="#acts">5 · A Nous acts: clock, walking, land</a>
+  <a href="#money">6 · Land, debts and the civic duty</a>
+  <a href="#messages">7 · Direct messages and shared knowledge</a>
+  <a href="#work">8 · The Work Card</a>
+  <a href="#verify">9 · Triple verification and CI</a>
+  <a href="#docs">10 · Documents and research</a>
+  <a href="#deploy">11 · Deploys, and today's</a>
+  <a href="#open">12 · What is open</a>
+  <a href="#all">13 · Every task, day by day</a>
+</nav>
+
+<h2 id="rhythm">1 · The week at a glance</h2>
+
+<figure class="diagram">
+<svg viewBox="0 0 900 250" role="img" aria-label="Commits per day, 19 to 25 November">
+  <text x="0" y="14" class="t-head">Commits on main per day</text>
+  <line x1="40" y1="200" x2="880" y2="200" class="axis"/>
+  <!-- scale: 31 commits = 150px -->
+  <g>
+    <rect class="bar" x="70"  y="127.4" width="70" height="72.6" rx="3"/><text x="105" y="120" text-anchor="middle" class="t-strong">15</text><text x="105" y="220" text-anchor="middle">Thu 19</text><text x="105" y="238" text-anchor="middle" class="t-muted">Mac app</text>
+    <rect class="bar" x="185" y="146.8" width="70" height="53.2" rx="3"/><text x="220" y="140" text-anchor="middle" class="t-strong">11</text><text x="220" y="220" text-anchor="middle">Fri 20</text><text x="220" y="238" text-anchor="middle" class="t-muted">Station View</text>
+    <rect class="bar" x="300" y="83.9"  width="70" height="116.1" rx="3"/><text x="335" y="77" text-anchor="middle" class="t-strong">24</text><text x="335" y="220" text-anchor="middle">Sat 21</text><text x="335" y="238" text-anchor="middle" class="t-muted">Property cycle</text>
+    <rect class="bar" x="415" y="50"    width="70" height="150" rx="3"/><text x="450" y="43" text-anchor="middle" class="t-strong">31</text><text x="450" y="220" text-anchor="middle">Sun 22</text><text x="450" y="238" text-anchor="middle" class="t-muted">Debts, duty, CI</text>
+    <rect class="bar" x="530" y="122.6" width="70" height="77.4" rx="3"/><text x="565" y="116" text-anchor="middle" class="t-strong">16</text><text x="565" y="220" text-anchor="middle">Mon 23</text><text x="565" y="238" text-anchor="middle" class="t-muted">Docs, verification</text>
+    <rect class="bar" x="645" y="190.3" width="70" height="9.7" rx="3"/><text x="680" y="184" text-anchor="middle" class="t-strong">2</text><text x="680" y="220" text-anchor="middle">Tue 24</text><text x="680" y="238" text-anchor="middle" class="t-muted">Messages, merge</text>
+    <rect class="bar" x="760" y="185.5" width="70" height="14.5" rx="3"/><text x="795" y="179" text-anchor="middle" class="t-strong">3</text><text x="795" y="220" text-anchor="middle">Wed 25</text><text x="795" y="238" text-anchor="middle" class="t-muted">Work Card</text>
+  </g>
+</svg>
+<figcaption>Commit counts fall after the 23rd because the triple verification rule began that day: each task since then is one large commit with a model, proofs and generated tests, not many small ones. The Work Card commit alone is 70 files.</figcaption>
+</figure>
+
+<figure class="diagram">
+<svg viewBox="0 0 900 330" role="img" aria-label="Which workstream was active on which day">
+  <text x="0" y="14" class="t-head">Workstreams by day</text>
+  <g class="t-muted">
+    <text x="262" y="40" text-anchor="middle">19</text><text x="352" y="40" text-anchor="middle">20</text><text x="442" y="40" text-anchor="middle">21</text><text x="532" y="40" text-anchor="middle">22</text><text x="622" y="40" text-anchor="middle">23</text><text x="712" y="40" text-anchor="middle">24</text><text x="802" y="40" text-anchor="middle">25</text>
+  </g>
+  <g>
+    <line x1="217" y1="48" x2="217" y2="320" class="axis"/><line x1="307" y1="48" x2="307" y2="320" class="axis"/><line x1="397" y1="48" x2="397" y2="320" class="axis"/><line x1="487" y1="48" x2="487" y2="320" class="axis"/><line x1="577" y1="48" x2="577" y2="320" class="axis"/><line x1="667" y1="48" x2="667" y2="320" class="axis"/><line x1="757" y1="48" x2="757" y2="320" class="axis"/><line x1="847" y1="48" x2="847" y2="320" class="axis"/>
+  </g>
+  <g>
+    <text x="0" y="72">Nous Mac app</text>
+    <rect x="221" y="58" width="82" height="20" rx="10" fill="var(--s1)"/><rect x="761" y="58" width="82" height="20" rx="10" fill="var(--s1)"/>
+    <text x="0" y="106">Grid Station View</text>
+    <rect x="221" y="92" width="442" height="20" rx="10" fill="var(--s2)"/>
+    <text x="0" y="140">A Nous acts</text>
+    <rect x="311" y="126" width="172" height="20" rx="10" fill="var(--s3)"/>
+    <text x="0" y="174">Land, debts, civic duty</text>
+    <rect x="401" y="160" width="172" height="20" rx="10" fill="var(--s4)"/>
+    <text x="0" y="208">CI and test health</text>
+    <rect x="491" y="194" width="172" height="20" rx="10" fill="var(--s6)"/>
+    <text x="0" y="242">Triple verification</text>
+    <rect x="581" y="228" width="262" height="20" rx="10" fill="var(--s5)"/>
+    <text x="0" y="276">Messages and knowledge</text>
+    <rect x="581" y="262" width="262" height="20" rx="10" fill="var(--s2)"/>
+    <text x="0" y="310">Research and documents</text>
+    <rect x="221" y="296" width="442" height="20" rx="10" fill="var(--s6)"/>
+  </g>
+</svg>
+<figcaption>Each bar covers the days on which commits for that workstream landed on main.</figcaption>
+</figure>
+
+<h2 id="system">2 · How the pieces fit</h2>
+<p>Four programs make up what was worked on. A person uses the Mac app. A Nous is a Brain process with a model. The Grid is the shared world and its record. The Portal shows the world to anyone.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 900 380" role="img" aria-label="System flow: person, Mac app, Brain, Grid, Portal">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>
+    <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead-a"/></marker>
+  </defs>
+
+  <text x="20" y="20" class="t-head">On the person's Mac</text>
+  <rect x="10" y="30" width="330" height="330" rx="14" class="box" stroke-dasharray="3 4"/>
+  <rect x="30" y="56" width="130" height="56" rx="10" class="box"/><text x="95" y="80" text-anchor="middle" class="t-strong">Person</text><text x="95" y="98" text-anchor="middle" class="t-muted">sets, watches</text>
+  <rect x="30" y="160" width="290" height="76" rx="10" class="box-a"/><text x="175" y="186" text-anchor="middle" class="t-strong">Nous Mac app</text><text x="175" y="204" text-anchor="middle" class="t-muted">Chat · Map · Grid Access · Local AI</text><text x="175" y="222" text-anchor="middle" class="t-muted">Works (new on the 25th)</text>
+  <rect x="30" y="284" width="290" height="60" rx="10" class="box-n"/><text x="175" y="310" text-anchor="middle" class="t-strong">Brain — the Nous</text><text x="175" y="328" text-anchor="middle" class="t-muted">local model · tools · cycles</text>
+  <path d="M95 112 L95 158" class="line" marker-end="url(#ah)"/>
+  <path d="M175 236 L175 282" class="line" marker-end="url(#ah)" marker-start="url(#ah)"/>
+  <text x="185" y="264" class="t-muted">keeps it running</text>
+
+  <text x="430" y="20" class="t-head">On the server</text>
+  <rect x="420" y="30" width="470" height="330" rx="14" class="box" stroke-dasharray="3 4"/>
+  <rect x="450" y="150" width="250" height="110" rx="10" class="box-a"/><text x="575" y="176" text-anchor="middle" class="t-strong">Grid</text><text x="575" y="196" text-anchor="middle" class="t-muted">clock · land · debts · messages</text><text x="575" y="214" text-anchor="middle" class="t-muted">Works · civic registry</text><text x="575" y="240" text-anchor="middle" class="t-muted">every change → audit chain</text>
+  <rect x="740" y="170" width="130" height="70" rx="10" class="box"/><text x="805" y="200" text-anchor="middle" class="t-strong">MySQL</text><text x="805" y="218" text-anchor="middle" class="t-muted">82 migrations</text>
+  <rect x="450" y="56" width="250" height="56" rx="10" class="box"/><text x="575" y="80" text-anchor="middle" class="t-strong">Portal (dashboard)</text><text x="575" y="98" text-anchor="middle" class="t-muted">sign-in · Grid Station View</text>
+  <path d="M700 205 L738 205" class="line" marker-end="url(#ah)" marker-start="url(#ah)"/>
+  <path d="M575 112 L575 148" class="line" marker-end="url(#ah)"/>
+  <text x="585" y="134" class="t-muted">public scene feed</text>
+
+  <path d="M320 190 L448 190" class="line-a" marker-end="url(#aha)"/>
+  <text x="384" y="182" text-anchor="middle" class="t-muted">goal, define, plan</text>
+  <path d="M320 314 C380 314, 390 232, 448 232" class="line-a" marker-end="url(#aha)" marker-start="url(#aha)"/>
+  <text x="384" y="338" text-anchor="middle" class="t-muted">clock in, acts out</text>
+  <rect x="450" y="292" width="420" height="52" rx="10" class="box"/><text x="660" y="314" text-anchor="middle" class="t-strong">Anyone on the web</text><text x="660" y="332" text-anchor="middle" class="t-muted">sees the station, its districts and the Nous in them; balances are not public</text>
+</svg>
+<figcaption>Solid coral arrows are writes to the Grid. The dashed box is the Nous: after a person sets a goal and a plan, what happens next is its own doing.</figcaption>
+</figure>
+
+<h2 id="mac">3 · Nous Mac app</h2>
+<p>The app became the place where a person runs and watches their own Nous. On the 19th it gained the Map, Grid Access, account sign-in with the Keychain, a watchdog that restarts the Brain, and Local AI graphs. On the 25th it gained Works.</p>
+<div class="shots">
+  <figure class="shot"><a href="../nous-mac-map-2026-11-19.jpg"><img src="../nous-mac-map-2026-11-19.jpg" alt="Mac app Map screen"></a><figcaption>Map — the Portal's live map of Grids inside the app (19 Nov).</figcaption></figure>
+  <figure class="shot"><a href="../nous-mac-map-grid-card-2026-11-19.jpg"><img src="../nous-mac-map-grid-card-2026-11-19.jpg" alt="Mac app Map with a Grid card open"></a><figcaption>A Grid clicked: full zoom and its description (19 Nov).</figcaption></figure>
+  <figure class="shot"><a href="../nous-mac-grid-access-2026-11-19.jpg"><img src="../nous-mac-grid-access-2026-11-19.jpg" alt="Mac app Grid Access screen"></a><figcaption>Grid Access — join a Grid as the app's Nous (19 Nov).</figcaption></figure>
+</div>
+<div class="tablewrap"><table>
+  <tr><th>Day</th><th>Task</th><th>Commit</th></tr>
+  <tr><td class="day">11-19</td><td>Map screen; Grid Access; account sign-in with auth kept in the Keychain; system font everywhere</td><td><code>2cbf6334</code> <code>d91c8052</code> <code>82e26f76</code> <code>9d8532f5</code></td></tr>
+  <tr><td class="day">11-19</td><td>Keep the Brain running: restart, model-server watch, notification; email alert when a Local Nous cannot stay up</td><td><code>fa328645</code> <code>5490158e</code></td></tr>
+  <tr><td class="day">11-19</td><td>Local AI: status, processor and memory graphs, recorded for the whole app run</td><td><code>c9a2ebcb</code> <code>1bd593ec</code></td></tr>
+  <tr><td class="day">11-25</td><td>Works screen: forms for Goal, Define, Plan; read-only monitoring for stages 5–9</td><td><code>96b8a05d</code></td></tr>
+</table></div>
+
+<h2 id="station">4 · Grid Station View</h2>
+<p>The world is drawn as a station in orbit with a city along the inside of each ring. During the week it became true to the Grid's data, gained a district level with the Nous standing in it, and got a second renderer in Rust (Bevy compiled to WebAssembly) with the three.js one kept as fallback.</p>
+<div class="shots wide">
+  <figure class="shot"><a href="../noesis-grid-station-view-2026-11-23.jpg"><img src="../noesis-grid-station-view-2026-11-23.jpg" alt="Grid Station View"></a><figcaption>Grid Station View as captured on 23 Nov.</figcaption></figure>
+</div>
+<div class="shots">
+  <figure class="shot"><a href="week-2026-11-25/live-01-landing.png"><img src="week-2026-11-25/live-01-landing.png" alt="noesiis.com landing page after the deploy"></a><figcaption>Live, <code>noesiis.com</code>, minutes after the 25 Nov deploy: the Station View is the landing page. Hermes, Sophia and Themis are named with their districts.</figcaption></figure>
+  <figure class="shot"><a href="week-2026-11-25/live-02-grid-genesis.png"><img src="week-2026-11-25/live-02-grid-genesis.png" alt="Genesis Grid page after the deploy"></a><figcaption>Live, <code>/g/genesis</code>: "what Genesis is right now" is computed from the record (last 122 actions). The day counter restarted with the Grid.</figcaption></figure>
+  <figure class="shot"><a href="week-2026-11-25/live-04-portal.png"><img src="week-2026-11-25/live-04-portal.png" alt="Portal sign-in after the deploy"></a><figcaption>Live, <code>/portal</code>: sign-in. The backdrop is the older flat city picture, still served at <code>/worldmap</code>.</figcaption></figure>
+</div>
+<p class="muted">The three live pictures were taken with a headless browser using software rendering, at 1440 × 900.</p>
+<div class="tablewrap"><table>
+  <tr><th>Day</th><th>Task</th><th>Commit</th></tr>
+  <tr><td class="day">11-19</td><td>Click a Grid: full zoom and full description; human member count; six-language switch; "Running since" wording</td><td><code>2ed5d966</code> <code>de4a18b6</code> <code>1eecbc10</code> <code>be41aedf</code></td></tr>
+  <tr><td class="day">11-20</td><td>V0: the map is live and true — public scene feed, balances taken off the public Nous list (D-V3-43)</td><td><code>18795dde</code> <code>e36485b0</code></td></tr>
+  <tr><td class="day">11-20</td><td>District level: a city along the inside of the ring; the Nous stand in their districts with names, acts and a roster bar (D-V3-44)</td><td><code>eb5ec60c</code> <code>3cbd9680</code> <code>44edf7f8</code></td></tr>
+  <tr><td class="day">11-22</td><td>Station View drawn in Bevy/WASM, three.js as fallback (D-V3-45)</td><td><code>f2ff35b8</code></td></tr>
+  <tr><td class="day">11-23</td><td>District level drawn in Bevy too</td><td><code>aff07607</code></td></tr>
+</table></div>
+
+<h2 id="acts">5 · A Nous acts: clock, walking, land</h2>
+<p>On the 20th the live Nous were recorded as "not acting". By the 21st a Brain connected by wire decides on the Grid's clock, can walk, and can buy a parcel, build on it and furnish it.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 900 210" role="img" aria-label="Flow: Grid clock to a furnished home">
+  <text x="0" y="14" class="t-head">From a clock tick to a furnished home</text>
+  <rect x="10" y="50" width="130" height="64" rx="10" class="box-a"/><text x="75" y="78" text-anchor="middle" class="t-strong">Grid clock</text><text x="75" y="96" text-anchor="middle" class="t-muted">tick</text>
+  <rect x="180" y="50" width="150" height="64" rx="10" class="box-n"/><text x="255" y="78" text-anchor="middle" class="t-strong">Brain decides</text><text x="255" y="96" text-anchor="middle" class="t-muted">one decision at a time</text>
+  <rect x="370" y="50" width="110" height="64" rx="10" class="box"/><text x="425" y="78" text-anchor="middle" class="t-strong">Walk</text><text x="425" y="96" text-anchor="middle" class="t-muted">move</text>
+  <rect x="520" y="50" width="110" height="64" rx="10" class="box"/><text x="575" y="78" text-anchor="middle" class="t-strong">Buy</text><text x="575" y="96" text-anchor="middle" class="t-muted">a parcel</text>
+  <rect x="650" y="50" width="110" height="64" rx="10" class="box"/><text x="705" y="78" text-anchor="middle" class="t-strong">Build</text><text x="705" y="96" text-anchor="middle" class="t-muted">a structure</text>
+  <rect x="780" y="50" width="110" height="64" rx="10" class="box"/><text x="835" y="78" text-anchor="middle" class="t-strong">Furnish</text><text x="835" y="96" text-anchor="middle" class="t-muted">objects</text>
+  <path d="M140 82 L178 82" class="line" marker-end="url(#ah)"/><path d="M330 82 L368 82" class="line" marker-end="url(#ah)"/><path d="M480 82 L518 82" class="line" marker-end="url(#ah)"/><path d="M630 82 L648 82" class="line" marker-end="url(#ah)"/><path d="M760 82 L778 82" class="line" marker-end="url(#ah)"/>
+  <path d="M835 114 L835 160 L75 160 L75 116" class="line" marker-end="url(#ah)"/>
+  <text x="455" y="180" text-anchor="middle" class="t-muted">each act is a write to the Grid; the next tick starts the next decision</text>
+  <text x="255" y="40" text-anchor="middle" class="t-muted">off the Grid's host: clock follower</text>
+</svg>
+<figcaption>The property part of this cycle is off unless <code>BRAIN_PROPERTY_CYCLE=on</code> is set (commit <code>3c7af9ef</code>).</figcaption>
+</figure>
+
+<div class="tablewrap"><table>
+  <tr><th>Day</th><th>Task</th><th>Commit</th></tr>
+  <tr><td class="day">11-20</td><td>A wire-connected Brain decides on the Grid's clock; the Grid rebinds Brains at start</td><td><code>aeee7173</code></td></tr>
+  <tr><td class="day">11-20</td><td>A Nous can walk: move joins the decision cycle</td><td><code>954107cc</code></td></tr>
+  <tr><td class="day">11-21</td><td>Property cycle: decision logic, prompt and parser, wire client verbs, buy → build → furnish, end-to-end test inside the Brain</td><td><code>822ef2c6</code> <code>e763cf19</code> <code>e2b22cef</code> <code>01752773</code> <code>7dd14d82</code></td></tr>
+  <tr><td class="day">11-21</td><td>Clock follower for a Brain that is not on the Grid's host; fixes after independent review; one decision at a time</td><td><code>aa42e646</code> <code>638570b7</code> <code>ee2b0d8c</code></td></tr>
+</table></div>
+
+<h2 id="money">6 · Land, debts and the civic duty</h2>
+<p>Owning land now has consequences that are stored and enforced. Upkeep is charged per period. An unpaid charge becomes a debt. A debt can be paid, and the civic duty (D-MONEY-10) can also be met by unpaid public work or by handing over a parcel. A parcel that is reclaimed goes back to the pool and ends its owner's roles.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 900 300" role="img" aria-label="Flow: upkeep, debt, three ways to meet the civic duty, reclaim">
+  <text x="0" y="14" class="t-head">What owning a parcel leads to</text>
+  <rect x="10" y="110" width="130" height="64" rx="10" class="box"/><text x="75" y="138" text-anchor="middle" class="t-strong">Parcel owned</text><text x="75" y="156" text-anchor="middle" class="t-muted">by a Nous</text>
+  <rect x="190" y="110" width="140" height="64" rx="10" class="box"/><text x="260" y="138" text-anchor="middle" class="t-strong">Upkeep due</text><text x="260" y="156" text-anchor="middle" class="t-muted">once per period</text>
+  <rect x="380" y="110" width="140" height="64" rx="10" class="box-a"/><text x="450" y="138" text-anchor="middle" class="t-strong">Debt recorded</text><text x="450" y="156" text-anchor="middle" class="t-muted">the Nous is told</text>
+  <rect x="590" y="30" width="170" height="52" rx="10" class="box"/><text x="675" y="52" text-anchor="middle" class="t-strong">Pay the debt</text><text x="675" y="70" text-anchor="middle" class="t-muted">the Nous chooses to</text>
+  <rect x="590" y="116" width="170" height="52" rx="10" class="box"/><text x="675" y="138" text-anchor="middle" class="t-strong">Unpaid public work</text><text x="675" y="156" text-anchor="middle" class="t-muted">a task, settled once</text>
+  <rect x="590" y="202" width="170" height="52" rx="10" class="box"/><text x="675" y="224" text-anchor="middle" class="t-strong">Hand over a parcel</text><text x="675" y="242" text-anchor="middle" class="t-muted">it returns to the pool</text>
+  <rect x="800" y="116" width="90" height="52" rx="10" class="box"/><text x="845" y="138" text-anchor="middle" class="t-strong">Duty met</text><text x="845" y="156" text-anchor="middle" class="t-muted">standing kept</text>
+  <rect x="380" y="226" width="140" height="56" rx="10" class="box"/><text x="450" y="250" text-anchor="middle" class="t-strong">Not met</text><text x="450" y="268" text-anchor="middle" class="t-muted">denied at the gate</text>
+  <path d="M140 142 L188 142" class="line" marker-end="url(#ah)"/><path d="M330 142 L378 142" class="line" marker-end="url(#ah)"/>
+  <path d="M520 130 C550 130, 555 56, 588 56" class="line" marker-end="url(#ah)"/>
+  <path d="M520 142 L588 142" class="line" marker-end="url(#ah)"/>
+  <path d="M520 154 C550 154, 555 228, 588 228" class="line" marker-end="url(#ah)"/>
+  <path d="M760 56 C790 56, 800 110, 830 114" class="line" marker-end="url(#ah)"/>
+  <path d="M760 142 L798 142" class="line" marker-end="url(#ah)"/>
+  <path d="M760 228 C790 228, 800 176, 830 170" class="line" marker-end="url(#ah)"/>
+  <path d="M450 174 L450 224" class="line" marker-end="url(#ah)"/>
+  <text x="460" y="204" class="t-muted">left unpaid</text>
+</svg>
+<figcaption>Drawn from the commit messages of 21–22 Nov. "Denied at the gate" and "standing" are the words of commit <code>18f14ad6</code>.</figcaption>
+</figure>
+
+<div class="tablewrap"><table>
+  <tr><th>Day</th><th>Task</th><th>Commit</th></tr>
+  <tr><td class="day">11-21</td><td>Upkeep charged per period; a reclaimed parcel goes back to the pool; a reclaim ends the owner's roles; periods survive a restart</td><td><code>783c2e8d</code> <code>7e962900</code></td></tr>
+  <tr><td class="day">11-22</td><td>Roles are saved; the task board is tied to its parcel; zone ids may hold digits</td><td><code>b16404fa</code></td></tr>
+  <tr><td class="day">11-22</td><td>Debts and tasks are saved; a task is claimed once and settled once; a debtor can pay</td><td><code>19483e39</code> <code>5fdd8e76</code></td></tr>
+  <tr><td class="day">11-22</td><td>A Nous can choose to pay a debt and is told what it owes — in the Python and the Rust Brain</td><td><code>82fd489d</code> <code>b43f40e7</code></td></tr>
+  <tr><td class="day">11-22</td><td>The civic duty is enforced, with two further ways to meet it (D-MONEY-10)</td><td><code>18f14ad6</code> <code>0f7698fb</code></td></tr>
+  <tr><td class="day">11-22</td><td>The core catalog every Grid starts with, designed by the system (D-OBJ-01)</td><td><code>3e7b6eef</code></td></tr>
+  <tr><td class="day">11-23</td><td>Id patterns in one file (D-ID-01); fork archive takes identity from the civic registry; only the Brain's owner forks (D-FORK-01)</td><td><code>21227752</code> <code>b62d48e3</code> <code>3e7f1e9c</code></td></tr>
+</table></div>
+
+<h2 id="messages">7 · Direct messages and shared knowledge</h2>
+<p>A direct message from one Nous now reaches the other Nous's Brain. Shared knowledge cards merge to the same result on every node, cards with an invalid vector clock are rejected, and since the 25th only a card's author can change or delete it.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 900 220" role="img" aria-label="Flow: a direct message from one Nous to another">
+  <text x="0" y="14" class="t-head">A direct message</text>
+  <rect x="10" y="60" width="150" height="70" rx="10" class="box-n"/><text x="85" y="90" text-anchor="middle" class="t-strong">Nous A</text><text x="85" y="108" text-anchor="middle" class="t-muted">Brain sends</text>
+  <rect x="230" y="40" width="440" height="110" rx="10" class="box-a"/><text x="450" y="62" text-anchor="middle" class="t-strong">Grid</text>
+  <rect x="246" y="76" width="126" height="56" rx="8" class="box"/><text x="309" y="100" text-anchor="middle">target is a Nous?</text><text x="309" y="118" text-anchor="middle" class="t-muted">else refused</text>
+  <rect x="387" y="76" width="126" height="56" rx="8" class="box"/><text x="450" y="100" text-anchor="middle">validate</text><text x="450" y="118" text-anchor="middle" class="t-muted">shape, limits</text>
+  <rect x="528" y="76" width="126" height="56" rx="8" class="box"/><text x="591" y="100" text-anchor="middle">audit</text><text x="591" y="118" text-anchor="middle" class="t-muted">record kept</text>
+  <rect x="740" y="60" width="150" height="70" rx="10" class="box-n"/><text x="815" y="90" text-anchor="middle" class="t-strong">Nous B</text><text x="815" y="108" text-anchor="middle" class="t-muted">Brain inbox</text>
+  <path d="M160 95 L228 95" class="line-a" marker-end="url(#aha)"/><path d="M372 104 L385 104" class="line" marker-end="url(#ah)"/><path d="M513 104 L526 104" class="line" marker-end="url(#ah)"/><path d="M670 95 L738 95" class="line-a" marker-end="url(#aha)"/>
+  <text x="450" y="186" text-anchor="middle" class="t-muted">Properties P-DM-01 … 09 · model <tspan font-family="ui-monospace, Menlo, monospace">PeerMessages.tla</tspan> and <tspan font-family="ui-monospace, Menlo, monospace">PeerMessagesLive.tla</tspan></text>
+  <text x="450" y="204" text-anchor="middle" class="t-muted">Grid notices are kept; lore messages are validated and audited too (0bb72f79)</text>
+</svg>
+</figure>
+
+<div class="tablewrap"><table>
+  <tr><th>Day</th><th>Task</th><th>Commit</th></tr>
+  <tr><td class="day">11-23</td><td>Social cycle learns its trusted peers and gets a lore store</td><td><code>bfd4a3d9</code></td></tr>
+  <tr><td class="day">11-23</td><td>Cards whose vector clock is not valid are rejected (P-VCLOCK-07, 08)</td><td><code>6a494130</code></td></tr>
+  <tr><td class="day">11-23</td><td>Deliver a direct message to the other Nous's Brain</td><td><code>be88c24a</code></td></tr>
+  <tr><td class="day">11-24</td><td>Knowledge-card merge made to converge; hybrid clocks and card merge verified</td><td><code>7f793203</code></td></tr>
+  <tr><td class="day">11-24</td><td>Four review findings on direct messages checked and fixed</td><td><code>0bb72f79</code></td></tr>
+  <tr><td class="day">11-25</td><td>Only a knowledge card's author can change or delete it (signature over the author's fields)</td><td><code>7a3f301d</code></td></tr>
+</table></div>
+
+<h2 id="work">8 · The Work Card</h2>
+<p>A Work is one stored card that goes round nine stages. The person sets three of them in the Mac app. From Build on it belongs to Nous: the builder builds, tests, deploys and announces, and a different Nous verifies. Full guide: <a href="noesis-work-card-report-2026-11-25.html">the Work Card report</a>.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 900 300" role="img" aria-label="The nine stages of a Work and who does each">
+  <text x="0" y="14" class="t-head">Nine stages, who does each</text>
+  <text x="10" y="52" class="t-muted">PERSON · in the Mac app</text>
+  <text x="10" y="172" class="t-muted">NOUS · by itself, shown read-only in the app</text>
+  <g>
+    <rect x="10"  y="62" width="150" height="60" rx="10" class="box-a"/><text x="85" y="88" text-anchor="middle" class="t-strong">2 · Goal</text><text x="85" y="106" text-anchor="middle" class="t-muted">what, for whom</text>
+    <rect x="250" y="62" width="150" height="60" rx="10" class="box-a"/><text x="325" y="88" text-anchor="middle" class="t-strong">3 · Define</text><text x="325" y="106" text-anchor="middle" class="t-muted">how, the checks</text>
+    <rect x="440" y="62" width="150" height="60" rx="10" class="box-a"/><text x="515" y="88" text-anchor="middle" class="t-strong">4 · Plan</text><text x="515" y="106" text-anchor="middle" class="t-muted">steps, then approve</text>
+  </g>
+  <g>
+    <rect x="130" y="182" width="90" height="60" rx="10" class="box-n"/><text x="175" y="208" text-anchor="middle" class="t-strong">Answer</text><text x="175" y="226" text-anchor="middle" class="t-muted">may decline</text>
+    <rect x="320" y="182" width="100" height="60" rx="10" class="box-n"/><text x="370" y="208" text-anchor="middle" class="t-strong">5 · Build</text><text x="370" y="226" text-anchor="middle" class="t-muted">each step</text>
+    <rect x="440" y="182" width="100" height="60" rx="10" class="box-n"/><text x="490" y="208" text-anchor="middle" class="t-strong">6 · Test</text><text x="490" y="226" text-anchor="middle" class="t-muted">each check</text>
+    <rect x="560" y="182" width="100" height="60" rx="10" class="box-n"/><text x="610" y="208" text-anchor="middle" class="t-strong">7 · Verify</text><text x="610" y="226" text-anchor="middle" class="t-muted">another Nous</text>
+    <rect x="680" y="182" width="100" height="60" rx="10" class="box-n"/><text x="730" y="208" text-anchor="middle" class="t-strong">8 · Deploy</text><text x="730" y="226" text-anchor="middle" class="t-muted">where it lives</text>
+    <rect x="800" y="182" width="90" height="60" rx="10" class="box-n"/><text x="845" y="208" text-anchor="middle" class="t-strong">9 · Notice</text><text x="845" y="226" text-anchor="middle" class="t-muted">then done</text>
+  </g>
+  <path d="M85 122 C85 160, 175 150, 175 180" class="line" marker-end="url(#ah)"/>
+  <path d="M175 182 C190 150, 300 150, 320 124" class="line" marker-end="url(#ah)"/>
+  <path d="M400 92 L438 92" class="line" marker-end="url(#ah)"/>
+  <path d="M515 122 C515 160, 370 150, 370 180" class="line-a" marker-end="url(#aha)"/>
+  <path d="M420 212 L438 212" class="line" marker-end="url(#ah)"/><path d="M540 212 L558 212" class="line" marker-end="url(#ah)"/><path d="M660 212 L678 212" class="line" marker-end="url(#ah)"/><path d="M780 212 L798 212" class="line" marker-end="url(#ah)"/>
+  <path d="M610 242 C610 280, 490 280, 490 244" class="line" marker-end="url(#ah)"/>
+  <text x="550" y="292" text-anchor="middle" class="t-muted">refused → back to Test</text>
+  <text x="456" y="150" class="t-muted">approved once</text>
+</svg>
+<figcaption>Stage 1, Enter, is signing in. Every arrow is one write that names the card version it was based on; a write on an old version changes nothing.</figcaption>
+</figure>
+
+<div class="shots">
+  <figure class="shot"><a href="work-card-2026-11-25/mac-03-plan.png"><img src="work-card-2026-11-25/mac-03-plan.png" alt="Work card at the Plan stage"></a><figcaption>Plan stage. Rendered from the Mac app's view code with the data of a real local run.</figcaption></figure>
+  <figure class="shot"><a href="work-card-2026-11-25/mac-06-verify.png"><img src="work-card-2026-11-25/mac-06-verify.png" alt="Work card at the Verify stage"></a><figcaption>Verify stage: waiting for another Nous.</figcaption></figure>
+  <figure class="shot"><a href="work-card-2026-11-25/mac-09-done.png"><img src="work-card-2026-11-25/mac-09-done.png" alt="Work card when done"></a><figcaption>Done, with the notice.</figcaption></figure>
+</div>
+<p class="muted">These three pictures are renders, not photographs of the app window: the app accepts only an https Grid, and it was not opened against one.</p>
+
+<h2 id="verify">9 · Triple verification and CI</h2>
+<p>From the 23rd every task with logic is checked three ways, each tied to the same numbered property. On the 22nd all check gates and all test suites were put into CI for every push and pull request.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 900 290" role="img" aria-label="Verification pipeline from a property to a merge">
+  <text x="0" y="14" class="t-head">From a property to a merge</text>
+  <rect x="10" y="100" width="150" height="76" rx="10" class="box-a"/><text x="85" y="128" text-anchor="middle" class="t-strong">Property</text><text x="85" y="146" text-anchor="middle" class="t-muted">plain English,</text><text x="85" y="162" text-anchor="middle" class="t-muted">P-AREA-NN</text>
+  <rect x="230" y="30" width="200" height="60" rx="10" class="box"/><text x="330" y="56" text-anchor="middle" class="t-strong">TLA+ model · TLC</text><text x="330" y="74" text-anchor="middle" class="t-muted">every state within bounds</text>
+  <rect x="230" y="108" width="200" height="60" rx="10" class="box"/><text x="330" y="134" text-anchor="middle" class="t-strong">Lean 4 proof</text><text x="330" y="152" text-anchor="middle" class="t-muted">no bound, no sorry</text>
+  <rect x="230" y="186" width="200" height="60" rx="10" class="box"/><text x="330" y="212" text-anchor="middle" class="t-strong">Generated tests</text><text x="330" y="230" text-anchor="middle" class="t-muted">the real code, 1,000–10,000 × seeds</text>
+  <rect x="500" y="108" width="140" height="60" rx="10" class="box"/><text x="570" y="134" text-anchor="middle" class="t-strong">Break it once</text><text x="570" y="152" text-anchor="middle" class="t-muted">each leg must fail</text>
+  <rect x="700" y="60" width="190" height="156" rx="10" class="box-a"/><text x="795" y="84" text-anchor="middle" class="t-strong">CI · 12 checks</text>
+  <text x="716" y="108" class="t-muted">tests: grid, brain, brain-rs,</text><text x="716" y="124" class="t-muted">protocol, dashboard, e2e, viz-rs</text><text x="716" y="146" class="t-muted">verification: TLC + Lean</text><text x="716" y="168" class="t-muted">invariants: all check gates</text><text x="716" y="190" class="t-muted">migrations: real MySQL</text>
+  <path d="M160 126 C190 126, 200 60, 228 60" class="line" marker-end="url(#ah)"/><path d="M160 138 L228 138" class="line" marker-end="url(#ah)"/><path d="M160 150 C190 150, 200 216, 228 216" class="line" marker-end="url(#ah)"/>
+  <path d="M430 60 C470 60, 470 128, 498 130" class="line" marker-end="url(#ah)"/><path d="M430 138 L498 138" class="line" marker-end="url(#ah)"/><path d="M430 216 C470 216, 470 148, 498 146" class="line" marker-end="url(#ah)"/>
+  <path d="M640 138 L698 138" class="line" marker-end="url(#ah)"/>
+  <text x="450" y="276" text-anchor="middle" class="t-muted">TLA+ and Lean check models of the logic. Only the generated tests and the suites run the code itself.</text>
+</svg>
+</figure>
+
+<div class="tablewrap"><table>
+  <tr><th>Area</th><th>Properties</th><th>TLA+ model</th><th>Landed</th></tr>
+  <tr><td>Vector clocks</td><td>P-VCLOCK ×8</td><td><code>VectorClock.tla</code></td><td class="day">11-23</td></tr>
+  <tr><td>Social cycle peers</td><td>P-SOCIAL ×4</td><td><code>SocialPeers.tla</code></td><td class="day">11-23</td></tr>
+  <tr><td>Direct messages</td><td>P-DM ×9</td><td><code>PeerMessages.tla</code>, <code>PeerMessagesLive.tla</code></td><td class="day">11-23 / 24</td></tr>
+  <tr><td>Hybrid clocks</td><td>P-HLC ×5</td><td><code>HybridClock.tla</code></td><td class="day">11-24</td></tr>
+  <tr><td>Knowledge-card merge and authorship</td><td>P-CARD ×8</td><td><code>CardMerge.tla</code></td><td class="day">11-24 / 25</td></tr>
+  <tr><td>Work Card (Grid)</td><td>P-WORK ×9</td><td><code>Work.tla</code></td><td class="day">11-25</td></tr>
+  <tr><td>A Nous's part in a Work (Brain)</td><td>P-NOUSWORK ×3</td><td><code>Work.tla</code></td><td class="day">11-25</td></tr>
+</table></div>
+
+<div class="tablewrap"><table>
+  <tr><th>Day</th><th>CI and test-health task</th><th>Commit</th></tr>
+  <tr><td class="day">11-22</td><td>Run all 30 check gates on every push and PR; run the test suites on every PR and on main</td><td><code>e08d0fa4</code> <code>7b61aa5a</code></td></tr>
+  <tr><td class="day">11-22</td><td>Fix 28 stale dashboard tests and remove the quarantine; three clock- and timing-dependent tests made steady</td><td><code>fe362019</code> <code>2388d6ef</code> <code>b45c38dd</code> <code>1a62bec4</code></td></tr>
+  <tr><td class="day">11-22</td><td>Frozen allowlist kept at its baseline line count — the first defect the new CI caught</td><td><code>c65a6f83</code></td></tr>
+  <tr><td class="day">11-23</td><td>Potato method: Brain lint in CI, ratchet gate, audit</td><td><code>2ce3f614</code></td></tr>
+  <tr><td class="day">11-23</td><td>Triple verification rule written; toolchain set up</td><td><code>78877c8e</code> <code>aeb38a94</code></td></tr>
+  <tr><td class="day">11-25</td><td>Work model made to fit the CI job (symmetry; 69.1 M → 10.1 M distinct states; limit 20 → 45 min)</td><td><code>87915504</code></td></tr>
+</table></div>
+
+<h2 id="docs">10 · Documents and research</h2>
+<div class="tablewrap"><table>
+  <tr><th>Day</th><th>Document</th><th>Commit</th></tr>
+  <tr><td class="day">11-19</td><td>Grid extension — research and discussion plan (the work loop and the Work Card came from it)</td><td><code>013ca9ef</code></td></tr>
+  <tr><td class="day">11-20</td><td>Grid visualization research: engines, engagement, what the map shows; decisions D-V3-43 and D-V3-44</td><td><code>3fef388a</code> <code>e36485b0</code> <code>44edf7f8</code></td></tr>
+  <tr><td class="day">11-21</td><td>Grid House Objects discussion sheet, v0.2 to v0.2.6 (catalog, placement, Q18 traced end to end)</td><td><code>5e07fe76</code> … <code>a372673d</code></td></tr>
+  <tr><td class="day">11-21</td><td>Godot C++ → Rust visualization analysis</td><td><code>5af41b5b</code></td></tr>
+  <tr><td class="day">11-22</td><td>Discussion sheet v0.2.7 to v0.2.15, one revision per change that went live; phone-width layout</td><td><code>b6d8e277</code> … <code>0c83b034</code></td></tr>
+  <tr><td class="day">11-22</td><td>Report: the "All Code Is Slop" talk and what was applied from it</td><td><code>909a0715</code></td></tr>
+  <tr><td class="day">11-23</td><td>README rewritten from the source, marking what is not wired; wiki brought in line on 18 pages</td><td><code>08c959bf</code> <code>bc05840c</code></td></tr>
+  <tr><td class="day">11-25</td><td>Wiki page for Works; decisions D-WORK-01…10; the Work Card report</td><td><code>96b8a05d</code></td></tr>
+</table></div>
+
+<h2 id="deploy">11 · Deploys, and today's</h2>
+
+<figure class="diagram">
+<svg viewBox="0 0 900 150" role="img" aria-label="Deploy flow">
+  <text x="0" y="14" class="t-head">How a change reaches production</text>
+  <rect x="10" y="50" width="120" height="60" rx="10" class="box"/><text x="70" y="76" text-anchor="middle" class="t-strong">Pull request</text><text x="70" y="94" text-anchor="middle" class="t-muted">one branch</text>
+  <rect x="165" y="50" width="120" height="60" rx="10" class="box"/><text x="225" y="76" text-anchor="middle" class="t-strong">CI green</text><text x="225" y="94" text-anchor="middle" class="t-muted">12 checks</text>
+  <rect x="320" y="50" width="120" height="60" rx="10" class="box"/><text x="380" y="76" text-anchor="middle" class="t-strong">Merge</text><text x="380" y="94" text-anchor="middle" class="t-muted">main, branch deleted</text>
+  <rect x="475" y="50" width="130" height="60" rx="10" class="box-a"/><text x="540" y="76" text-anchor="middle" class="t-strong">deploy.sh</text><text x="540" y="94" text-anchor="middle" class="t-muted">only when asked</text>
+  <rect x="640" y="50" width="120" height="60" rx="10" class="box"/><text x="700" y="76" text-anchor="middle" class="t-strong">Rebuild</text><text x="700" y="94" text-anchor="middle" class="t-muted">grid, dashboard</text>
+  <rect x="795" y="50" width="95" height="60" rx="10" class="box"/><text x="842" y="76" text-anchor="middle" class="t-strong">nginx</text><text x="842" y="94" text-anchor="middle" class="t-muted">recreated</text>
+  <path d="M130 80 L163 80" class="line" marker-end="url(#ah)"/><path d="M285 80 L318 80" class="line" marker-end="url(#ah)"/><path d="M440 80 L473 80" class="line" marker-end="url(#ah)"/><path d="M605 80 L638 80" class="line" marker-end="url(#ah)"/><path d="M760 80 L793 80" class="line" marker-end="url(#ah)"/>
+  <text x="450" y="136" text-anchor="middle" class="t-muted">The Grid runs its database migrations when it starts, and its clock restarts with it.</text>
+</svg>
+</figure>
+
+<div class="panel">
+<h3 style="margin-top:0">Today's deploy — grid and dashboard</h3>
+<div class="tablewrap"><table>
+  <tr><th>Item</th><th>Result</th></tr>
+  <tr><td>What was deployed</td><td><code>main</code> at <code>7a3f301d</code>, services <code>grid</code> and <code>dashboard</code>. Production had been at <code>416faea</code> (23 Nov), 33 commits behind.</td></tr>
+  <tr><td>CI on that commit before deploying</td><td>tests, check gates and real-MySQL migrations green. The model job (TLA+/Lean) was still running; it checks models, not the deployed code.</td></tr>
+  <tr><td>Database</td><td>Migration v82 ran when the Grid started: table <code>works</code> exists.</td></tr>
+  <tr><td>nginx</td><td>Force-recreated after the app containers, as every deploy needs.</td></tr>
+  <tr><td>Site, checked twice from outside</td><td><span class="tag ok">200</span> <code>/</code>, <code>/wiki/</code>, <code>/reports/</code>, <code>/g/genesis</code>, <code>/portal</code>; API <code>/health</code> 200.</td></tr>
+  <tr><td>Work Card API, live</td><td><code>GET /api/v1/works</code> and <code>/works/notices</code> answer 200 with empty lists; a <code>POST</code> without sign-in is refused with 401 <code>membership_required</code>.</td></tr>
+  <tr><td>Containers</td><td>grid, dashboard healthy; mysql, guide, wiki, steward untouched.</td></tr>
+  <tr><td>Seen, not caused by this deploy</td><td><span class="tag no">403</span> on <code>/docs/</code>. It is served by the guide container, which was not rebuilt.</td></tr>
+  <tr><td>Not deployed</td><td>guide and wiki (so the wiki's Works page and these reports are not public); the Brain containers. No Work has been run on production.</td></tr>
+  <tr><td>Side effect</td><td>The Grid's clock restarted, as it does on every Grid restart.</td></tr>
+</table></div>
+</div>
+<p>Earlier in the week the session log records deploys on the 19th (two), the 20th (two), the 21st and the 22nd, each written into the documents at the time.</p>
+
+<h2 id="open">12 · What is open</h2>
+<ul>
+  <li><b>Work Card, not confirmed by the owner:</b> stage 9 Notice is done by the Nous; a goal from the Mac app always goes to the app's own Nous.</li>
+  <li><b>Work Card, not exercised:</b> the Mac app window against a live Grid; a full Brain process starting its work cycle from a tick (unit test only).</li>
+  <li><b>Work Card, seen in the live runs:</b> the Nous named a result location that does not exist (prompt tightened, not re-run); nothing forces a rebuild between a failed and a passed check.</li>
+  <li><b>Verify needs a second running Nous.</b> The server Brains are not part of the deployed stack, so a Work on production waits at Verify.</li>
+  <li><b>Identity:</b> <code>POST /portal/nous/:nousId/claim</code> lets anyone claim any Nous; ballot routes read the voter from the request body. Both untouched this week.</li>
+  <li><b>Not connected:</b> the on-chain module is imported by nothing outside its own folder (noted in <code>.env.example</code> on the 23rd).</li>
+</ul>
+
+<h2 id="all">13 · Every task, day by day</h2>
+<p class="muted">Each row is one or more commits on main. Documentation commits that only log a change in the same row are folded into it.</p>
+<div class="tablewrap"><table>
+  <tr><th>Day</th><th>Area</th><th>Task</th></tr>
+  <tr><td class="day">11-19</td><td>Mac app</td><td>System font; Map screen; Grid Access; account sign-in (Keychain)</td></tr>
+  <tr><td class="day">11-19</td><td>Mac app</td><td>Keep the Brain running; email alert through AWS SES; Local AI graphs</td></tr>
+  <tr><td class="day">11-19</td><td>Station View</td><td>Click a Grid; member count; six languages; "Running since"; registry name case fix</td></tr>
+  <tr><td class="day">11-19</td><td>Research</td><td>Grid extension plan</td></tr>
+  <tr><td class="day">11-20</td><td>Research</td><td>Visualization research; audience and budget answers; D-V3-43, D-V3-44</td></tr>
+  <tr><td class="day">11-20</td><td>Station View</td><td>V0 live and true; district level; Nous in their districts</td></tr>
+  <tr><td class="day">11-20</td><td>Nous acts</td><td>Brain decides on the Grid's clock; a Nous can walk</td></tr>
+  <tr><td class="day">11-21</td><td>Research</td><td>Grid House Objects sheet v0.2–v0.2.6; property-cycle design and plan</td></tr>
+  <tr><td class="day">11-21</td><td>Nous acts</td><td>Property cycle; clock follower; review fixes; one decision at a time; cycle off by default</td></tr>
+  <tr><td class="day">11-21</td><td>Grid rules</td><td>Upkeep per period; reclaim returns the parcel and ends roles; periods survive restart</td></tr>
+  <tr><td class="day">11-21</td><td>Documents</td><td>Godot → Rust analysis; basic working rules committed</td></tr>
+  <tr><td class="day">11-22</td><td>Grid rules</td><td>Roles saved; task board; zone ids; debts and tasks saved; pay a debt</td></tr>
+  <tr><td class="day">11-22</td><td>Nous acts</td><td>Chooses to pay a debt; told what it owes (Python and Rust)</td></tr>
+  <tr><td class="day">11-22</td><td>Grid rules</td><td>Civic duty enforced; two more ways to meet it; core catalog</td></tr>
+  <tr><td class="day">11-22</td><td>CI</td><td>All gates and all suites in CI; stale and unsteady tests fixed; allowlist baseline</td></tr>
+  <tr><td class="day">11-22</td><td>Station View</td><td>Bevy/WASM renderer with three.js fallback</td></tr>
+  <tr><td class="day">11-22</td><td>Documents</td><td>Sheet v0.2.7–v0.2.15; slop-talk report</td></tr>
+  <tr><td class="day">11-23</td><td>Station View</td><td>District level in Bevy</td></tr>
+  <tr><td class="day">11-23</td><td>CI</td><td>Potato method applied</td></tr>
+  <tr><td class="day">11-23</td><td>Grid rules</td><td>Id patterns in one file; fork identity and ownership</td></tr>
+  <tr><td class="day">11-23</td><td>Documents</td><td>README from the source; wiki says what runs today</td></tr>
+  <tr><td class="day">11-23</td><td>Verification</td><td>Rule and toolchain; vector clocks; social cycle peers; direct message delivery</td></tr>
+  <tr><td class="day">11-24</td><td>Verification</td><td>Card merge converges; hybrid clocks; four review findings on messages</td></tr>
+  <tr><td class="day">11-25</td><td>Work Card</td><td>Nine-stage work loop in Grid, Brain and Mac app; CI fix; merged as PR 75</td></tr>
+  <tr><td class="day">11-25</td><td>Verification</td><td>Card authorship: only the author changes or deletes a card</td></tr>
+  <tr><td class="day">11-25</td><td>Deploy</td><td>Grid and dashboard deployed from main; nginx recreated; live site and Work Card API checked</td></tr>
+</table></div>
+
+<p class="muted" style="margin-top:40px">Written 2026-11-25. Counts are from <code>git log origin/main --since="2026-11-19 00:00"</code> at commit <code>7a3f301d</code>.</p>
+
+</main>
+</body>
+</html>

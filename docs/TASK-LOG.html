@@ -65,7 +65,7 @@
   </div>
 
   <!-- ============================ SESSION 32 ============================ -->
-  <h2>Session 39 — 2026‑11‑24 · “A live Brain accepts a taught skill from hot ties only”</h2>
+  <h2>Session 40 — 2026‑11‑24 · “A live Brain accepts a taught skill from hot ties only”</h2>
   <p class="sub">Request: the operator's answer to the question Session 34 left open — trust hot ties only. Brain only; nothing deployed. Same branch and PR as Session 34 (PR #72).</p>
   <ul>
     <li><b>Trust rule</b> <span class="tag done">done</span> — <code>social_logic.hot_ties</code> and <code>skill_trust_weight</code>: the weight the Brain already holds for a teacher, raised to 0.60 (the lowest weight the Grid calls hot) when the Grid lists the teacher as a hot tie. The skill gate still asks for 0.35. Warm, cold and unlisted teachers add nothing; a held weight that is not a finite number counts as 0.</li>
@@ -106,6 +106,14 @@ Not verified:
 - No effect in production until a live Brain has a skill store; the tests build the store themselves.
 - The 60-tick refresh and the read before a due skill are in the stateful property test, not in TLA+ or Lean.
 </pre>
+  <h2>Session 39 — 2026‑11‑25 · “Merge after CI pass”, “deploy grid and dashboard”, “last 7 days all task report”</h2>
+  <p class="sub">Continuation of Session 37. Class C for the report (no logic changed); the CI fix changed a TLA+ model's search, not its bounds or invariants.</p>
+  <ul>
+    <li><b>PR 75 merged</b> as <code>5ed4fb5f</code>. The first CI run was not green: the TLA+/Lean job was cancelled at 20 minutes because <code>Work.tla</code> was too large for the runner. Fix <code>87915504</code>: symmetry over Nous and checks (10,100,936 distinct states, was 69,060,880), job limit 45 minutes. All 12 checks then passed. Remote and local branch deleted.</li>
+    <li><b>Deployed</b> <code>grid</code> and <code>dashboard</code> from <code>main@7a3f301d</code> (production was at <code>416faea</code>, 33 commits behind). nginx force-recreated. Migration v82 applied (<code>works</code> table present). Checked twice from outside: site routes 200, <code>/api/v1/works</code> 200, unauthenticated <code>POST</code> 401. <code>/docs/</code> answers 403 (guide container, not rebuilt). guide, wiki and Brains not deployed.</li>
+    <li><b>Report</b>: <a href="reports/noesis-week-report-2026-11-19-to-25.html">seven days of work, 19–25 Nov</a> — 9 diagrams, 10 screenshots (3 taken live after the deploy). Not added to the public reports index: it names the two open identity holes.</li>
+  </ul>
+
   <h2>Session 38 — 2026‑11‑25 · “Add an authorship check so only a card's author can overwrite or delete it”</h2>
   <p class="sub">Request: the follow-up left open in Session 35. Protocol package only; nothing deployed.</p>
   <ul>

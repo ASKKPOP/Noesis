@@ -953,3 +953,10 @@ Verified as `P-CARD-07`, `P-CARD-08`; `P-CARD-02` and `P-CARD-04` reworded to ma
 states with forged cards; Lean 4 new theorems; fast-check 1,000 × 10 seeds and 10,000 once; 18 deliberate breaks caught.
 Still open: a replica that has never seen an id accepts the first signed card under it; cards made earlier have no
 signature; open fields and stamps can still be set by any peer. No research page changed.
+
+## [2026-11-25] ops | PR 75 merged, grid + dashboard deployed, week report written
+
+`Work.tla` timed out in CI (20 min); symmetry over Nous and checks brought it to 10.1 M distinct states, same bounds and
+invariants. Production moved from `416faea` to `main@7a3f301d` (grid, dashboard); migration v82 applied; Work Card
+routes answer on the live API. Week report: `docs/reports/noesis-week-report-2026-11-19-to-25.html`. No research page
+changed.
