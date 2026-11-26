@@ -25,7 +25,7 @@ import { generateIdentity, sign, verify, type Identity } from '../../src/identit
 import { RoomManager } from '../../src/rooms.js';
 import { P2PNode } from '../../src/p2p.js';
 import { CocEngine } from '../../src/coc.js';
-import { KnowledgePool, type KnowledgeCard } from '../../src/knowledge.js';
+import { KnowledgePool, signCardAuthorship, type KnowledgeCard } from '../../src/knowledge.js';
 import { SecurityManager } from '../../src/security.js';
 import { ContentStore } from '../../src/content-store.js';
 import { ReputationEngine, type TaskOutcome } from '../../src/reputation.js';
@@ -240,7 +240,7 @@ function makeCard(
     identity: Identity, id: string, spaceId: string,
     title: string, content: string, tags: string[] = [],
 ): KnowledgeCard {
-    return {
+    const card: KnowledgeCard = {
         id, spaceId, type: 'fact', title,
         summary: title, content, contentFormat: 'plain',
         author: identity.did,
@@ -250,11 +250,14 @@ function makeCard(
         usage: { views: 0, citations: 0, applications: 0, lastAccessed: Date.now() },
         privacy: 'public',
         crdt: {
-            hlc: { wallTime: Date.now() + Math.random() * 100000, logical: 0, nodeId: identity.did },
+            // A whole number: mergeCard rejects a fractional wall time.
+            hlc: { wallTime: Date.now() + Math.floor(Math.random() * 100000), logical: 0, nodeId: identity.did },
             vectorClock: { [identity.did]: 1 },
             tombstone: false,
         },
     };
+    signCardAuthorship(card, identity);
+    return card;
 }
 
 // ─── Scenario 1: Multi-Runtime Agent Collaboration ──────────────
@@ -1050,6 +1053,7 @@ describe('Scenario 7: Concurrent Agents Stress Test', () => {
                 card.crdt.hlc.wallTime = Date.now() + n * 10000 + c * 1000;
                 card.crdt.hlc.logical = c;
                 card.crdt.vectorClock = { [identity.did]: c + 1 };
+                signCardAuthorship(card, identity); // the signature covers the author's count
                 cards.push(card);
                 knowledge.mergeCard(card);
             }

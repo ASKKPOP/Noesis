@@ -12,7 +12,7 @@
 import { EventEmitter } from 'events';
 import { ulid } from 'ulid';
 import { type Storage } from './storage.js';
-import { type Identity } from './identity.js';
+import { type Identity, deepCanonicalJson, publicKeyFromDid, sign, verify } from './identity.js';
 import type { InputValidator } from './prompt-guard.js';
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -93,6 +93,10 @@ export interface KnowledgeCard {
         vectorClock: Record<string, number>;
         tombstone: boolean;      // Se foi deletado
     };
+
+    // The author's signature over the authored fields (see signCardAuthorship).
+    // Absent only on cards made before signatures existed; peers reject those.
+    authorSignature?: string;
 }
 
 export interface Verification {
@@ -309,6 +313,48 @@ export function isValidHybridClock(value: unknown): value is HybridLogicalClock 
     return Number.isSafeInteger(wallTime) && (wallTime as number) >= 0
         && Number.isSafeInteger(logical) && (logical as number) >= 0
         && typeof nodeId === 'string';
+}
+
+/**
+ * The fields only a card's author may set. Everything else on a card (confidence,
+ * verification status and list, usage, updatedAt) may be changed by any node.
+ */
+const AUTHORED_FIELDS = [
+    'id', 'spaceId', 'type', 'title', 'summary', 'content', 'contentFormat', 'author',
+    'createdAt', 'version', 'tags', 'domain', 'entities', 'source', 'privacy', 'allowedReaders',
+] as const;
+
+/**
+ * What the author signs: the authored fields, the deleted flag, and the author's
+ * own write count. The count ties a signature to one author write, so an old
+ * signed version cannot be passed off as a newer one.
+ */
+function authoredPayload(card: KnowledgeCard): string {
+    const payload: Record<string, unknown> = {
+        tombstone: card.crdt.tombstone,
+        seq: ownCount(card.crdt.vectorClock, card.author),
+    };
+    for (const field of AUTHORED_FIELDS) payload[field] = card[field];
+    // Through JSON first, so the text is the same before and after a trip over the network.
+    return deepCanonicalJson(JSON.parse(JSON.stringify(payload)));
+}
+
+/** Sign a card's authored fields as its author. Call after every write by the author. */
+export function signCardAuthorship(card: KnowledgeCard, author: Identity): void {
+    card.authorSignature = sign(author, authoredPayload(card));
+}
+
+/**
+ * Whether a card's authored fields, deleted flag and author write count are the
+ * ones its author signed. The author's public key is read from the author DID.
+ */
+export function verifyCardAuthorship(card: KnowledgeCard): boolean {
+    try {
+        return typeof card.authorSignature === 'string'
+            && verify(publicKeyFromDid(card.author), authoredPayload(card), card.authorSignature);
+    } catch {
+        return false; // the author is not a did:key, or the signature is not base64
+    }
 }
 
 /**
@@ -529,6 +575,8 @@ export class KnowledgePool extends EventEmitter {
             }
         };
 
+        signCardAuthorship(card, this.identity);
+
         this.cards.set(id, card);
         space.cards.add(id);
         space.stats.cardCount++;
@@ -563,7 +611,6 @@ export class KnowledgePool extends EventEmitter {
 
         card.version++;
         card.updatedAt = Date.now();
-        this.stampWrite(card);
         
         // Aplicar updates
         if (updates.title) card.title = updates.title;
@@ -580,6 +627,9 @@ export class KnowledgePool extends EventEmitter {
         }
         if (updates.confidence !== undefined) card.confidence = updates.confidence;
 
+        // After the updates: the author's signature covers them.
+        this.stampWrite(card);
+
         await this.saveCard(card);
         this.emit('card:updated', card);
         
@@ -589,6 +639,7 @@ export class KnowledgePool extends EventEmitter {
     async deleteCard(id: KnowledgeId): Promise<void> {
         const card = this.cards.get(id);
         if (!card) throw new Error('Card not found');
+        if (card.author !== this.identity.did) throw new Error('No permission to delete');
 
         // Soft delete (tombstone para CRDT). A delete is a write: without advancing
         // the clocks, peers see an equal vector clock and discard it.
@@ -613,11 +664,13 @@ export class KnowledgePool extends EventEmitter {
      * Record a local write on a card: advance its stamp (Kulkarni et al. 2014) as
      * this node, and count the write in its vector clock. The stamp carries the
      * writer's node id, so two nodes never give concurrent writes the same stamp.
+     * The author's own write also renews the signature, which covers the write count.
      */
     private stampWrite(card: KnowledgeCard): void {
         card.crdt.hlc = { ...tickHLC(card.crdt.hlc), nodeId: this.identity.did };
         card.crdt.vectorClock[this.identity.did] =
             (card.crdt.vectorClock[this.identity.did] || 0) + 1;
+        if (card.author === this.identity.did) signCardAuthorship(card, this.identity);
     }
 
     /**
@@ -631,11 +684,14 @@ export class KnowledgePool extends EventEmitter {
      *    - concurrent      → LWW tie-break on HLC (wallTime, logical, nodeId).
      * 3. Merge vector clocks (component-wise max) regardless of winner.
      * 4. Keep the larger of the two HLC stamps: the stamp of the newest write seen.
-     * 5. Tombstone wins: if either copy is tombstoned, result is tombstoned.
+     * 5. The authored fields, the deleted flag and the author's signature are taken
+     *    together from the copy with the newer author write, whoever wins step 2:
+     *    only the author changes or deletes a card.
      *
      * Returns the merged card, or null if the remote was stale.
-     * Throws if the remote's vector clock or HLC stamp is not valid
-     * (see isValidVectorClock, isValidHybridClock).
+     * Throws if the remote's vector clock or HLC stamp is not valid, if its author
+     * signature does not verify, or if it names a different author than the local copy
+     * (see isValidVectorClock, isValidHybridClock, verifyCardAuthorship).
      */
     mergeCard(remote: KnowledgeCard): KnowledgeCard | null {
         if (!isValidVectorClock(remote.crdt?.vectorClock)) {
@@ -644,7 +700,13 @@ export class KnowledgePool extends EventEmitter {
         if (!isValidHybridClock(remote.crdt.hlc)) {
             throw new Error(`Rejected card ${remote.id}: invalid hybrid clock`);
         }
+        if (!verifyCardAuthorship(remote)) {
+            throw new Error(`Rejected card ${remote.id}: author signature does not verify`);
+        }
         const local = this.cards.get(remote.id);
+        if (local && local.author !== remote.author) {
+            throw new Error(`Rejected card ${remote.id}: author differs from the local copy`);
+        }
 
         // Case 1: New card — accept remote entirely
         if (!local) {
@@ -700,19 +762,24 @@ export class KnowledgePool extends EventEmitter {
         // Keep the larger write stamp. The stamp must stay the stamp of a write, the
         // same on every replica, or replicas that saw the same writes pick different winners.
         const mergedHlc = { ...(compareHLC(local.crdt.hlc, remote.crdt.hlc) >= 0 ? local.crdt.hlc : remote.crdt.hlc) };
-        // Tombstone wins: once deleted, stays deleted
-        const tombstone = local.crdt.tombstone || remote.crdt.tombstone;
+        // The authored part comes whole from the copy with the newer author write, so
+        // the stored card always carries a signature that verifies.
+        const authored =
+            ownCount(remote.crdt.vectorClock, remote.author) > ownCount(local.crdt.vectorClock, local.author)
+                ? remote
+                : local;
+        const tombstone = authored.crdt.tombstone;
 
         // Build merged card
         const merged: KnowledgeCard = {
             ...winner,
+            ...Object.fromEntries(AUTHORED_FIELDS.map((field) => [field, authored[field]])),
+            authorSignature: authored.authorSignature,
             crdt: {
                 hlc: mergedHlc,
                 vectorClock: mergedVectorClock,
                 tombstone
             },
-            // Take the higher version
-            version: Math.max(local.version, remote.version),
             // Merge usage counters (take max of each)
             usage: {
                 views: Math.max(local.usage.views, remote.usage.views),
