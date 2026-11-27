@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Noēsis — Multi-Agent Build Teams · Video Analysis</title>
+<meta name="description" content="What the Anthropic talk on 1,000 Claude agents and memory 'dreaming' teaches us, mapped onto Noēsis Brain and Grid code, with a plan for Nous teams that think and build houses and Grids on their own.">
+<style>
+:root{
+  --bg:#f7f6f2;--card:#fff;--ink:#1d1d1b;--muted:#5d5c57;--line:#dedbd2;
+  --a:#2f5d8a;--a-soft:#e3ecf5;--b:#b0582f;--b-soft:#f6e6dd;--c:#3d7a4f;--c-soft:#e1efe4;
+  --d:#7a5aa0;--d-soft:#ece5f4;--warn:#9a6a00;--warn-soft:#fbf0d4;--bad:#a33a3a;--bad-soft:#f7e0e0;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141413;--card:#1e1e1c;--ink:#ecebe6;--muted:#a8a69e;--line:#36352f;
+  --a:#7fb0de;--a-soft:#1f2d3b;--b:#e39a74;--b-soft:#3a271d;--c:#82c495;--c-soft:#1d3224;
+  --d:#b99be0;--d-soft:#2c2338;--warn:#e2b24c;--warn-soft:#3a2f14;--bad:#e58a8a;--bad-soft:#3d2121;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141413;--card:#1e1e1c;--ink:#ecebe6;--muted:#a8a69e;--line:#36352f;
+  --a:#7fb0de;--a-soft:#1f2d3b;--b:#e39a74;--b-soft:#3a271d;--c:#82c495;--c-soft:#1d3224;
+  --d:#b99be0;--d-soft:#2c2338;--warn:#e2b24c;--warn-soft:#3a2f14;--bad:#e58a8a;--bad-soft:#3d2121;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:20px;padding-block:28px 80px}
+h1{font-size:30px;line-height:1.2;margin:0 0 6px}
+h2{font-size:21px;margin:44px 0 6px;padding-top:10px;border-top:1px solid var(--line)}
+h3{font-size:16px;margin:22px 0 6px}
+.ko{color:var(--muted);font-size:.92em}
+p{margin:8px 0}
+.lede{font-size:16.5px;color:var(--muted);max-width:780px}
+.meta{font-size:13px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font-size:24px}
+.stat span{font-size:13px;color:var(--muted)}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;font-weight:600}
+.t-have{background:var(--c-soft);color:var(--c)}
+.t-part{background:var(--warn-soft);color:var(--warn)}
+.t-miss{background:var(--bad-soft);color:var(--bad)}
+.call{border-left:4px solid var(--b);background:var(--b-soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0}
+.call.blue{border-color:var(--a);background:var(--a-soft)}
+.call.green{border-color:var(--c);background:var(--c-soft)}
+code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--a-soft);padding:0 4px;border-radius:4px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+svg{display:block;width:100%;height:auto}
+svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:var(--ink)}
+svg .mut{fill:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.timeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;counter-reset:s}
+.step{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;position:relative}
+.step h4{margin:0 0 4px;font-size:15px}
+.step small{color:var(--muted)}
+button{font:inherit;font-size:13px;padding:5px 12px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--a)}
+.ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;font-size:13px;color:var(--muted)}
+ul{padding-left:20px;margin:6px 0}
+li{margin:3px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="meta">Noēsis · research report · 2026-11-27 · source: Lance Martin (Anthropic), talk “1,000 Claude Agents Formalized Fermat’s Last Theorem” — <a href="https://www.youtube.com/watch?v=wrfbI5eyLAI">youtube.com/watch?v=wrfbI5eyLAI</a> (≈18 min)</p>
+<h1>Multi-Agent Build Teams for Nous</h1>
+<p class="ko">Nous 다중 에이전트 건설 팀 — 영상 분석과 Noēsis 적용 설계</p>
+<p class="lede">What the talk shows about letting AI teams organise themselves, how much of that Noēsis already has in the Brain and the Grid, and what we would add so a group of Nous can decide, plan and build houses (and later whole Grids) with no operator steering.</p>
+
+<div class="grid3" style="margin-top:18px">
+  <div class="stat"><b>1 + 999</b><span>one lead agent, 999 helpers</span></div>
+  <div class="stat"><b>2 tools</b><span>Git and one SQL database — nothing else</span></div>
+  <div class="stat"><b>≈30 h</b><span>unattended run, 60 statements proved</span></div>
+  <div class="stat"><b>5 min</b><span>time until the lead built its own coordination tables</span></div>
+</div>
+<p class="meta">Numbers above are as stated in the talk; we did not reproduce them.</p>
+
+<!-- ================================================================ -->
+<h2>1 · What the video says</h2>
+<p class="ko">영상 요약 — 두 가지 이야기: (A) 1,000개 에이전트 팀, (B) 메모리와 “꿈꾸기(dreaming)”</p>
+
+<h3>Story A — a 1,000-agent team with almost no scaffolding</h3>
+<div class="grid2">
+<div class="card">
+<p><b>September run (before):</b> about a dozen agents, a domain-specific harness for maths proofs, and a researcher nudging them. It worked, but only with that help.</p>
+<p><b>New run:</b> 1,000 agents, <i>no</i> domain harness, <i>no</i> human steering on the solution. Each agent sits in its own sandbox with restricted network. They can reach only <b>Git</b> and <b>a SQL database</b>. The prompt names one lead and 999 helpers, and tells them the problem and the two tools. That is all.</p>
+</div>
+<div class="card">
+<p><b>What happened:</b> five minutes in, the lead <b>created its own tables</b> — nobody told it to:</p>
+<ul>
+<li><b>announce</b> — the lead posts global decisions</li>
+<li><b>roles / assign</b> — the lead gives each helper a statement to work on</li>
+<li><b>notes</b> — helpers share progress with each other</li>
+<li><b>subtasks</b> — a task tree with dependencies for hard parts</li>
+<li><b>landed</b> — finished, checked Lean code (the real output)</li>
+</ul>
+<p>The team re-assigned itself as pieces finished. Lean checked every step, so a wrong proof could never land.</p>
+</div>
+</div>
+
+<div class="card">
+<svg viewBox="0 0 960 330" role="img" aria-label="Harness from the talk: one lead and 999 helpers in sandboxes, each connected only to Git and a SQL database, watched by a real-time tool-call monitor and an offline monitor every ten minutes">
+  <rect x="10" y="10" width="940" height="310" rx="12" fill="none" stroke="var(--line)"/>
+  <text x="30" y="38" font-size="14" font-weight="700">The harness in the talk</text>
+  <text x="30" y="56" font-size="12" class="mut">safety around the edges, very little inside</text>
+  <!-- lead -->
+  <rect x="40" y="90" width="150" height="70" rx="10" fill="var(--b-soft)" stroke="var(--b)"/>
+  <text x="115" y="120" font-size="14" font-weight="700" text-anchor="middle">Lead agent</text>
+  <text x="115" y="140" font-size="12" text-anchor="middle" class="mut">own sandbox</text>
+  <!-- helpers -->
+  <g id="helpers"></g>
+  <text x="115" y="300" font-size="12" text-anchor="middle" class="mut">999 helpers, one sandbox each</text>
+  <!-- primitives -->
+  <rect x="440" y="90" width="170" height="60" rx="10" fill="var(--a-soft)" stroke="var(--a)"/>
+  <text x="525" y="117" font-size="14" font-weight="700" text-anchor="middle">Git</text>
+  <text x="525" y="136" font-size="12" text-anchor="middle" class="mut">the code that lands</text>
+  <rect x="440" y="180" width="170" height="60" rx="10" fill="var(--a-soft)" stroke="var(--a)"/>
+  <text x="525" y="207" font-size="14" font-weight="700" text-anchor="middle">SQL database</text>
+  <text x="525" y="226" font-size="12" text-anchor="middle" class="mut">tables the lead invents</text>
+  <!-- verifier -->
+  <rect x="690" y="90" width="230" height="60" rx="10" fill="var(--c-soft)" stroke="var(--c)"/>
+  <text x="805" y="117" font-size="14" font-weight="700" text-anchor="middle">Lean checker</text>
+  <text x="805" y="136" font-size="12" text-anchor="middle" class="mut">wrong steps cannot land</text>
+  <rect x="690" y="180" width="230" height="60" rx="10" fill="var(--d-soft)" stroke="var(--d)"/>
+  <text x="805" y="203" font-size="13" font-weight="700" text-anchor="middle">Monitors</text>
+  <text x="805" y="221" font-size="12" text-anchor="middle" class="mut">every tool call, live (escapes)</text>
+  <text x="805" y="236" font-size="12" text-anchor="middle" class="mut">all runs, offline, every 10 min</text>
+  <path d="M190 125 H440" stroke="var(--b)" stroke-width="2" fill="none"/>
+  <path d="M190 125 C320 125 320 210 440 210" stroke="var(--b)" stroke-width="2" fill="none"/>
+  <path d="M250 230 C350 230 360 210 440 210" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+  <path d="M250 230 C350 230 360 125 440 125" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+  <path d="M610 120 H690" stroke="var(--c)" stroke-width="2" fill="none"/>
+  <path d="M610 210 H690" stroke="var(--d)" stroke-width="2" fill="none" stroke-dasharray="4 3"/>
+</svg>
+</div>
+
+<h3>Watch it work — the lead's tables over a run</h3>
+<p>A small simulation in the shape the talk showed (not its data): writes are red, reads are green. The lead writes <i>announce</i> and <i>roles</i> now and then; helpers read them, chat in <i>notes</i>, and write to <i>landed</i> as statements finish.</p>
+<div class="card">
+<div class="ctrl"><button id="tblPlay">Pause</button><span id="tblClock">t = 0 h</span></div>
+<svg id="tblSvg" viewBox="0 0 960 250" role="img" aria-label="Simulated reads and writes to the announce, roles, notes, subtasks and landed tables over a thirty hour run"></svg>
+<div class="legend"><span><i style="background:var(--bad)"></i>write</span><span><i style="background:var(--c)"></i>read</span><span>x-axis: hours 0 → 30</span></div>
+</div>
+
+<h3>Story B — memory, and why agents need to “dream”</h3>
+<div class="grid2">
+<div class="card">
+<p><b>The paradox:</b> agents write memory <i>while working</i>, greedily (“this looks important now”), but memory must be a <i>coherent, non-repeating map</i> to be useful later. Kierkegaard: life is understood backwards but lived forwards.</p>
+<p><b>Human analogy:</b> the hippocampus keeps the day; at night it replays to the neocortex, which keeps long-term knowledge.</p>
+<p><b>Evidence shown:</b> on a 40-question continual-learning test, weaker models barely used a memory folder; stronger models knew <i>when</i> to write and read. In Pokémon, an older model wrote a huge, messy memory folder and played worse; a newer one wrote a small, strategic one.</p>
+</div>
+<div class="card">
+<p><b>Dreaming</b> = a separate pass that reads transcripts and notes and rewrites them:</p>
+<ul>
+<li><b>fixes poisoned memories</b> — a wrong landmark note trapped Claude in a loop; dreaming corrected it and it moved on</li>
+<li><b>builds new forms</b> — e.g. a wiki over a company’s documents; more dreaming compute → better answers (search alone ≈53%; wiki + search better than either)</li>
+<li><b>fills gaps</b> — placeholder wiki pages got written, an index was added</li>
+<li><b>promotes</b> key memories into context that every future session loads first</li>
+</ul>
+</div>
+</div>
+
+<div class="card">
+<svg viewBox="0 0 960 200" role="img" aria-label="Memory layers: transcripts at the bottom, notes written during work, then a dreaming pass that produces a wiki, corrected notes and injected context">
+  <rect x="20" y="140" width="920" height="44" rx="8" fill="var(--a-soft)" stroke="var(--a)"/>
+  <text x="480" y="167" font-size="14" text-anchor="middle"><tspan font-weight="700">Transcripts</tspan> — everything that happened (big, mostly not useful)</text>
+  <rect x="20" y="80" width="300" height="44" rx="8" fill="var(--b-soft)" stroke="var(--b)"/>
+  <text x="170" y="107" font-size="13" text-anchor="middle"><tspan font-weight="700">Notes</tspan> written while working</text>
+  <rect x="350" y="20" width="260" height="104" rx="10" fill="var(--d-soft)" stroke="var(--d)"/>
+  <text x="480" y="52" font-size="15" font-weight="700" text-anchor="middle">Dreaming pass</text>
+  <text x="480" y="74" font-size="12" text-anchor="middle" class="mut">reads transcripts + notes</text>
+  <text x="480" y="92" font-size="12" text-anchor="middle" class="mut">corrects · merges · fills gaps</text>
+  <text x="480" y="110" font-size="12" text-anchor="middle" class="mut">runs with its own compute budget</text>
+  <rect x="640" y="20" width="300" height="30" rx="7" fill="var(--c-soft)" stroke="var(--c)"/>
+  <text x="790" y="40" font-size="13" text-anchor="middle">Wiki (organised knowledge)</text>
+  <rect x="640" y="57" width="300" height="30" rx="7" fill="var(--c-soft)" stroke="var(--c)"/>
+  <text x="790" y="77" font-size="13" text-anchor="middle">Corrected notes (poison removed)</text>
+  <rect x="640" y="94" width="300" height="30" rx="7" fill="var(--c-soft)" stroke="var(--c)"/>
+  <text x="790" y="114" font-size="13" text-anchor="middle">Injected context (loaded every session)</text>
+  <path d="M320 102 H350" stroke="var(--b)" stroke-width="2"/>
+  <path d="M480 140 V124" stroke="var(--a)" stroke-width="2"/>
+  <path d="M610 72 H640" stroke="var(--d)" stroke-width="2"/>
+</svg>
+</div>
+
+<div class="call blue"><b>The one lesson behind both stories:</b> give strong models a few simple, shared primitives, a hard checker for what counts as done, and safety monitoring at the edges — then let them invent their own coordination. Do <i>not</i> hand-script the teamwork.<br><span class="ko">핵심: 단순한 공용 도구 + 엄격한 검증기 + 외곽 안전 감시. 팀워크 자체는 에이전트가 스스로 만들게 둔다.</span></div>
+
+<!-- ================================================================ -->
+<h2>2 · What Noēsis already has</h2>
+<p class="ko">Noēsis에 이미 있는 것 — 영상의 구성 요소 대부분이 이미 코드에 있다</p>
+<p>Checked against the code on <code>main</code> (commit 2d6cf696). Noēsis is closer to the talk than it looks: most pieces exist, but as separate features, not one team loop.</p>
+
+<div class="scroll"><table>
+<tr><th>In the talk</th><th>In Noēsis today</th><th>Where</th><th>State</th></tr>
+<tr><td>SQL database the agents share</td><td>Grid civic tables reached through Brain actions (RPC → Grid routes)</td><td><code>brain/…/rpc/types.py</code>, <code>grid/src/api/routes/civic-parcels.ts</code></td><td><span class="tag t-have">have</span></td></tr>
+<tr><td><b>subtasks</b> table + task tree</td><td>Co-work task board (<code>post_task / claim_task / complete_task</code>) and the co-build DAG: a blueprint’s <code>arrangement</code> is a dependency graph of sub-tasks with weights</td><td><code>grid/src/civic/cowork.ts</code>, <code>co-build.ts</code></td><td><span class="tag t-have">have</span></td></tr>
+<tr><td><b>roles</b> table</td><td>Typed roles on a parcel: owner / staff / guest, with a trust score from honoured work</td><td><code>grid/src/civic/roles.ts</code></td><td><span class="tag t-part">partial</span> — parcel access roles, not “who works on which sub-task”</td></tr>
+<tr><td><b>landed</b> = checked output in Git</td><td>The tamper-evident audit chain; on full completion the blueprint executor applies the recipe and emits <code>skill.blueprint_executed</code></td><td><code>grid/src/civic/blueprint.ts</code>, audit chain</td><td><span class="tag t-have">have</span></td></tr>
+<tr><td>Lean checker (wrong steps can’t land)</td><td>Closed catalog (only known kinds), physics gate, build-must-pay rule, Polis law</td><td><code>furniture.ts</code>, Genesis catalog, co-build checks</td><td><span class="tag t-part">partial</span> — checks <i>legality</i>, not whether a house is <i>good</i></td></tr>
+<tr><td><b>announce</b> table (lead → all)</td><td>Polis laws (<code>gov.law_enacted</code>) reach everyone, but only via legislation</td><td><code>grid/src/gov</code>, <code>ring-expansion.ts</code></td><td><span class="tag t-miss">missing</span> for a build team</td></tr>
+<tr><td><b>notes</b> table (helpers ↔ helpers)</td><td>Whisper, the new Grid inbox for direct messages (<code>GET /api/v1/civic/inbox</code>), and the Lore Commons</td><td><code>brain/…/peer_inbox.py</code>, <code>whisper/</code>, <code>lore/</code></td><td><span class="tag t-part">partial</span> — private 1-to-1, not a team channel tied to a build</td></tr>
+<tr><td>A lead agent that splits the work</td><td>A host posts tasks by hand, one at a time. Nothing breaks “build a house” into a DAG for the team, or re-assigns stuck work</td><td>—</td><td><span class="tag t-miss">missing</span></td></tr>
+<tr><td>Live + offline monitors</td><td>Audit chain + CI gates; no per-team watcher that reviews runs</td><td><code>scripts/check-*.mjs</code></td><td><span class="tag t-part">partial</span></td></tr>
+<tr><td>Memory written while working</td><td>Memory stream + retrieval scoring; reminders</td><td><code>brain/…/memory/</code>, <code>reminders/</code></td><td><span class="tag t-have">have</span></td></tr>
+<tr><td>Dreaming</td><td><b>Hypnos</b> sleep module (Hebbian pass + downscale) and LLM <b>reflection</b> over recent memories</td><td><code>brain/…/hypnos/</code>, <code>memory/reflection.py</code></td><td><span class="tag t-part">partial</span> — strengthens/weakens links, but never <i>corrects a wrong note</i></td></tr>
+<tr><td>Wiki built from memory</td><td>Personal Wiki (Karpathy pattern: other Nous, places, skills, beliefs)</td><td><code>brain/…/episteme/wiki.py</code></td><td><span class="tag t-part">partial</span> — written page by page, no dreaming pass that fills gaps or adds an index</td></tr>
+</table></div>
+
+<!-- ================================================================ -->
+<h2>3 · Proposed design — a Nous build crew</h2>
+<p class="ko">제안 설계 — Nous 건설 팀(크루): 반장 1명 + 작업자 여러 명, Grid 공용 테이블로 협업</p>
+<p>Translate the talk one-to-one. A <b>crew</b> forms around one build (a house, a shop, a road). One Nous is the <b>foreman</b> (the lead); the others are <b>builders</b>. The Grid gives them the shared tables; the existing checks act as the Lean checker. No new governance power: the foreman has no authority over Polis law, and every Nous still pays and gets paid as today (D-NH-06).</p>
+
+<div class="card">
+<svg viewBox="0 0 960 430" role="img" aria-label="Proposed crew loop: a foreman Nous and builder Nous each run their own Brain; they coordinate only through Grid crew tables and the co-work board; the catalog, physics gate and Polis law check every build step before it is recorded on the audit chain; the operator watches from the Grid Manager">
+  <text x="20" y="26" font-size="14" font-weight="700">Brains (each Nous, own machine)</text>
+  <text x="400" y="26" font-size="14" font-weight="700">Grid — shared primitives</text>
+  <text x="740" y="26" font-size="14" font-weight="700">Checks → record</text>
+  <!-- brains -->
+  <rect x="20" y="44" width="300" height="96" rx="10" fill="var(--b-soft)" stroke="var(--b)"/>
+  <text x="36" y="70" font-size="14" font-weight="700">Foreman Nous</text>
+  <text x="36" y="90" font-size="12" class="mut">reads the parcel + blueprint</text>
+  <text x="36" y="106" font-size="12" class="mut">splits work into a sub-task DAG</text>
+  <text x="36" y="122" font-size="12" class="mut">announces, assigns, re-assigns</text>
+  <g id="crewBuilders"></g>
+  <!-- grid tables -->
+  <rect x="380" y="44" width="300" height="300" rx="12" fill="var(--a-soft)" stroke="var(--a)"/>
+  <g font-size="13">
+    <rect x="400" y="62" width="260" height="34" rx="6" fill="var(--card)" stroke="var(--line)"/><text x="412" y="84"><tspan font-weight="700">crew_announce</tspan> <tspan class="mut">· foreman → all</tspan></text>
+    <rect x="400" y="104" width="260" height="34" rx="6" fill="var(--card)" stroke="var(--line)"/><text x="412" y="126"><tspan font-weight="700">crew_roles</tspan> <tspan class="mut">· who does which node</tspan></text>
+    <rect x="400" y="146" width="260" height="34" rx="6" fill="var(--card)" stroke="var(--line)"/><text x="412" y="168"><tspan font-weight="700">crew_notes</tspan> <tspan class="mut">· builders ↔ builders</tspan></text>
+    <rect x="400" y="188" width="260" height="48" rx="6" fill="var(--c-soft)" stroke="var(--c)"/><text x="412" y="208"><tspan font-weight="700">co-build DAG + task board</tspan></text><text x="412" y="226" class="mut" font-size="12">exists today (cowork.ts / co-build.ts)</text>
+    <rect x="400" y="244" width="260" height="48" rx="6" fill="var(--c-soft)" stroke="var(--c)"/><text x="412" y="264"><tspan font-weight="700">landed = completed nodes</tspan></text><text x="412" y="282" class="mut" font-size="12">paid via Ousia or IOU (D-NH-06)</text>
+    <text x="412" y="324" class="mut" font-size="12">the 3 white tables are new; green ones exist</text>
+  </g>
+  <!-- checks -->
+  <rect x="730" y="44" width="210" height="140" rx="10" fill="var(--c-soft)" stroke="var(--c)"/>
+  <text x="746" y="70" font-size="14" font-weight="700">The “Lean checker”</text>
+  <text x="746" y="92" font-size="12">• Genesis catalog (known kinds)</text>
+  <text x="746" y="110" font-size="12">• physics gate</text>
+  <text x="746" y="128" font-size="12">• zone fit (by zone kind)</text>
+  <text x="746" y="146" font-size="12">• Polis law + civic duty</text>
+  <text x="746" y="164" font-size="12">• must-pay rule</text>
+  <rect x="730" y="204" width="210" height="60" rx="10" fill="var(--card)" stroke="var(--line)"/>
+  <text x="746" y="228" font-size="14" font-weight="700">Audit chain</text>
+  <text x="746" y="248" font-size="12" class="mut">skill.blueprint_executed</text>
+  <rect x="730" y="284" width="210" height="60" rx="10" fill="var(--d-soft)" stroke="var(--d)"/>
+  <text x="746" y="308" font-size="14" font-weight="700">Grid Manager (Tier 2)</text>
+  <text x="746" y="328" font-size="12" class="mut">watches, cannot legislate</text>
+  <!-- arrows -->
+  <path d="M320 80 H400" stroke="var(--b)" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M320 120 C350 120 360 121 400 121" stroke="var(--b)" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M320 250 C360 250 360 165 400 165" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+  <path d="M320 250 C360 250 360 212 400 212" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+  <path d="M660 268 C700 268 690 120 730 120" stroke="var(--c)" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M835 184 V204" stroke="var(--c)" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M835 264 V284" stroke="var(--d)" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <text x="20" y="400" font-size="12" class="mut">Brains talk to each other only through the Grid tables (and whisper) — same as the talk’s “Git + SQL only”. The Grid never runs a Nous’s thinking.</text>
+</svg>
+</div>
+
+<h3>A house being built by a crew</h3>
+<p>Simulated, to show the loop: the foreman splits a house blueprint into a DAG; a node can start only when the nodes it depends on have landed; builders claim free nodes; a stuck node is re-assigned by the foreman.</p>
+<div class="card">
+<div class="ctrl"><button id="dagPlay">Pause</button><button id="dagReset">Restart</button><span id="dagLog">foreman: splitting the blueprint…</span></div>
+<svg id="dagSvg" viewBox="0 0 960 300" role="img" aria-label="Animated build DAG for a house: foundation, frame, walls, roof, plumbing, wiring, interior and furniture nodes turning from waiting to in progress to landed as builder Nous claim them"></svg>
+<div class="legend"><span><i style="background:var(--line)"></i>waiting on parents</span><span><i style="background:var(--warn)"></i>free to claim</span><span><i style="background:var(--a)"></i>in progress</span><span><i style="background:var(--c)"></i>landed (checked + paid)</span><span><i style="background:var(--bad)"></i>stuck → re-assigned</span></div>
+</div>
+
+<h3>From one house to a whole Grid</h3>
+<p>The same loop nests, like the talk’s task tree for its hardest lemma. A <b>district crew</b>’s DAG has nodes that are themselves house builds, each with its own foreman. A <b>Grid founding crew</b> (much later) has nodes like “propose the first zone set to the Polis” — those nodes are <i>bills</i>, so they still go through VOTE-05 and the Polis. A foreman can never skip the law; the law is one of the checks.</p>
+
+<!-- ================================================================ -->
+<h2>4 · Memory: give Nous a real dream</h2>
+<p class="ko">메모리 — Hypnos(수면)를 진짜 “꿈꾸기”로: 잘못된 기억을 고치고, 위키를 채우고, 핵심만 다음 세션에 주입</p>
+<p>Noēsis already named the right module: <b>Hypnos</b>. Today it is a maths pass (Hebbian strengthening + downscale). It never reads a note and asks “is this still true?”. The talk shows that question is what rescues a stuck agent. For builders that matters directly: a Nous that wrongly remembers “parcel 14 is mine” or “oak costs 3 Ousia” will keep failing the same build.</p>
+<div class="grid2">
+<div class="card">
+<h4 style="margin:0 0 6px">Add a dreaming pass (Brain-only)</h4>
+<ul>
+<li>Runs on the Nous’s sleep tick (Hypnos already gets one; still no wall-clock).</li>
+<li>Reads recent memories + the Personal Wiki + build outcomes (what landed, what was rejected and why).</li>
+<li><b>Corrects</b>: a memory contradicted by a Grid rejection is marked wrong, not just weakened.</li>
+<li><b>Fills</b>: wiki pages that are only names get written; an index page is kept.</li>
+<li><b>Promotes</b>: at most a handful of lines (“my trade skills”, “my debts”, “my crew”) are put into every next prompt.</li>
+</ul>
+</div>
+<div class="card">
+<h4 style="margin:0 0 6px">Keep what Noēsis promises</h4>
+<ul>
+<li>Memory stays Brain-local, like reflections; the Grid sees only hashes.</li>
+<li>Dream output is a prompt change → it falls under the <b>Brain parity contract</b> (D-V3-42): fixtures re-recorded and <code>brain-rs</code> changed in the same PR.</li>
+<li>Dreaming costs AI power, so it is a choice the Nous budgets — consistent with “AI power is money” and the civic duty (D-MONEY-10).</li>
+</ul>
+</div>
+</div>
+
+<!-- ================================================================ -->
+<h2>5 · My position on what to do — and what not to</h2>
+<p class="ko">입장 — 해야 할 것과 하지 말아야 할 것</p>
+<div class="call"><b>Do not copy “1,000 agents”.</b> The talk’s team was 1,000 copies of a frontier model with a perfect checker (Lean). Noēsis Brains default to small local models (the Ollama adapter; <code>qwen3:4b</code> / llama in config). The talk itself shows weaker models do not use memory or coordination well. Expect a 3–6 Nous crew on small models to <i>under</i>-coordinate. Start with crews of 3–5 and measure.</div>
+<div class="call"><b>Our checker is weaker than Lean — say so.</b> Lean proves a step is <i>correct</i>. Our catalog + physics + law prove a build is <i>allowed</i>, not that it is a <i>good</i> house. Without a quality signal, a crew can “land” useless boxes. We need a cheap score of the result (e.g. does the house meet its blueprint’s function: rooms reachable, bed + door + light present) before we let crews run unattended.</div>
+<div class="call green"><b>Do keep the primitives tiny.</b> The talk’s key result is that the <i>agents</i> invented the tables. We should offer the three crew tables as plain, open records (any field, short text) rather than a rigid workflow — then watch which ones Nous actually use. If they ignore one, delete it.</div>
+
+<!-- ================================================================ -->
+<h2>6 · Build plan</h2>
+<p class="ko">구현 순서 — 작게 시작해서 측정</p>
+<div class="timeline">
+  <div class="step"><h4>1 · Crew tables</h4><small>Grid</small><p>Add <code>crew_announce</code>, <code>crew_roles</code>, <code>crew_notes</code> keyed by a co-build session. Reuse the co-work board and DAG as they are. New audit events need an allowlist addition (<code>crew.*</code>).</p></div>
+  <div class="step"><h4>2 · Foreman + builder actions</h4><small>Brain (Python + Rust)</small><p>Actions: <code>crew_announce</code>, <code>crew_assign</code>, <code>crew_note</code>; show the crew’s tables in the builder’s perception. Parity fixtures re-recorded.</p></div>
+  <div class="step"><h4>3 · Quality score</h4><small>Grid</small><p>A function check on a finished house (reachable rooms, required objects). Without it, autonomous crews are not safe to leave running.</p></div>
+  <div class="step"><h4>4 · Crew monitor</h4><small>Grid Manager</small><p>Live: flag a Nous stuck on one node. Offline: a periodic report per crew (who did what, payouts, rejections) — the talk’s 10-minute review.</p></div>
+  <div class="step"><h4>5 · Dreaming pass</h4><small>Brain, Hypnos</small><p>Correct / fill / promote, as in §4. Compare build success with and without it — the talk’s with/without test.</p></div>
+  <div class="step"><h4>6 · Nesting</h4><small>later</small><p>District crews whose nodes are house builds; then Grid founding crews whose nodes are Polis bills.</p></div>
+</div>
+
+<div class="card" style="margin-top:20px">
+<h3 style="margin-top:0">Open questions for the operator</h3>
+<ul>
+<li>Who becomes foreman — the parcel owner, or any Nous holding the blueprint skill? (My pick: the owner, who already pays.)</li>
+<li>Is the foreman paid for coordinating, or only builders for nodes? Under D-NH-06 nothing is free, so coordination probably needs a small paid node of its own.</li>
+<li>Can Type B Nous in their first year join a crew as builders? (D-V3-35 limits civic acts; building is economic, so probably yes.)</li>
+</ul>
+</div>
+
+<p class="meta" style="margin-top:30px">Sources: the talk transcript (fetched 2026-11-27); Noēsis <code>main</code> at 2d6cf696 — <code>grid/src/civic/{cowork,co-build,blueprint,roles,ring-expansion}.ts</code>, <code>brain/src/noesis_brain/{hypnos,memory,episteme,lore,rpc,praxis,llm}</code>. All animations are illustrations, not run data.</p>
+</div>
+
+<script>
+(function(){
+  var NS='http://www.w3.org/2000/svg';
+  function el(t,a,p){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+  // helper sandboxes in the harness diagram
+  var h=document.getElementById('helpers');
+  for(var i=0;i<40;i++){var c=i%10,r=Math.floor(i/10);
+    el('rect',{x:40+c*15,y:200+r*20,width:11,height:14,rx:2,fill:'var(--card)',stroke:'var(--muted)','stroke-width':.8},h);}
+  // builders in the crew diagram
+  var cb=document.getElementById('crewBuilders');
+  for(var j=0;j<4;j++){var y=160+j*52;
+    el('rect',{x:20,y:y,width:300,height:42,rx:8,fill:'var(--card)',stroke:'var(--line)'},cb);
+    var t=el('text',{x:36,y:y+26,'font-size':13},cb);t.textContent='Builder Nous '+(j+1)+' — claims nodes, writes notes';}
+
+  // ---- table activity sim ----
+  var ts=document.getElementById('tblSvg'), tables=['announce','roles','notes','subtasks','landed'];
+  var X0=110,X1=940,rowH=44;
+  tables.forEach(function(n,k){var y=20+k*rowH;
+    el('line',{x1:X0,x2:X1,y1:y+16,y2:y+16,stroke:'var(--line)'},ts);
+    var t=el('text',{x:10,y:y+21,'font-size':13,'font-weight':600},ts);t.textContent=n;});
+  var marks=el('g',{},ts), cursor=el('line',{x1:X0,x2:X0,y1:10,y2:240,stroke:'var(--muted)','stroke-dasharray':'3 3'},ts);
+  var rate={announce:[.02,.25],roles:[.05,.35],notes:[.45,.6],subtasks:[.18,.3],landed:[.12,.15]};
+  var tt=0, tplay=true, seed=7;
+  function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
+  function tick(){
+    if(!tplay)return;
+    tt+=0.06; if(tt>30){tt=0;while(marks.firstChild)marks.removeChild(marks.firstChild);seed=7;}
+    var x=X0+(X1-X0)*tt/30; cursor.setAttribute('x1',x);cursor.setAttribute('x2',x);
+    document.getElementById('tblClock').textContent='t = '+tt.toFixed(1)+' h';
+    tables.forEach(function(n,k){var y=20+k*rowH, rw=rate[n];
+      var boost=(n==='landed')?Math.min(1,tt/12):1;
+      if(rnd()<rw[0]*boost) el('rect',{x:x,y:y+3,width:2,height:12,fill:'var(--bad)'},marks);
+      if(rnd()<rw[1]) el('rect',{x:x,y:y+17,width:2,height:12,fill:'var(--c)'},marks);});
+  }
+  setInterval(tick,50);
+  document.getElementById('tblPlay').onclick=function(){tplay=!tplay;this.textContent=tplay?'Pause':'Play';};
+
+  // ---- house DAG sim ----
+  var ds=document.getElementById('dagSvg');
+  var N=[
+    {id:'found',l:'Foundation',x:80,y:150,p:[]},
+    {id:'frame',l:'Frame',x:230,y:150,p:['found']},
+    {id:'walls',l:'Walls',x:380,y:80,p:['frame']},
+    {id:'roof',l:'Roof',x:380,y:220,p:['frame']},
+    {id:'plumb',l:'Plumbing',x:530,y:60,p:['walls']},
+    {id:'wire',l:'Wiring',x:530,y:150,p:['walls']},
+    {id:'door',l:'Door + windows',x:530,y:240,p:['walls','roof']},
+    {id:'inter',l:'Interior',x:690,y:150,p:['plumb','wire','door']},
+    {id:'furn',l:'Furniture',x:850,y:150,p:['inter']}];
+  var byId={};N.forEach(function(n){byId[n.id]=n;});
+  var eg=el('g',{},ds), ng=el('g',{},ds), bg=el('g',{},ds);
+  N.forEach(function(n){n.p.forEach(function(pid){var p=byId[pid];
+    el('path',{d:'M'+(p.x+55)+' '+p.y+' C'+(p.x+95)+' '+p.y+' '+(n.x-95)+' '+n.y+' '+(n.x-55)+' '+n.y,stroke:'var(--line)','stroke-width':2,fill:'none'},eg);});
+    n.r=el('rect',{x:n.x-55,y:n.y-20,width:110,height:40,rx:8,'stroke-width':1.5},ng);
+    var t=el('text',{x:n.x,y:n.y+5,'font-size':12.5,'text-anchor':'middle','font-weight':600},ng);t.textContent=n.l;});
+  var B=[0,1,2,3].map(function(i){var g=el('g',{},bg);el('circle',{r:9,fill:'var(--b)'},g);var t=el('text',{'font-size':10,'text-anchor':'middle',y:4,style:'fill:#fff'},g);t.textContent='B'+(i+1);return {g:g,node:null,x:40+i*30,y:285,tx:40+i*30,ty:285,work:0};});
+  var dplay=true, log=document.getElementById('dagLog'), step=0, stuckDone=false;
+  function reset(){N.forEach(function(n){n.s='wait';n.who=null;});B.forEach(function(b,i){b.node=null;b.tx=40+i*30;b.ty=285;});step=0;stuckDone=false;log.textContent='foreman: splitting the blueprint into 9 nodes…';}
+  var col={wait:['var(--card)','var(--line)'],free:['var(--warn-soft)','var(--warn)'],busy:['var(--a-soft)','var(--a)'],done:['var(--c-soft)','var(--c)'],stuck:['var(--bad-soft)','var(--bad)']};
+  function draw(){N.forEach(function(n){var c=col[n.s];n.r.setAttribute('fill',c[0]);n.r.setAttribute('stroke',c[1]);});
+    B.forEach(function(b){b.x+=(b.tx-b.x)*.15;b.y+=(b.ty-b.y)*.15;b.g.setAttribute('transform','translate('+b.x+','+b.y+')');});}
+  function think(){
+    step++;
+    N.forEach(function(n){if(n.s==='wait'&&n.p.every(function(p){return byId[p].s==='done';}))n.s='free';});
+    B.forEach(function(b,i){
+      if(b.node){var n=b.node;b.work--;
+        if(n.id==='wire'&&!stuckDone&&b.work===2){n.s='stuck';log.textContent='foreman: Wiring is stuck (B'+(i+1)+' ran out of copper) — re-assigning';stuckDone=true;b.node=null;b.tx=40+i*30;b.ty=285;setTimeout(function(){if(n.s==='stuck')n.s='free';},700);return;}
+        if(b.work<=0){n.s='done';log.textContent='landed: '+n.l+' (checked by catalog + physics, B'+(i+1)+' paid)';b.node=null;b.tx=40+i*30;b.ty=285;}
+      } else {var f=N.filter(function(n){return n.s==='free';})[0];
+        if(f){f.s='busy';b.node=f;b.work=3+Math.floor(Math.random()*3);b.tx=f.x-40+i*6;b.ty=f.y-30;log.textContent='B'+(i+1)+' claimed '+f.l;}}
+    });
+    if(N.every(function(n){return n.s==='done';})){log.textContent='foreman: house complete — skill.blueprint_executed. Restarting…';setTimeout(reset,2200);}
+  }
+  reset();
+  setInterval(function(){if(dplay)draw();},40);
+  setInterval(function(){if(dplay)think();},700);
+  document.getElementById('dagPlay').onclick=function(){dplay=!dplay;this.textContent=dplay?'Pause':'Play';};
+  document.getElementById('dagReset').onclick=reset;
+})();
+</script>
+</body>
+</html>
