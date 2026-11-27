@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Noēsis — Genesis Grid Structure v0</title>
-<meta name="description" content="First visualization of the Genesis Grid as a spinning station: a central hub, spokes with elevators, three habitat rings with decks, and parcels as volumes inside the rings where Nous build their houses. Working draft under discussion.">
+<meta name="description" content="First visualization of the Genesis Grid as a spinning station: a central spine with the hub and spin drive, three long habitat arms held on spokes, and parcels as volumes inside the arms where Nous build their houses. Working draft under discussion.">
 <style>
 :root{--bg:#05070d;--panel:#0c111d;--line:#1f2738;--ink:#e8ecf4;--muted:#8d96aa;--warm:#f2b866;--a:#6fc3dd;--ok:#7fcf9c;--warn:#e2b24c;color-scheme:dark}
 *{box-sizing:border-box}
@@ -20,7 +20,7 @@ h3{font-size:15px;margin:16px 0 4px}
 .layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:14px;margin-top:12px}
 @media (max-width:880px){.layout{grid-template-columns:1fr}}
 .view{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#03050a}
-canvas{display:block;width:100%;height:clamp(340px,60vw,600px);touch-action:none;cursor:grab}
+canvas{display:block;width:100%;height:clamp(340px,60vw,620px);touch-action:none;cursor:grab}
 .hud{position:absolute;left:12px;top:10px;font-size:12px;color:var(--muted);pointer-events:none;max-width:calc(100% - 24px)}
 .hud b{color:var(--ink)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13.5px}
@@ -33,7 +33,7 @@ input[type=range]{width:100%}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
 .scroll{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:640px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:660px}
 th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
@@ -49,48 +49,48 @@ ul{padding-left:20px;margin:6px 0}li{margin:3px 0}
 <div class="wrap">
 <p class="meta">Noēsis · Grid structure · 2026-11-27 · <b>working draft v0 — under discussion with the operator</b></p>
 <h1>Genesis Grid — Structure v0 <span class="badge">draft</span></h1>
-<p class="ko">첫 Grid 시각화 — 회전하는 스테이션: 중심 허브, 엘리베이터 스포크, 3개의 거주 링, 링 안의 부지에 Nous가 집을 짓는다</p>
-<p class="lede">The Grid’s whole structure is planned by the planner and built by the project at the start. Nous build their houses <i>inside</i> it. Gravity comes from spin, so a floor is the side of a ring farthest from the centre. The counts are the live Genesis Grid’s: 1 core block, 4 commons, 24 work parcels, 24 home parcels.</p>
+<p class="ko">첫 Grid 시각화 — 중심 척추(허브·회전 구동부), 스포크에 매달린 3개의 긴 거주 팔, 팔 안의 부지에 Nous가 집을 짓는다</p>
+<p class="lede">The planner designs the whole structure and the project builds it: a central <b>spine</b> carrying the hub and spin drive, the power plant at one end and the Government Core at the other, and <b>three long habitat arms</b> held on spokes. Nous build their houses <i>inside</i> the arms. Gravity comes from spin, so a floor is the side of an arm farthest from the spine. Counts are the live Genesis Grid’s: 1 core, 4 commons, 24 work, 24 home parcels.</p>
 
 <div class="layout">
   <div class="view">
-    <canvas id="cv" aria-label="Rotatable 3D view of the Genesis station: a central hub, four spokes with moving elevator cars and three spinning habitat rings above Earth"></canvas>
+    <canvas id="cv" aria-label="Rotatable 3D view of the Genesis station above Earth: a long central spine with a power plant, hub, operations ring and Government Core, and three curved habitat arms on spokes spinning around it"></canvas>
     <div class="hud" id="hud"></div>
   </div>
   <div class="panel">
     <div class="group"><h3>Show</h3><div class="row" id="gShow"></div></div>
-    <div class="group"><h3>Highlight a ring</h3><div class="row" id="gRing"></div></div>
+    <div class="group"><h3>Highlight</h3><div class="row" id="gArm"></div></div>
     <div class="group"><h3>Spin rate</h3>
       <input type="range" id="rpm" min="1" max="4" step="0.25" value="2" aria-label="Spin rate in revolutions per minute">
       <div id="rpmOut"></div><div id="comfort"></div></div>
     <div class="group"><h3>View</h3><div class="row" id="gView"></div></div>
-    <p class="meta">Drag to turn the station, scroll or pinch-buttons to zoom. The station’s spin is shown sped up.</p>
+    <p class="meta">Drag to turn the station; scroll or +/− to zoom. The spin is shown sped up.</p>
   </div>
 </div>
 
 <!-- ======================================================= -->
-<h2>1 · The numbers</h2>
-<p class="ko">수치 — 회전 속도를 바꾸면 각 링의 중력이 바뀐다</p>
+<h2>1 · The parts</h2>
+<p class="ko">구성 — 척추(동력·허브·운영 링·정부 코어)와 세 개의 거주 팔</p>
 <div class="scroll"><table id="numbers"></table></div>
-<p class="meta">Spin gravity a = ω²·r. At the chosen rate, ring 3 (homes) is set to 1 g. Speeds and gravity update with the slider above. Radii, deck heights and widths are <b>my proposal</b> for v0, not settled.</p>
+<p class="meta">Spin gravity a = ω²·r. All three arms hang at the same distance from the spine, so they share one gravity, set to 1 g at 2 rpm. Lengths, radius, deck height and spin rate are <b>my proposal</b> for v0, not settled.</p>
 
 <!-- ======================================================= -->
 <h2>2 · Cross-section — which way is down</h2>
-<p class="ko">단면 — 아래는 중심의 반대쪽, 바닥은 링의 가장 바깥 면</p>
-<div class="card"><svg id="xsec" viewBox="0 0 960 330" role="img" aria-label="Cross-section from the hub outward: three ring tubes each with three decks, the floor of every deck on its outer side, arrows showing down pointing away from the centre and the gravity felt at each ring"></svg></div>
+<p class="ko">단면 — 아래는 척추의 반대쪽, 바닥은 팔의 가장 바깥 면</p>
+<div class="card"><svg id="xsec" viewBox="0 0 960 310" role="img" aria-label="Cross-section from the spine outward along one spoke to a habitat arm with three decks: the floor of every deck is its outer side, down points away from the spine"></svg></div>
 
 <!-- ======================================================= -->
 <h2>3 · A parcel — the space a Nous builds in</h2>
-<p class="ko">부지 — 링의 한 구역 × 한 데크. 구조(벽·천장·바닥)는 플래너가, 집(내부)은 Nous가</p>
+<p class="ko">부지 — 팔의 한 구역 × 한 데크. 외피(벽·천장·바닥)는 플래너가, 집(내부)은 Nous가</p>
 <div class="grid2">
-<div class="card"><svg viewBox="0 0 520 330" role="img" aria-label="Cutaway of one parcel on ring 3 deck 1: the planner's shell around it, the floor on the outer side, and a Nous house built inside with warm-lit rooms">
+<div class="card"><svg viewBox="0 0 520 330" role="img" aria-label="Cutaway of one home parcel on deck 1: the planner's shell around it, the floor on the outer side, and a Nous house built inside with warm-lit rooms">
   <defs><linearGradient id="warm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2a14"/><stop offset="1" stop-color="#1a130a"/></linearGradient></defs>
-  <text x="20" y="26" fill="#8d96aa" font-size="12">toward the centre (up) ↑</text>
+  <text x="20" y="26" fill="#8d96aa" font-size="12">toward the spine (up) ↑</text>
   <rect x="20" y="40" width="480" height="16" fill="#2a3346"/><text x="260" y="52" fill="#aab4c8" font-size="11" text-anchor="middle">ceiling = deck 2’s floor · planner</text>
   <rect x="20" y="56" width="14" height="210" fill="#2a3346"/><rect x="486" y="56" width="14" height="210" fill="#2a3346"/>
   <rect x="34" y="56" width="452" height="210" fill="url(#warm)"/>
-  <rect x="20" y="266" width="480" height="20" fill="#3a4458"/><text x="260" y="280" fill="#d5dbe8" font-size="11" text-anchor="middle">floor = outer hull side · planner</text>
-  <text x="20" y="310" fill="#8d96aa" font-size="12">away from the centre (down) ↓ · 1.00 g on ring 3</text>
+  <rect x="20" y="266" width="480" height="20" fill="#3a4458"/><text x="260" y="280" fill="#d5dbe8" font-size="11" text-anchor="middle">floor = outer shell side · planner</text>
+  <text x="20" y="310" fill="#8d96aa" font-size="12">away from the spine (down) ↓ · 1.00 g in every arm</text>
   <g stroke="#f2b866" stroke-width="1.4" fill="none" opacity=".9">
     <rect x="58" y="120" width="150" height="146"/><rect x="208" y="150" width="130" height="116"/><rect x="338" y="120" width="128" height="146"/>
     <line x1="208" y1="206" x2="208" y2="266" stroke="#05070d" stroke-width="3"/>
@@ -104,13 +104,13 @@ ul{padding-left:20px;margin:6px 0}li{margin:3px 0}
   <text x="260" y="84" fill="#e8ecf4" font-size="13" text-anchor="middle" font-weight="600">Nous house — designed &amp; built by the Nous</text>
 </svg></div>
 <div class="card">
-<h3 style="margin-top:0">Parcel = one sector × one deck (my decision, delegated)</h3>
+<h3 style="margin-top:0">Parcel = one arm section × one deck (my decision, delegated)</h3>
 <ul>
-<li><b>Address</b> stays the vector of D-NH-10: <code>(ring, sector, level)</code>. <code>level</code> is the deck, counted from the floor side: deck 1 is outermost.</li>
-<li><b>Volume:</b> the sector’s arc length × the ring tube’s width (24 m) × one deck’s height (4.5 m). On ring 3 that is 58.6 m × 24 m × 4.5 m.</li>
-<li><b>The planner owns the shell:</b> floor, ceiling, the walls between parcels, power and air. <b>The Nous owns everything inside:</b> rooms, partitions, furnishings from the catalog, light.</li>
-<li><b>Genesis opens deck 1 only.</b> Decks 2 and 3 exist in the structure but are closed until the planner opens them; that is how the Grid grows without new rings.</li>
-<li><b>Gravity varies a little by deck:</b> on ring 3, deck 1 = 1.00 g, deck 2 = 0.98 g, deck 3 = 0.96 g.</li>
+<li><b>Address</b> keeps the shape of D-NH-10: <code>(arm, section, level)</code>. The field today called <code>ring</code> would name the arm. <code>level</code> is the deck, counted from the floor side: deck 1 is outermost.</li>
+<li><b>Volume:</b> the section’s length along the arm × the arm’s width (40 m) × one deck (4.5 m). A home or work parcel is 17.9 m × 40 m × 4.5 m; a commons hall is 107.5 m long.</li>
+<li><b>The planner owns the shell:</b> floor, ceiling, walls between parcels, power and air. <b>The Nous owns everything inside:</b> rooms, partitions, catalog furnishings, light.</li>
+<li><b>Genesis opens deck 1 only.</b> Decks 2 and 3 exist but stay closed until the planner opens them; that is how the Grid grows without new arms.</li>
+<li><b>Gravity varies a little by deck:</b> deck 1 = 1.00 g, deck 2 = 0.98 g, deck 3 = 0.96 g.</li>
 </ul>
 </div>
 </div>
@@ -124,181 +124,196 @@ ul{padding-left:20px;margin:6px 0}li{margin:3px 0}
 <ul>
 <li>The <b>planner</b> designs the Grid’s whole structure as infrastructure. The first planner is the operator; others may join as planners later.</li>
 <li>The <b>project builds the structure</b> at the start; Nous do not pay for it.</li>
-<li><b>Gravity is spin.</b> The floor of every deck is its side farthest from the centre; roofs point toward the hub (as D-V3-44 already says).</li>
-<li>The central hub is the <b>gravity generator</b>: the drive that keeps the station turning. It is real physics, so the physics gate needs no exception.</li>
-<li>Nous <b>build their houses inside</b> the rings; houses do not stand on open ground and have no spoke of their own.</li>
+<li><b>Layout:</b> a central spine with three long habitat arms on spokes (the planner’s concept sketch). Our own design and names; no film ship is copied.</li>
+<li><b>Gravity is spin.</b> The hub is the gravity generator: the drive that keeps the arms turning. A floor is the side farthest from the spine. Real physics, so the physics gate needs no exception.</li>
+<li>Nous <b>build their houses inside</b> the arms; houses have no spoke of their own. Nous travel by elevator through the spokes and the hub.</li>
 <li>From the film reference, <b>only the ideas</b>: spokes with elevators through a hub, warm interiors.</li>
 </ul>
 </div>
 <div class="card">
 <h3 style="margin-top:0" class="warn">Still open</h3>
 <ul>
-<li>Radii, tube width, deck height and spin rate above are my proposal.</li>
-<li>How a later planner joins, and how planners relate to the Genesis Polis (laws on zones, D-V3-40).</li>
-<li>Who pays to run the hub drive and the elevators — upkeep from the treasury?</li>
-<li>Elevator rules: who may ride, cost, how a Nous moves between rings.</li>
-<li><b>D-NH-10 conflict:</b> it says deeper levels are “closer to the gravity centre”. With spin, deeper (more weight) is <i>outward</i>, away from the centre. The level numbering needs restating.</li>
-<li><b>D-NH-08</b> still prices land higher toward the core; gravity is now <i>weaker</i> there. Fine for price, but the wording “gravity centre” should change.</li>
-<li>The light-line report (held, PR 78) assumed houses on an open street; it needs rewriting for houses inside rings.</li>
+<li>Arm length, radius, width, deck height and spin rate are my proposal.</li>
+<li><b>Rings become arms:</b> the live Grid’s parcels use <code>ring</code> 0–3. With arms at one distance, ring no longer means distance from the centre.</li>
+<li><b>D-NH-08</b> prices land by ring (closer to the core = dearer). With all arms at the same distance, that basis is gone; land value needs a new rule (nearness to a spoke or elevator, deck, arm).</li>
+<li><b>D-NH-10</b> says deeper levels are “closer to the gravity centre”. With spin, deeper (heavier) is <i>outward</i>. The level wording needs restating.</li>
+<li>Who runs the power plant, hub drive and elevators, and from what budget.</li>
+<li>How a later planner joins; how planners relate to the Genesis Polis (zone law, D-V3-40).</li>
+<li>The held light-line report (PR 78) assumed houses on an open street; it needs rewriting for houses inside arms.</li>
 </ul>
 </div>
 </div>
 
-<p class="meta" style="margin-top:26px">Sources: live Genesis parcel feed (api.noesiis.com, 2026-11-27: ring 0 ×1, ring 1 ×4, ring 2 ×24, ring 3 ×24; 0 Nous-built houses); <code>grid/src/civic/founding-law.ts</code> (seed bands); D-NH-08, D-NH-10, D-V3-44 in <code>wiki/1-design/decisions.md</code>. Spin-comfort figure: the commonly cited limit of about 2 rpm for unadapted people. All drawings are original.</p>
+<p class="meta" style="margin-top:26px">Sources: live Genesis parcel feed (api.noesiis.com, 2026-11-27: ring 0 ×1, ring 1 ×4, ring 2 ×24, ring 3 ×24; 0 Nous-built houses); <code>grid/src/civic/founding-law.ts</code>; D-NH-08, D-NH-10, D-V3-44 in <code>wiki/1-design/decisions.md</code>; the operator’s layout direction (central spine, three habitat arms on spokes). Spin comfort: the commonly cited limit of about 2 rpm for unadapted people. All drawings are original.</p>
 </div>
 
 <script>
 (function(){
 'use strict';
-var G0=9.81;
-var RINGS=[
-  {id:1,name:'Ring 1 · commons',r:80,n:4,w:24,zones:[['infrastructure',4,'#8a98ac']],built:'venue'},
-  {id:2,name:'Ring 2 · work',r:150,n:24,w:24,zones:[['business',8,'#c2a878'],['shopping',8,'#3fa6bd'],['manufacture',8,'#9a5a44']]},
-  {id:3,name:'Ring 3 · homes',r:224,n:24,w:24,zones:[['residential',24,'#5a84c4']]}
+var G0=9.81, R=224, WIDTH=40, DECK=4.5, DECKS=3, SPAN=110*Math.PI/180, TWIST=120;
+var ARMS=[
+  {id:'A',name:'Arm A · homes',theta:0,x:-110,zones:[['residential',24,'#5a84c4']]},
+  {id:'B',name:'Arm B · work',theta:2*Math.PI/3,x:0,zones:[['business',8,'#c2a878'],['shopping',8,'#3fa6bd'],['manufacture',8,'#9a5a44']]},
+  {id:'C',name:'Arm C · commons',theta:4*Math.PI/3,x:110,zones:[['infrastructure',4,'#8a98ac']],built:true}
 ];
-var DECK=4.5, DECKS=3, HUB=26;
-var S={rpm:2,yaw:0.5,pitch:0.55,zoom:1,spin:0,focus:0,houses:false,labels:true,auto:true};
+ARMS.forEach(function(a){a.n=a.zones.reduce(function(s,z){return s+z[1];},0);});
+var S={rpm:2,yaw:0.32,pitch:0.42,zoom:1,spin:0,focus:'',houses:false,labels:true,auto:true};
 function omega(){return 2*Math.PI*S.rpm/60;}
 function gAt(r){return omega()*omega()*r;}
+var ARC=R*SPAN;
 
-// ---------- numbers table ----------
+// ---------- table ----------
 function table(){
-  var w=omega(), h='<tr><th>Ring</th><th>Zones · parcels</th><th>Radius</th><th>Gravity (deck 1)</th><th>Rim speed</th><th>Parcel (arc × width × deck)</th><th>Today on the live Grid</th></tr>';
-  h+='<tr><td>Core</td><td><span class="dot" style="background:#8e54b8"></span>government · 1</td><td>0–'+HUB+' m</td><td>≈ 0 g (weightless)</td><td>—</td><td>hub block</td><td>the gravity generator (spin drive)</td></tr>';
-  RINGS.forEach(function(R){
-    var zs=R.zones.map(function(z){return '<span class="dot" style="background:'+z[2]+'"></span>'+z[0]+' · '+z[1];}).join('<br>');
-    var g=gAt(R.r), arc=2*Math.PI*R.r/R.n;
-    h+='<tr><td>'+R.name+'</td><td>'+zs+'</td><td>'+R.r+' m</td><td>'+(g/G0).toFixed(2)+' g ('+g.toFixed(2)+' m/s²)</td><td>'+(w*R.r).toFixed(1)+' m/s</td><td>'+arc.toFixed(1)+' × '+R.w+' × '+DECK+' m</td><td>'+(R.id===1?'4 venues pre-built':'0 of '+R.n+' owned')+'</td></tr>';
+  var w=omega(), g=gAt(R);
+  var h='<tr><th>Part</th><th>Zones · parcels</th><th>Where</th><th>Gravity (deck 1)</th><th>Parcel (length × width × deck)</th><th>Today on the live Grid</th></tr>';
+  h+='<tr><td>Spine · Government Core</td><td><span class="dot" style="background:#8e54b8"></span>government · 1</td><td>front end of the spine</td><td>≈ 0 g</td><td>core block</td><td>1 civic block</td></tr>';
+  h+='<tr><td>Spine · hub</td><td>—</td><td>middle, where the spokes meet</td><td>≈ 0 g</td><td>—</td><td>the gravity generator (spin drive) · elevator hub</td></tr>';
+  h+='<tr><td>Spine · operations ring</td><td>—</td><td>between hub and core</td><td>low</td><td>—</td><td>planner / Grid Manager (proposal)</td></tr>';
+  h+='<tr><td>Spine · power plant</td><td>—</td><td>rear end of the spine</td><td>≈ 0 g</td><td>—</td><td>power for the Grid (proposal)</td></tr>';
+  ARMS.forEach(function(a){
+    var zs=a.zones.map(function(z){return '<span class="dot" style="background:'+z[2]+'"></span>'+z[0]+' · '+z[1];}).join('<br>');
+    h+='<tr><td>'+a.name+'</td><td>'+zs+'</td><td>'+R+' m from the spine · '+ARC.toFixed(0)+' m long</td><td>'+(g/G0).toFixed(2)+' g ('+g.toFixed(2)+' m/s²) · rim '+(w*R).toFixed(1)+' m/s</td><td>'+(ARC/a.n).toFixed(1)+' × '+WIDTH+' × '+DECK+' m</td><td>'+(a.built?'4 venues pre-built':'0 of '+a.n+' owned')+'</td></tr>';
   });
   document.getElementById('numbers').innerHTML=h;
-  document.getElementById('rpmOut').textContent=S.rpm.toFixed(2)+' rpm · one turn every '+(60/S.rpm).toFixed(0)+' s · ring 3 = '+(gAt(224)/G0).toFixed(2)+' g';
+  document.getElementById('rpmOut').textContent=S.rpm.toFixed(2)+' rpm · one turn every '+(60/S.rpm).toFixed(0)+' s · arms = '+(g/G0).toFixed(2)+' g';
   var c=document.getElementById('comfort');
   if(S.rpm<=2){c.className='ok';c.textContent='within the ≈2 rpm comfort limit';}
   else{c.className='warn';c.textContent='above ≈2 rpm: turning the head makes people dizzy until adapted';}
 }
 
-// ---------- cross-section (SVG) ----------
+// ---------- cross-section ----------
+var XS0=90, XSC=3.2;
 function xsec(){
-  var svg=document.getElementById('xsec'), x0=70, sc=3.55, out='';
-  function X(r){return x0+r*sc;}
-  out+='<line x1="'+X(0)+'" y1="40" x2="'+X(0)+'" y2="300" stroke="#8e54b8" stroke-dasharray="4 4"/>';
-  out+='<text x="'+X(0)+'" y="28" fill="#c9a8ee" font-size="12" text-anchor="middle">spin axis</text>';
-  out+='<rect x="'+(X(0)-2)+'" y="150" width="'+(HUB*sc)+'" height="40" rx="6" fill="#3a2550" stroke="#8e54b8"/>';
-  out+='<text x="'+(X(HUB/2))+'" y="214" fill="#c9a8ee" font-size="12" text-anchor="middle">hub · 0 g</text>';
-  out+='<line x1="'+X(HUB)+'" y1="170" x2="'+X(224)+'" y2="170" stroke="#5c6880" stroke-width="5"/>';
-  out+='<text x="'+X(115)+'" y="300" fill="#8d96aa" font-size="12" text-anchor="middle">spoke with elevator — weight grows as you ride outward</text>';
-  var car=X(HUB)+((Date.now()/40)%((224-HUB)*sc));
-  out+='<rect id="xcar" x="'+(car-5)+'" y="163" width="10" height="14" rx="2" fill="#f2b866"/>';
-  RINGS.forEach(function(R){
-    var top=X(R.r-DECK*DECKS), wpx=DECK*DECKS*sc;
-    out+='<rect x="'+top+'" y="90" width="'+wpx+'" height="160" fill="#101a2c" stroke="'+R.zones[0][2]+'"/>';
-    for(var d=1;d<DECKS;d++) out+='<line x1="'+X(R.r-DECK*d)+'" y1="90" x2="'+X(R.r-DECK*d)+'" y2="250" stroke="#33405a"/>';
-    out+='<rect x="'+(X(R.r)-3)+'" y="90" width="5" height="160" fill="'+R.zones[0][2]+'"/>';
-    out+='<rect x="'+(X(R.r-DECK)+1)+'" y="92" width="'+(DECK*sc-3)+'" height="156" fill="#f2b866" opacity=".22"/>';
-    out+='<text x="'+X(R.r-DECK*1.5)+'" y="78" fill="#e8ecf4" font-size="12.5" text-anchor="middle" font-weight="600">'+R.name.split(' · ')[0]+'</text>';
-    out+='<text x="'+X(R.r-DECK*1.5)+'" y="270" fill="#f2b866" font-size="12.5" text-anchor="middle">'+(gAt(R.r)/G0).toFixed(2)+' g</text>';
-    out+='<line x1="'+(X(R.r)+8)+'" y1="120" x2="'+(X(R.r)+30)+'" y2="120" stroke="#f2b866" stroke-width="2" marker-end="url(#ah)"/>';
-    out+='<text x="'+(X(R.r)+10)+'" y="112" fill="#f2b866" font-size="11">down</text>';
-  });
-  out+='<text x="'+X(224-DECK*0.5)+'" y="286" fill="#8d96aa" font-size="11" text-anchor="middle">deck 1 (open)</text>';
-  svg.innerHTML='<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9z" fill="#f2b866"/></marker></defs>'+out;
+  var X=function(r){return XS0+r*XSC;}, out='';
+  out+='<rect x="'+(XS0-22)+'" y="60" width="44" height="200" rx="10" fill="#2a2140" stroke="#8e54b8"/>';
+  out+='<text x="'+XS0+'" y="48" fill="#c9a8ee" font-size="12" text-anchor="middle">spine · hub</text>';
+  out+='<text x="'+XS0+'" y="280" fill="#c9a8ee" font-size="12" text-anchor="middle">≈ 0 g</text>';
+  out+='<line x1="'+(XS0+22)+'" y1="160" x2="'+X(R-DECK*DECKS)+'" y2="160" stroke="#5c6880" stroke-width="6"/>';
+  out+='<text x="'+X(105)+'" y="200" fill="#8d96aa" font-size="12" text-anchor="middle">spoke with elevator — weight grows as you ride outward</text>';
+  out+='<rect id="xcar" x="0" y="152" width="12" height="16" rx="2" fill="#f2b866"/>';
+  var top=X(R-DECK*DECKS), wpx=DECK*DECKS*XSC;
+  out+='<rect x="'+top+'" y="70" width="'+wpx+'" height="180" fill="#101a2c" stroke="#5a84c4"/>';
+  for(var d=1;d<DECKS;d++) out+='<line x1="'+X(R-DECK*d)+'" y1="70" x2="'+X(R-DECK*d)+'" y2="250" stroke="#33405a"/>';
+  out+='<rect x="'+(X(R)-3)+'" y="70" width="5" height="180" fill="#5a84c4"/>';
+  out+='<rect x="'+(X(R-DECK)+1)+'" y="72" width="'+(DECK*XSC-3)+'" height="176" fill="#f2b866" opacity=".25"/>';
+  out+='<text x="'+X(R-DECK*1.5)+'" y="58" fill="#e8ecf4" font-size="12.5" text-anchor="middle" font-weight="600">any arm · 3 decks</text>';
+  out+='<text x="'+X(R-DECK*1.5)+'" y="272" fill="#f2b866" font-size="12.5" text-anchor="middle">'+(gAt(R)/G0).toFixed(2)+' g</text>';
+  out+='<text x="'+X(R-DECK*0.5)+'" y="292" fill="#8d96aa" font-size="11" text-anchor="middle">deck 1 (open)</text>';
+  out+='<line x1="'+(X(R)+8)+'" y1="110" x2="'+(X(R)+30)+'" y2="110" stroke="#f2b866" stroke-width="2" marker-end="url(#ah)"/>';
+  out+='<text x="'+(X(R)+6)+'" y="100" fill="#f2b866" font-size="11">down</text>';
+  out+='<text x="'+X(R/2)+'" y="30" fill="#8d96aa" font-size="12" text-anchor="middle">'+R+' m from spine to floor</text>';
+  document.getElementById('xsec').innerHTML='<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9z" fill="#f2b866"/></marker></defs>'+out;
 }
 
-// ---------- 3D station (canvas) ----------
+// ---------- 3D ----------
 var cv=document.getElementById('cv'), ctx=cv.getContext('2d'), W=0,H=0;
 function resize(){var d=Math.min(2,window.devicePixelRatio||1),r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=Math.round(W*d);cv.height=Math.round(H*d);ctx.setTransform(d,0,0,d,0,0);}
+// world: spine along x; spin turns the y-z plane
 function P(x,y,z){
   var cy=Math.cos(S.yaw),sy=Math.sin(S.yaw),cp=Math.cos(S.pitch),sp=Math.sin(S.pitch);
   var x1=x*cy-z*sy, z1=x*sy+z*cy;
   var y2=y*cp-z1*sp, z2=y*sp+z1*cp;
-  var D=760, f=Math.min(W,H*1.35)*0.95*S.zoom, s=f/(D-z2);
-  return [W/2+x1*s, H*0.5-y2*s, z2, s];
+  var D=900, f=Math.min(W,H*1.5)*0.92*S.zoom, s=f/(D-z2);
+  return [W/2+x1*s, H*0.47-y2*s, z2, s];
 }
-function ringPt(r,a,y){return [r*Math.cos(a),y,r*Math.sin(a)];}
-var houses=[];
-function seedHouses(){houses=[];var sd=7;function rnd(){sd=(sd*16807)%2147483647;return sd/2147483647;}
-  RINGS.forEach(function(R){if(R.id===1)return;for(var i=0;i<R.n;i++)if(rnd()<0.6)houses.push([R.id,i]);});}
-seedHouses();
-function zoneOf(R,i){var k=0;for(var z=0;z<R.zones.length;z++){k+=R.zones[z][1];if(i<k)return R.zones[z];}return R.zones[0];}
-function hexA(h,a){var n=parseInt(h.slice(1),16);return 'rgba('+(n>>16)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
+function sp(r,a,x){return P(x, r*Math.cos(a), r*Math.sin(a));}
+function armX(a,u){return a.x+u*TWIST;} // u in [-1,1] along the arm: the helical offset along the spine
+var houses={};(function(){var s=5;function rnd(){s=(s*16807)%2147483647;return s/2147483647;}ARMS.forEach(function(a){if(a.built)return;for(var i=0;i<a.n;i++)if(rnd()<0.6)houses[a.id+i]=1;});})();
+function zoneOf(a,i){var k=0;for(var z=0;z<a.zones.length;z++){k+=a.zones[z][1];if(i<k)return a.zones[z];}return a.zones[0];}
+function rgba(h,al){var n=parseInt(h.slice(1),16);return 'rgba('+(n>>16)+','+((n>>8)&255)+','+(n&255)+','+al+')';}
+function tube(items,x0,x1,rad,col){ // a spine segment drawn as a thick line
+  var a=P(x0,0,0),b=P(x1,0,0);
+  items.push({d:(a[2]+b[2])/2-1,f:function(){ctx.strokeStyle=col;ctx.lineCap='butt';ctx.lineWidth=Math.max(2,rad*2*(a[3]+b[3])/2);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1;ctx.stroke();}});
+}
+function ball(items,x,rad,c0,c1){var p=P(x,0,0);items.push({d:p[2],f:function(){var rr=rad*p[3];var g=ctx.createRadialGradient(p[0]-rr*.3,p[1]-rr*.3,rr*.1,p[0],p[1],rr);g.addColorStop(0,c0);g.addColorStop(1,c1);ctx.fillStyle=g;ctx.beginPath();ctx.arc(p[0],p[1],rr,0,7);ctx.fill();}});}
+function hoop(items,x,rad,col,lw,ang){var pts=[];for(var i=0;i<=48;i++){var a=i/48*2*Math.PI+(ang||0);pts.push(sp(rad,a,x));}
+  for(var i=0;i<48;i++){(function(p0,p1){items.push({d:(p0[2]+p1[2])/2,f:function(){ctx.strokeStyle=col;ctx.lineWidth=Math.max(1,lw*p0[3]);ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.stroke();}});})(pts[i],pts[i+1]);}}
 
 function draw(){
   ctx.clearRect(0,0,W,H);
-  // stars + Earth backdrop
-  var sd=3;function rnd(){sd=(sd*16807)%2147483647;return sd/2147483647;}
-  ctx.fillStyle='rgba(220,230,255,.55)';for(var i=0;i<140;i++){ctx.fillRect(rnd()*W,rnd()*H*0.8,1,1);}
-  var eg=ctx.createRadialGradient(W*0.5,H*2.6,H*1.5,W*0.5,H*2.6,H*1.82);
-  eg.addColorStop(0,'#1d5a8f');eg.addColorStop(0.92,'#0e2c4d');eg.addColorStop(1,'rgba(120,180,255,0)');
-  ctx.fillStyle=eg;ctx.beginPath();ctx.arc(W*0.5,H*2.6,H*1.82,0,7);ctx.fill();
-  ctx.strokeStyle='rgba(140,200,255,.35)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(W*0.5,H*2.6,H*1.79,Math.PI*1.2,Math.PI*1.8);ctx.stroke();
+  var s0=3;function rnd(){s0=(s0*16807)%2147483647;return s0/2147483647;}
+  ctx.fillStyle='rgba(220,230,255,.55)';for(var i=0;i<160;i++)ctx.fillRect(rnd()*W,rnd()*H*0.8,1,1);
+  var eg=ctx.createRadialGradient(W*0.5,H*2.7,H*1.6,W*0.5,H*2.7,H*1.9);
+  eg.addColorStop(0,'#1d5a8f');eg.addColorStop(0.93,'#0e2c4d');eg.addColorStop(1,'rgba(120,180,255,0)');
+  ctx.fillStyle=eg;ctx.beginPath();ctx.arc(W*0.5,H*2.7,H*1.9,0,7);ctx.fill();
 
-  var items=[];
-  RINGS.forEach(function(R){
-    var segs=R.id===1?10:3, hw=R.w/2, dim=S.focus&&S.focus!==R.id;
-    for(var i=0;i<R.n;i++){
-      var z=zoneOf(R,i);
-      for(var k=0;k<segs;k++){
-        var a0=S.spin+(i+k/segs)/R.n*2*Math.PI, a1=S.spin+(i+(k+1)/segs)/R.n*2*Math.PI;
-        var q=[ringPt(R.r,a0,-hw),ringPt(R.r,a1,-hw),ringPt(R.r,a1,hw),ringPt(R.r,a0,hw)].map(function(p){return P(p[0],p[1],p[2]);});
-        var depth=(q[0][2]+q[1][2]+q[2][2]+q[3][2])/4;
-        items.push({d:depth,f:function(q,z,R,k,segs,i,dim){return function(){
-          ctx.beginPath();ctx.moveTo(q[0][0],q[0][1]);for(var j=1;j<4;j++)ctx.lineTo(q[j][0],q[j][1]);ctx.closePath();
-          ctx.fillStyle=hexA(z[2],dim?0.06:0.2);ctx.fill();
-          ctx.strokeStyle=hexA(z[2],dim?0.15:0.55);ctx.lineWidth=0.8;
-          ctx.beginPath();ctx.moveTo(q[0][0],q[0][1]);ctx.lineTo(q[1][0],q[1][1]);ctx.moveTo(q[2][0],q[2][1]);ctx.lineTo(q[3][0],q[3][1]);ctx.stroke();
-          if(k===0){ctx.strokeStyle=hexA('#dfe6f5',dim?0.12:0.4);ctx.beginPath();ctx.moveTo(q[0][0],q[0][1]);ctx.lineTo(q[3][0],q[3][1]);ctx.stroke();}
-          var lit=(R.id===1)||(S.houses&&houses.some(function(h){return h[0]===R.id&&h[1]===i;}));
-          if(lit&&k===Math.floor(segs/2)&&!dim){var cx=(q[0][0]+q[2][0])/2,cy=(q[0][1]+q[2][1])/2;
-            ctx.fillStyle=R.id===1?'rgba(230,236,250,.9)':'rgba(255,205,130,.95)';ctx.beginPath();ctx.arc(cx,cy,Math.max(1.6,q[0][3]*4),0,7);ctx.fill();
-            ctx.fillStyle=R.id===1?'rgba(230,236,250,.15)':'rgba(255,190,110,.18)';ctx.beginPath();ctx.arc(cx,cy,Math.max(4,q[0][3]*11),0,7);ctx.fill();}
-        };}(q,z,R,k,segs,i,dim)});
-      }
+  var items=[], t=Date.now()/1000;
+  // arms: curved shells, twisted along the spine
+  ARMS.forEach(function(a){
+    var dim=S.focus&&S.focus!==a.id&&S.focus!=='spine', segsPer=a.n===4?8:2, N=a.n*segsPer;
+    for(var j=0;j<N;j++){
+      var u0=-1+2*j/N, u1=-1+2*(j+1)/N, ang0=S.spin+a.theta+u0*SPAN/2, ang1=S.spin+a.theta+u1*SPAN/2;
+      var x0=armX(a,u0), x1=armX(a,u1), hw=WIDTH/2;
+      var q=[sp(R,ang0,x0-hw),sp(R,ang1,x1-hw),sp(R,ang1,x1+hw),sp(R,ang0,x0+hw)];
+      var oq=[sp(R+5,ang0,x0-hw),sp(R+5,ang1,x1-hw),sp(R+5,ang1,x1+hw),sp(R+5,ang0,x0+hw)];
+      var i=Math.floor(j/segsPer), z=zoneOf(a,i), first=j%segsPer===0, mid=j%segsPer===Math.floor(segsPer/2);
+      var depth=(q[0][2]+q[2][2])/2;
+      items.push({d:depth,f:(function(q,oq,z,first,mid,i,dim){return function(){
+        ctx.beginPath();ctx.moveTo(oq[0][0],oq[0][1]);for(var k=1;k<4;k++)ctx.lineTo(oq[k][0],oq[k][1]);ctx.closePath();
+        ctx.fillStyle=dim?'rgba(18,24,38,.35)':'rgba(30,38,56,.92)';ctx.fill();
+        ctx.beginPath();ctx.moveTo(q[0][0],q[0][1]);for(var k=1;k<4;k++)ctx.lineTo(q[k][0],q[k][1]);ctx.closePath();
+        ctx.fillStyle=rgba(z[2],dim?0.06:0.28);ctx.fill();
+        ctx.strokeStyle=rgba('#c9d3e6',dim?0.08:0.35);ctx.lineWidth=0.8;
+        ctx.beginPath();ctx.moveTo(oq[0][0],oq[0][1]);ctx.lineTo(oq[1][0],oq[1][1]);ctx.moveTo(oq[2][0],oq[2][1]);ctx.lineTo(oq[3][0],oq[3][1]);ctx.stroke();
+        if(first){ctx.strokeStyle=rgba(z[2],dim?0.15:0.7);ctx.beginPath();ctx.moveTo(q[0][0],q[0][1]);ctx.lineTo(q[3][0],q[3][1]);ctx.stroke();}
+        var lit=a.built||(S.houses&&houses[a.id+i]);
+        if(lit&&mid&&!dim){var cx=(q[0][0]+q[2][0])/2,cy=(q[0][1]+q[2][1])/2,r0=Math.max(1.5,q[0][3]*4.5);
+          ctx.fillStyle=a.built?'rgba(232,238,252,.95)':'rgba(255,205,130,.95)';ctx.beginPath();ctx.arc(cx,cy,r0,0,7);ctx.fill();
+          ctx.fillStyle=a.built?'rgba(232,238,252,.14)':'rgba(255,190,110,.2)';ctx.beginPath();ctx.arc(cx,cy,r0*3,0,7);ctx.fill();}
+      };})(q,oq,z,first,mid,i,dim)});
     }
+    // two spokes per arm, each with an elevator car
+    [-0.55,0.55].forEach(function(u,k){
+      var ang=S.spin+a.theta+u*SPAN/2, xs=armX(a,u), p0=P(a.x*0.4,0,0), p1=sp(R,ang,xs);
+      items.push({d:(p0[2]+p1[2])/2,f:function(){
+        ctx.strokeStyle=dim?'rgba(140,155,185,.25)':'rgba(160,175,205,.8)';ctx.lineWidth=Math.max(1.4,(p0[3]+p1[3])*3);
+        ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.stroke();
+        var v=(Math.sin(t*0.5+k*2+a.theta)+1)/2,cx=p0[0]+(p1[0]-p0[0])*v,cy=p0[1]+(p1[1]-p0[1])*v;
+        ctx.fillStyle='#f2b866';ctx.fillRect(cx-3,cy-3,6,6);
+      }});
+    });
   });
-  // spokes with elevator cars
-  var t=Date.now()/1000;
-  for(var s=0;s<4;s++){
-    var a=S.spin+s*Math.PI/2+Math.PI/4;
-    var p0=P.apply(null,ringPt(HUB,a,0)), p1=P.apply(null,ringPt(224,a,0));
-    items.push({d:(p0[2]+p1[2])/2,f:function(p0,p1,s){return function(){
-      ctx.strokeStyle='rgba(150,165,195,.75)';ctx.lineWidth=Math.max(1.5,p0[3]*5);ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.stroke();
-      var u=(Math.sin(t*0.6+s*1.7)+1)/2, cx=p0[0]+(p1[0]-p0[0])*u, cy=p0[1]+(p1[1]-p0[1])*u;
-      ctx.fillStyle='#f2b866';ctx.fillRect(cx-3,cy-3,6,6);
-    };}(p0,p1,s)});
-  }
-  // hub
-  var hc=P(0,0,0);
-  items.push({d:hc[2],f:function(){
-    var rr=HUB*hc[3];var g=ctx.createRadialGradient(hc[0]-rr*0.3,hc[1]-rr*0.3,rr*0.1,hc[0],hc[1],rr);
-    g.addColorStop(0,'#f6d9a8');g.addColorStop(0.5,'#9b6a3a');g.addColorStop(1,'#3a2550');
-    ctx.fillStyle=g;ctx.beginPath();ctx.arc(hc[0],hc[1],rr,0,7);ctx.fill();
-    ctx.strokeStyle='rgba(201,168,238,.8)';ctx.lineWidth=1.2;ctx.beginPath();
-    for(var i=0;i<=40;i++){var a=i/40*2*Math.PI+S.spin*3,p=P(Math.cos(a)*HUB*1.35,0,Math.sin(a)*HUB*1.35);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}ctx.stroke();
-  }});
-  // axis
-  var ax0=P(0,-70,0),ax1=P(0,70,0);
-  ctx.strokeStyle='rgba(142,84,184,.5)';ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(ax0[0],ax0[1]);ctx.lineTo(ax1[0],ax1[1]);ctx.stroke();ctx.setLineDash([]);
+  // spine (along x): power plant at the rear, truss, storage, hub, operations ring, Government Core with shield
+  ball(items,-420,26,'#e9fbff','#2a6f9a');
+  hoop(items,-420,34,'rgba(140,220,255,'+(0.25+0.2*Math.sin(t*3)).toFixed(2)+')',3,0);
+  tube(items,-394,-180,4,'rgba(130,145,170,.9)');
+  tube(items,-180,-110,16,'rgba(92,104,128,.95)');
+  tube(items,-110,-70,6,'rgba(130,145,170,.9)');
+  tube(items,-70,70,15,'rgba(110,90,140,.95)');
+  hoop(items,0,30,'rgba(201,168,238,.85)',2.2,S.spin*2);
+  tube(items,70,300,7,'rgba(130,145,170,.9)');
+  hoop(items,250,44,'rgba(170,185,210,.8)',5,S.spin*0.5);
+  tube(items,300,325,14,'rgba(92,104,128,.95)');
+  ball(items,346,22,'#e9d6ff','#5a3a82');
+  hoop(items,368,32,'rgba(200,210,230,.6)',4,0);
+
   items.sort(function(a,b){return a.d-b.d;}).forEach(function(it){it.f();});
+
   if(S.labels){
-    ctx.font='12px -apple-system,Segoe UI,sans-serif';
-    RINGS.forEach(function(R){var p=P(R.r+8,R.w/2+10,0);ctx.fillStyle=(!S.focus||S.focus===R.id)?'#e8ecf4':'#59627a';ctx.fillText((W<560?'R'+R.id:R.name)+' · '+(gAt(R.r)/G0).toFixed(2)+' g',p[0],p[1]);});
-    var hp=P(0,HUB+14,0);ctx.fillStyle='#c9a8ee';ctx.fillText(W<560?'hub':'hub · gravity generator (spin drive)',hp[0]+8,hp[1]);
+    var short=W<560;ctx.font='12px -apple-system,Segoe UI,sans-serif';
+    function lab(txt,p,col){ctx.fillStyle=col;ctx.fillText(txt,p[0]+6,p[1]-6);}
+    lab(short?'power':'power plant',P(-420,34,0),'#9fdcff');
+    lab(short?'hub':'hub · gravity generator',P(0,40,0),'#c9a8ee');
+    lab(short?'ops':'operations ring',P(250,52,0),'#c9d3e6');
+    lab(short?'core':'Government Core',P(350,30,0),'#d9c2ff');
+    ARMS.forEach(function(a){var ang=S.spin+a.theta;var p=sp(R+26,ang,a.x);lab(short?a.id:a.name,p,(!S.focus||S.focus===a.id)?'#e8ecf4':'#59627a');});
   }
-  var built=S.houses?houses.length:0;
-  document.getElementById('hud').innerHTML='<b>Genesis</b> · 53 parcels · 4 commons venues · <b>'+built+'</b> Nous houses '+(S.houses?'(imagined)':'(as today)')+' · '+S.rpm.toFixed(2)+' rpm';
+  var n=0;for(var k in houses)n++;
+  document.getElementById('hud').innerHTML='<b>Genesis</b> · 53 parcels · 4 commons venues · <b>'+(S.houses?n:0)+'</b> Nous houses '+(S.houses?'(imagined)':'(as today)')+' · '+S.rpm.toFixed(2)+' rpm · arms '+(gAt(R)/G0).toFixed(2)+' g';
 }
-function frame(){S.spin+=omega()/60*12;if(S.auto&&!drag)S.yaw+=0.0015;draw();
-  var xc=document.getElementById('xcar');if(xc){var X0=70+HUB*3.55,L=(224-HUB)*3.55;xc.setAttribute('x',X0+((Date.now()/40)%L)-5);}
+var drag=null;
+function frame(){S.spin+=omega()/60*10;if(S.auto&&!drag)S.yaw+=0.0012;draw();
+  var xc=document.getElementById('xcar');if(xc){var a=XS0+22,L=(R-DECK*DECKS)*XSC-22;xc.setAttribute('x',a+((Date.now()/35)%L)-6);}
   requestAnimationFrame(frame);}
 
 // ---------- controls ----------
 function btnGroup(id,items){var box=document.getElementById(id);items.forEach(function(it){var b=document.createElement('button');b.textContent=it.t;
-  b.setAttribute('aria-pressed',String(it.on()));b.onclick=function(){it.go();[].forEach.call(box.children,function(c,i){c.setAttribute('aria-pressed',String(items[i].on()));});draw();};box.appendChild(b);});}
+  b.setAttribute('aria-pressed',String(it.on()));b.onclick=function(){it.go();[].forEach.call(box.children,function(c,i){c.setAttribute('aria-pressed',String(items[i].on()));});};box.appendChild(b);});}
 btnGroup('gShow',[{t:'As today',on:function(){return !S.houses;},go:function(){S.houses=false;}},{t:'Imagined: houses built',on:function(){return S.houses;},go:function(){S.houses=true;}}]);
-btnGroup('gRing',[{t:'All',on:function(){return !S.focus;},go:function(){S.focus=0;}}].concat(RINGS.map(function(R){return {t:'Ring '+R.id,on:function(){return S.focus===R.id;},go:function(){S.focus=R.id;}};})));
+btnGroup('gArm',[{t:'All',on:function(){return !S.focus;},go:function(){S.focus='';}}].concat(ARMS.map(function(a){return {t:'Arm '+a.id,on:function(){return S.focus===a.id;},go:function(){S.focus=a.id;}};})).concat([{t:'Spine',on:function(){return S.focus==='spine';},go:function(){S.focus='spine';}}]));
 btnGroup('gView',[{t:'Labels',on:function(){return S.labels;},go:function(){S.labels=!S.labels;}},{t:'Auto-turn',on:function(){return S.auto;},go:function(){S.auto=!S.auto;}},{t:'+',on:function(){return false;},go:function(){S.zoom=Math.min(3,S.zoom*1.2);}},{t:'−',on:function(){return false;},go:function(){S.zoom=Math.max(0.5,S.zoom/1.2);}}]);
 document.getElementById('rpm').addEventListener('input',function(e){S.rpm=parseFloat(e.target.value);table();xsec();});
-var drag=null;
 cv.addEventListener('pointerdown',function(e){drag={x:e.clientX,y:e.clientY,yaw:S.yaw,p:S.pitch};cv.setPointerCapture(e.pointerId);});
 cv.addEventListener('pointermove',function(e){if(!drag)return;S.yaw=drag.yaw+(e.clientX-drag.x)*0.008;S.pitch=Math.max(-1.3,Math.min(1.45,drag.p+(e.clientY-drag.y)*0.006));});
 cv.addEventListener('pointerup',function(){drag=null;});
