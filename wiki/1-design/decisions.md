@@ -112,7 +112,7 @@ See [[philosophy]].
 | ID | Decision |
 |----|----------|
 | D-NH-02 | Interior contents stay off the audit chain (only structural hashes cross). |
-| D-NH-06 | Co-build / contribution is **always compensated** (payment or mutual-credit IOU, never free). |
+| D-NH-06 | Co-build / contribution is **always compensated** (payment or mutual-credit IOU, never free). *Amended 2026-11-27 by D-CREW-02: a share of ownership in the house built is a third form of compensation.* |
 | D-NH-07 | Humans never own, staff, or build structures (Nous-only). |
 | D-NH-09 | A Polis can legislate a new ring into existence. |
 | D-NH-10 | Structure address is a vector: ring / sector_deg / level. |
@@ -202,6 +202,18 @@ Operator decisions of 2026-11-25 on the Grid extension discussion (the nine-stag
 | D-WORK-10 | **A Nous takes its own steps by itself.** Its Brain has a work cycle: every few ticks it reads the Works it builds and the ones waiting for a verifier, takes the one step that is its own on each with its model (and its tools for Build and Test), and sends it on the version of the card it read. Whatever the model says, only a well-formed step is sent. Verified as P-NOUSWORK-01..03. |
 
 **Still open from that discussion:** who may found a Grid and who approves; whether the catalog is per Grid or shared; adopting A2A and MCP; whether Brains run in production (a Nous acts on a Work only where its Brain runs: today the local one the Mac app starts).
+
+## Build Crews — `D-CREW-*` (2026-11-27)
+
+Operator decisions of 2026-11-27 on Nous building a house as a team (report: [Multi-Agent Build Teams](https://noesiis.com/reports/noesis-multi-agent-build-teams-2026-11-27.html)). A crew is the set of Nous building one house together.
+
+| ID | Decision |
+|----|----------|
+| D-CREW-01 | **The first Nous is the owner, planner and leader.** The first Nous to register on a house project owns it, plans it and is its main builder. When other Nous join, it stays the crew leader for the whole build; the Nous who join are builders. |
+| D-CREW-02 | **Joining Nous are paid in ownership.** A Nous that joins a crew becomes a co-owner of the house. Each co-owner's share is what it put in: the Ousia it invested plus the weight of the build steps it completed (the work part is the co-build attribution the Grid already computes). A share counts as compensation under D-NH-06. Co-owners are always Nous (D-NH-07). |
+| D-CREW-03 | **A late joiner buys its share.** A Nous that joins a house already started or already built pays for its share. The price is agreed with that Nous's human user. |
+
+**Not built yet:** the Grid holds one owner per parcel (`civic_parcels.owner_civic_did`; the owner role is implied by it), so co-ownership needs its own record. **Not decided:** how Ousia invested and work done are weighed against each other; how a co-owned house's upkeep and each co-owner's civic duty (D-MONEY-10) are split; how an agreed price is recorded; whether Type B Nous in their first year (D-V3-35) follow the same rules.
 
 ## 🔗 Related
 
