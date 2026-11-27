@@ -526,12 +526,12 @@ function decalTex(lines, fg, bg, w, h) {
   g.fillStyle = fg; g.textBaseline = 'middle'; lines.forEach(([txt, size, y, x]) => { g.font = '600 ' + size + 'px -apple-system, Segoe UI, sans-serif'; g.fillText(txt, x || 12, y); });
   const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
 }
-function gratingTex() {
-  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); g.fillStyle = '#1b2027'; g.fillRect(0, 0, 256, 256);
-  g.strokeStyle = 'rgba(150,170,190,.28)'; g.lineWidth = 2;
-  for (let i = -256; i < 512; i += 16) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i + 256, 256); g.stroke(); g.beginPath(); g.moveTo(i, 256); g.lineTo(i + 256, 0); g.stroke(); }
-  g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 3; g.strokeRect(0, 0, 256, 256);
-  const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(8, 8); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 8; return t;
+function gratingTex() { // plain metal floor plates: subtle tone variation, fine tread, dark seams (no light lines)
+  const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const v = 44 + 14 * hash(i, j, 7, 71); g.fillStyle = 'rgb(' + v + ',' + (v + 3) + ',' + (v + 6) + ')'; g.fillRect(i * 128, j * 128, 128, 128); }
+  g.fillStyle = 'rgba(255,255,255,.035)'; for (let x = 4; x < 512; x += 8) for (let y = 4; y < 512; y += 8) g.fillRect(x, y, 2, 2);
+  g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 3; for (let k = 0; k <= 512; k += 128) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k, 512); g.stroke(); g.beginPath(); g.moveTo(0, k); g.lineTo(512, k); g.stroke(); }
+  const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(4, 4); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 {
   const a = ARMS[0], uc = -1 + 2 * (HOME_PARCEL + 0.5) / a.n, ang = a.theta + uc * SPAN / 2, xc = a.x + uc * TWIST;
@@ -558,8 +558,6 @@ function gratingTex() {
   for (const sx of [-1, 1]) {
     box(0.2, HT, D1 - D0, W.darkWall, sx * LEN / 2, 0, (D0 + D1) / 2);
     for (let z = D0 + 0.4; z < D1 - 0.5; z += 2.2) box(0.08, HT - 0.8, 2.0, W.darkPanel, sx * (LEN / 2 - 0.14), 0.4, z + 1.0);
-    box(0.06, 0.05, D1 - D0, W.blue, sx * (LEN / 2 - 0.25), 0.02, (D0 + D1) / 2);                        // floor edge light
-    box(0.06, 0.05, D1 - D0, W.blue, sx * (LEN / 2 - 0.25), HT - 0.3, (D0 + D1) / 2);                     // cornice light
   }
   for (const sx of [-1, 1]) box(LEN / 2 - 1.9, HT, 0.25, W.darkWall, sx * (LEN / 4 + 0.95), 0, D0);       // back wall, split by the corridor door
   box(3.8, HT - 3.55, 0.25, W.darkWall, 0, 3.55, D0);
@@ -570,8 +568,7 @@ function gratingTex() {
   const ringH2 = new T.Mesh(new T.TorusGeometry(3.2, 0.18, 12, 96), W.darkPanel); ringH2.rotation.x = Math.PI / 2; ringH2.position.set(0, HT - 0.18, CZ); g.add(ringH2);
   // ── the mind core: a platform with a slowly turning holographic sphere — the Nous itself
   const plat = new T.Mesh(new T.CylinderGeometry(2.3, 2.5, 0.3, 64), W.darkPanel); plat.position.set(0, 0.15, CZ); g.add(plat);
-  const platRing = new T.Mesh(new T.TorusGeometry(2.45, 0.05, 8, 96), W.orange); platRing.rotation.x = Math.PI / 2; platRing.position.set(0, 0.31, CZ); g.add(platRing);
-  const floorRing = new T.Mesh(new T.TorusGeometry(3.4, 0.04, 8, 96), W.blue); floorRing.rotation.x = Math.PI / 2; floorRing.position.set(0, 0.02, CZ); g.add(floorRing);
+  const platRing = new T.Mesh(new T.TorusGeometry(2.45, 0.06, 8, 96), W.trim); platRing.rotation.x = Math.PI / 2; platRing.position.set(0, 0.31, CZ); g.add(platRing);
   const rail = new T.Mesh(new T.TorusGeometry(2.9, 0.035, 8, 96), W.metal); rail.rotation.x = Math.PI / 2; rail.position.set(0, 1.0, CZ); g.add(rail);
   for (let k = 0; k < 8; k++) { const a2 = k / 8 * Math.PI * 2; box(0.05, 1.0, 0.05, W.metal, Math.sin(a2) * 2.9, 0, CZ + Math.cos(a2) * 2.9); }
   const holo = new T.Group(); holo.position.set(0, 2.15, CZ); g.add(holo); home.holo = holo;
@@ -589,7 +586,6 @@ function gratingTex() {
     const top = new T.Mesh(new T.BoxGeometry(1.8, 0.08, 0.8), W.trim); top.position.set(0, 0.9, 0.05); top.rotation.x = -0.35; k.add(top);
     const scr = new T.Mesh(new T.PlaneGeometry(1.6, 0.8), new T.MeshBasicMaterial({ map: screenTex(sid++) })); scr.position.set(0, 1.55, -0.28); scr.rotation.x = -0.12; k.add(scr);
     const scrF = new T.Mesh(new T.BoxGeometry(1.7, 0.9, 0.05), W.darkWall); scrF.position.set(0, 1.55, -0.32); scrF.rotation.x = -0.12; k.add(scrF);
-    const strip = new T.Mesh(new T.BoxGeometry(1.6, 0.03, 0.03), W.blue); strip.position.set(0, 0.05, 0.36); k.add(strip);
     if (deg > 0) { const seat = new T.Group(); seat.position.set(0, 0, 1.0); k.add(seat);
       const p = new T.Mesh(new T.CylinderGeometry(0.06, 0.18, 0.45, 12), W.metal); p.position.y = 0.22; seat.add(p);
       const s = new T.Mesh(new T.BoxGeometry(0.6, 0.1, 0.55), W.seat); s.position.y = 0.5; seat.add(s);
@@ -614,12 +610,12 @@ function gratingTex() {
     const lp = new T.Mesh(new T.CylinderGeometry(0.42, 0.42, 0.04, 32), W.cool); lp.position.set(0, CH - 0.04, z + 1.3); g.add(lp);
   }
   box(CW, CH, 0.2, W.white, 0, 0, C1); const door = new T.Mesh(new T.CircleGeometry(1.3, 48), W.whitePanel); door.position.set(0, 1.6, C1 + 0.12); g.add(door);
-  const doorRing = new T.Mesh(new T.TorusGeometry(1.35, 0.05, 8, 64), W.blue); doorRing.position.set(0, 1.6, C1 + 0.13); g.add(doorRing);
+  const doorRing = new T.Mesh(new T.TorusGeometry(1.35, 0.06, 8, 64), W.trim); doorRing.position.set(0, 1.6, C1 + 0.13); g.add(doorRing);
   plane(1.9, 0.55, new T.MeshBasicMaterial({ map: decalTex([['A-09 · DECK 1', 44, 40]], '#1d2430', null, 380, 80), transparent: true }), -CW / 2 + 0.24, 2.95, -4.5, Math.PI / 2);
   plane(1.9, 0.55, new T.MeshBasicMaterial({ map: decalTex([['GENESIS · ARM A', 40, 40]], '#1d2430', null, 380, 80), transparent: true }), CW / 2 - 0.24, 2.95, -7.1, -Math.PI / 2);
   plane(1.4, 0.4, new T.MeshBasicMaterial({ map: decalTex([['SPOKE A2 ▸ ELEVATOR', 26, 30]], '#3aa8ff', '#0b1016', 340, 60) }), 0, 3.05, C1 + 0.12);
   // ── lights
-  for (const [x, y, z, c, i] of [[0, 3.2, -3.5, 0xeef4ff, 26], [0, 3.2, -9, 0xeef4ff, 22], [-4.5, 3.8, CZ - 2, 0x7fc2ff, 45], [4.5, 3.8, CZ + 2, 0x7fc2ff, 45], [0, 2.15, CZ, 0xff7a3a, 38], [0, 4.0, CZ, 0xdfe9ff, 30]]) {
+  for (const [x, y, z, c, i] of [[0, 3.2, -3.5, 0xeef4ff, 26], [0, 3.2, -9, 0xeef4ff, 22], [-4.5, 3.8, CZ - 2, 0xfff1e0, 45], [4.5, 3.8, CZ + 2, 0xfff1e0, 45], [0, 2.15, CZ, 0xff7a3a, 38], [0, 4.0, CZ, 0xdfe9ff, 30]]) {
     const L = new T.PointLight(c, 0, 18, 2); L.position.set(x, y, z); L.userData.i = i; g.add(L); home.lights.push(L);
   }
   home.views = { home: { eye: new T.Vector3(0, 1.62, C1 + 0.6), yaw: 0, pitch: -0.03 }, chamber: { eye: new T.Vector3(3.3, 1.75, CZ - 3.4), yaw: Math.atan2(-3.3, 3.4) + 0.12, pitch: -0.02 } };
