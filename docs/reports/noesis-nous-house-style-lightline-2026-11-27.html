@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Noēsis — Nous House Style · Light-Line Target</title>
+<meta name="description" content="The Tron-like look as the target style for houses Nous build: what defines it, why it fits an orbital Grid, how far the catalog and the Bevy district view are from it today, and the steps to get there.">
+<style>
+:root{
+  --bg:#f6f6f3;--card:#fff;--ink:#1b1c1e;--muted:#5c5e63;--line:#dcdde0;
+  --a:#1f6f8b;--a-soft:#e0eff4;--warn:#946300;--warn-soft:#fbf0d4;--bad:#a33a3a;--bad-soft:#f7e0e0;--ok:#2f7a4a;--ok-soft:#e0f0e6;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1013;--card:#17191d;--ink:#e9eaec;--muted:#a3a6ad;--line:#2c2f35;
+  --a:#6fc3dd;--a-soft:#16303a;--warn:#e2b24c;--warn-soft:#3a2f14;--bad:#e58a8a;--bad-soft:#3d2121;--ok:#7fcf9c;--ok-soft:#173023;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1013;--card:#17191d;--ink:#e9eaec;--muted:#a3a6ad;--line:#2c2f35;
+  --a:#6fc3dd;--a-soft:#16303a;--warn:#e2b24c;--warn-soft:#3a2f14;--bad:#e58a8a;--bad-soft:#3d2121;--ok:#7fcf9c;--ok-soft:#173023;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:20px;padding-block:28px 80px}
+h1{font-size:30px;line-height:1.2;margin:0 0 6px}
+h2{font-size:21px;margin:44px 0 6px;padding-top:10px;border-top:1px solid var(--line)}
+h3{font-size:16px;margin:22px 0 6px}
+.ko{color:var(--muted);font-size:.92em}
+.lede{font-size:16.5px;color:var(--muted);max-width:790px}
+.meta{font-size:13px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;font-weight:600}
+.t-have{background:var(--ok-soft);color:var(--ok)}.t-part{background:var(--warn-soft);color:var(--warn)}.t-miss{background:var(--bad-soft);color:var(--bad)}
+.call{border-left:4px solid var(--warn);background:var(--warn-soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0}
+.call.blue{border-color:var(--a);background:var(--a-soft)}
+code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--a-soft);padding:0 4px;border-radius:4px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:660px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+svg{display:block;width:100%;height:auto}
+.stage{background:#04060c;border-radius:12px;overflow:hidden;border:1px solid #1b2030}
+.stage text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.rule{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.rule b{display:block;margin-bottom:2px}
+.rule small{color:var(--muted)}
+.ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:12px 0}
+.ctrl{font-size:13px;color:var(--muted)}
+.ctrl .row{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+button{font:inherit;font-size:13px;padding:4px 11px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button[aria-pressed="true"]{border-color:var(--a);background:var(--a-soft);font-weight:600}
+.sw{width:26px;height:26px;padding:0;border-radius:50%}
+.sw[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:2px}
+.timeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.step h4{margin:0 0 4px;font-size:15px}.step small{color:var(--muted)}
+ul{padding-left:20px;margin:6px 0}li{margin:3px 0}
+#caption{font-size:13px;color:var(--muted);margin-top:6px;min-height:1.4em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="meta">Noēsis · design report · 2026-11-27 · operator direction: “most Nous houses look like a Tron movie house”</p>
+<h1>Nous House Style — the Light-Line Target</h1>
+<p class="ko">Nous 집 스타일 — “트론 영화 같은 집”을 목표 디자인으로 분석</p>
+<p class="lede">What makes the Tron look, why it suits an orbital Grid, how far the catalog and the district view are from it today, and what to build so the houses Nous make come out in that style by default — while each Nous still designs its own.</p>
+
+<div class="call blue"><b>One firm point first.</b> Take the <i>visual language</i>, not the film. Tron is a Disney property: its name, logos, vehicles and specific set designs (Flynn’s safehouse, light cycles, the disc) must not appear in Noēsis. The language itself — dark volumes, edges drawn in light, a colour per identity — is a general style anyone may use. In code and docs this report calls it <b>the light-line style</b>. The drawings below are our own, not stills from the film.<br><span class="ko">영화를 복제하지 말고 시각 언어만 가져온다. 코드와 문서에서는 “라이트라인 스타일”로 부른다.</span></div>
+
+<!-- ============================================================ -->
+<h2>1 · Today vs the target</h2>
+<p class="ko">현재 모습과 목표 모습 비교</p>
+<p>Left: a “home” lot exactly as <code>viz-rs/src/district.rs</code> draws it today — light-grey box (<code>#cfd6e4</code>), brown four-sided roof (<code>#7a5a4a</code>), a band of window light. Right: the same lot in the light-line style.</p>
+<div class="stage">
+<svg viewBox="0 0 960 400" role="img" aria-label="Side by side: the current district home, a light grey box with a brown pyramid roof, and the target light-line home, dark stacked volumes outlined in glowing cyan with a glowing grid floor">
+  <defs>
+    <filter id="g1" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="fl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1222"/><stop offset="1" stop-color="#04060c"/></linearGradient>
+  </defs>
+  <text x="240" y="34" fill="#9aa3b5" font-size="14" text-anchor="middle" font-weight="600">TODAY — district.rs “home”</text>
+  <text x="720" y="34" fill="#9aa3b5" font-size="14" text-anchor="middle" font-weight="600">TARGET — light-line home</text>
+  <line x1="480" y1="20" x2="480" y2="380" stroke="#1b2030"/>
+  <!-- TODAY -->
+  <g transform="translate(240,250)">
+    <polygon points="0,60 150,-15 0,-90 -150,-15" fill="#1b2333"/>
+    <polygon points="-90,-15 0,30 0,-60 -90,-105" fill="#b9c0cd"/>
+    <polygon points="90,-15 0,30 0,-60 90,-105" fill="#cfd6e4"/>
+    <polygon points="-90,-58 0,-13 0,-30 -90,-75" fill="#5f93b3" opacity=".85"/>
+    <polygon points="90,-58 0,-13 0,-30 90,-75" fill="#5f93b3" opacity=".85"/>
+    <polygon points="-90,-105 0,-60 0,-185" fill="#6a4d40"/>
+    <polygon points="90,-105 0,-60 0,-185" fill="#7a5a4a"/>
+    <polygon points="-90,-105 0,-150 0,-185" fill="#86685a"/>
+  </g>
+  <text x="240" y="355" fill="#7d8597" font-size="12.5" text-anchor="middle">reads as an Earth suburb house on a space station</text>
+  <!-- TARGET -->
+  <g transform="translate(720,250)">
+    <g stroke="#1e6f8f" stroke-width="1" opacity=".55">
+      <line x1="-200" y1="-15" x2="0" y2="85"/><line x1="-150" y1="-40" x2="50" y2="60"/><line x1="-100" y1="-65" x2="100" y2="35"/><line x1="-50" y1="-90" x2="150" y2="10"/><line x1="0" y1="-115" x2="200" y2="-15"/>
+      <line x1="200" y1="-15" x2="0" y2="85"/><line x1="150" y1="-40" x2="-50" y2="60"/><line x1="100" y1="-65" x2="-100" y2="35"/><line x1="50" y1="-90" x2="-150" y2="10"/><line x1="0" y1="-115" x2="-200" y2="-15"/>
+    </g>
+    <polygon points="-95,-10 0,37 0,-48 -95,-95" fill="#0b1120"/>
+    <polygon points="95,-10 0,37 0,-48 95,-95" fill="#0e1628"/>
+    <polygon points="-95,-95 0,-48 95,-95 0,-142" fill="#111a2e"/>
+    <g transform="translate(-30,-60)">
+      <polygon points="-75,-35 0,2 0,-58 -75,-95" fill="#0c1324"/>
+      <polygon points="75,-35 0,2 0,-58 75,-95" fill="#101a2e"/>
+      <polygon points="-75,-95 0,-58 75,-95 0,-132" fill="#152238"/>
+      <polygon points="8,-8 70,-39 70,-60 8,-29" fill="#e9f6ff" opacity=".9"/>
+    </g>
+    <g fill="none" stroke="#5ff3ff" stroke-width="2.2" filter="url(#g1)">
+      <polyline points="-95,-10 0,37 95,-10"/><line x1="0" y1="37" x2="0" y2="-48"/><line x1="-95" y1="-10" x2="-95" y2="-95"/><line x1="95" y1="-10" x2="95" y2="-95"/>
+      <polygon points="-95,-95 0,-48 95,-95 0,-142"/>
+      <g transform="translate(-30,-60)"><polyline points="-75,-35 0,2 75,-35"/><line x1="0" y1="2" x2="0" y2="-58"/><line x1="-75" y1="-35" x2="-75" y2="-95"/><line x1="75" y1="-35" x2="75" y2="-95"/><polygon points="-75,-95 0,-58 75,-95 0,-132"/></g>
+      <line x1="-60" y1="-34" x2="0" y2="-4" stroke-width="1.4"/>
+    </g>
+  </g>
+  <text x="720" y="355" fill="#7d8597" font-size="12.5" text-anchor="middle">dark volumes · edges in the owner’s light · lit floor grid</text>
+</svg>
+</div>
+
+<!-- ============================================================ -->
+<h2>2 · What the light-line style is made of</h2>
+<p class="ko">스타일 구성 요소 — 8가지 규칙</p>
+<div class="grid3">
+  <div class="rule"><b>1 · Dark bodies</b><small>Near-black, slightly glossy volumes (body luminance low, roughness ≈ 0.2–0.35). Surfaces are there to be <i>outlined</i>, not seen.</small></div>
+  <div class="rule"><b>2 · Light draws the form</b><small>Every silhouette edge and seam carries a thin emissive line. Remove the lights and the house disappears into space.</small></div>
+  <div class="rule"><b>3 · One colour = one identity</b><small>All lines on a house share its owner’s colour. You can read who owns what across a district at a glance.</small></div>
+  <div class="rule"><b>4 · Light is energy</b><small>Bright = powered and maintained; dim = running low; flickering or dark = failing. Light is a status display, not decoration.</small></div>
+  <div class="rule"><b>5 · Clean geometry</b><small>Boxes, slabs, cantilevers, sharp bevels; no ornament, no pitched roofs, no wood texture. Few, large parts.</small></div>
+  <div class="rule"><b>6 · White interior light</b><small>Inside reads bright and calm: white-lit floors and window bands against the dark shell.</small></div>
+  <div class="rule"><b>7 · The ground is a grid</b><small>Lots sit on a lit floor grid; streets are lines of light. The station already has the dark sky for it.</small></div>
+  <div class="rule"><b>8 · Halo and haze</b><small>A soft glow (bloom) around lit lines and a little distance fog make depth. Without bloom, emissive lines look flat.</small></div>
+</div>
+
+<div class="call blue"><b>Why this fits Noēsis, not just looks good:</b> the Grid is an orbital station over Earth with a black sky — the district camera already clears to <code>#020610</code> with fog. And rule 4 turns light into <b>function</b> (every object must have one): the upkeep ladder that already exists (maintained → worn → derelict), occupancy (someone home or not), and ownership (rule 3) all become readable from the light alone. With crews (D-CREW-02), a co-owned house can carry each co-owner’s colour in proportion to its share.<br><span class="ko">빛이 곧 정보: 관리 상태, 거주 여부, 소유자(공동 소유자 지분)를 빛만으로 읽을 수 있다.</span></div>
+
+<!-- ============================================================ -->
+<h2>3 · Try it — light carries the status</h2>
+<p class="ko">직접 바꿔 보기 — 소유자 색, 관리 상태, 공동 소유, 빛 번짐(블룸)</p>
+<p><b>Full demo:</b> <a href="noesis-nous-house-lightline-demo-2026-11-27.html">Light-Line District — interactive demo</a> — a whole district you can rotate and click, today’s look vs the target, a Nous building a house, a crew of three, upkeep lapsing, late joiners buying in.</p>
+<div class="ctrls">
+  <div class="ctrl">Owner colour<div class="row" id="cOwner"></div></div>
+  <div class="ctrl">Condition (upkeep ladder)<div class="row" id="cCond"></div></div>
+  <div class="ctrl">Co-owners (D-CREW-02)<div class="row" id="cCo"></div></div>
+  <div class="ctrl">Someone home · bloom<div class="row" id="cMisc"></div></div>
+</div>
+<div class="stage">
+<svg id="demo" viewBox="0 0 960 420" role="img" aria-label="Interactive light-line house: change the owner colour, the upkeep condition, the number of co-owners and whether someone is home or bloom is on"></svg>
+</div>
+<p id="caption"></p>
+
+<!-- ============================================================ -->
+<h2>4 · Where we are — checked in the code</h2>
+<p class="ko">현재 상태 — 코드로 확인</p>
+<p>Checked on <code>main</code> at a58f014b: <code>viz-rs/src/district.rs</code>, <code>viz-rs/src/scene.rs</code>, <code>viz-rs/Cargo.toml</code> (Bevy 0.20.1), <code>grid/src/civic/form-dsl.ts</code>, <code>genesis-catalog.ts</code>.</p>
+<div class="scroll"><table>
+<tr><th>Style rule</th><th>Today</th><th>State</th></tr>
+<tr><td>Dark sky, haze</td><td>District camera clears to <code>#020610</code>, linear distance fog 260→620</td><td><span class="tag t-have">have</span></td></tr>
+<tr><td>1 · Dark bodies</td><td>Bodies are light grey <code>#cfd6e4</code> (worn <code>#8d9099</code>, derelict <code>#4b4d55</code>); homes get a brown pyramid roof</td><td><span class="tag t-miss">opposite</span></td></tr>
+<tr><td>2 · Edges in light</td><td>Only <i>empty</i> lots draw a glowing outline (<code>box_edges</code>); buildings have none</td><td><span class="tag t-part">partial</span> — the helper exists</td></tr>
+<tr><td>3 · Owner colour</td><td>One <code>accent</code> per district (default <code>#5a84c4</code>), the same on every lot. The parcel feed already gives <code>owner_civic_did_hash</code></td><td><span class="tag t-miss">missing</span> — data is there</td></tr>
+<tr><td>4 · Light = status</td><td>Derelict lots lose window light; windows warm when occupied, cool when empty</td><td><span class="tag t-part">partial</span></td></tr>
+<tr><td>5 · Clean geometry</td><td>Fixed shapes per type (home, shop, workshop, venue), coded by hand; the pitched roof breaks the rule</td><td><span class="tag t-part">partial</span></td></tr>
+<tr><td>8 · Bloom</td><td><code>Tonemapping::None</code>; no Bloom component anywhere in <code>viz-rs</code></td><td><span class="tag t-miss">missing</span></td></tr>
+<tr><td>Nous design their own house</td><td>The district view never reads a Nous’s design: a house is drawn from its <i>type</i> only. Form DSL documents describe <i>furnishings</i>, not house shells</td><td><span class="tag t-miss">missing</span></td></tr>
+<tr><td>Form DSL can express the style</td><td>8 bases, ≤ 24 parts, per-part <code>color</code>, <code>roughness</code>, <code>metalness</code>, <code>emissive</code>. A light strip is a thin box (min 0.01 m) with an emissive colour</td><td><span class="tag t-have">mostly</span> — but see below</td></tr>
+<tr><td>Dark finishes in the catalog</td><td>The 12 Tier 0 finishes are all light or natural (wood, fabric, stone, ceramic, glass, brushed metal…). No dark gloss, no light-strip finish</td><td><span class="tag t-miss">missing</span></td></tr>
+</table></div>
+
+<div class="call"><b>Two limits that will bite when Nous design house shells:</b> (1) <code>maxParts: 24</code> — a single box needs 12 edge strips, so a two-volume house outlined in light already needs 24 strips plus its bodies. Either raise the cap for shells or add an “outline this part” flag the renderer draws, which is cheaper and keeps documents small. (2) <code>maxDim: 8</code> m — fine for furniture, too small for a whole house shell. Shells need their own caps. Both are changes to the form gate, and new finishes are a Tier 0 change: a new catalog version with a new pinned digest (D-OBJ-01).</div>
+
+<!-- ============================================================ -->
+<h2>5 · How Nous get to this look — and keep their own designs</h2>
+<p class="ko">Nous가 이 스타일로 짓되, 각자 자기만의 디자인을 하도록</p>
+<div class="grid2">
+<div class="card">
+<h3 style="margin-top:0">Style = defaults + a few hard rules</h3>
+<ul>
+<li><b>Defaults:</b> dark finishes and an outline flag ship in the catalog, and the default house forms use them. A Nous that designs nothing still gets a light-line house.</li>
+<li><b>Hard rules (style gate)</b>, checked like the physics gate: body luminance below a ceiling; at least the silhouette outlined; line colour = the owner’s colour (the renderer sets it, so a Nous cannot wear another’s colour).</li>
+<li><b>Free:</b> shape, size within caps, number of volumes, windows, cantilevers, interior. “Kinds are closed, forms are open” (D-OBJ-01) carries over to houses.</li>
+</ul>
+</div>
+<div class="card">
+<h3 style="margin-top:0">Where the owner colour comes from</h3>
+<ul>
+<li>Derive it from <code>owner_civic_did_hash</code>, which the public parcel feed already carries: no new data, no new privacy exposure.</li>
+<li>Pick from a fixed palette of distinguishable hues (not a raw hash → hue), so two neighbours never look alike by accident.</li>
+<li>Reserve two colours: Polis / civic buildings (the 4 pre-built venues) and unowned land.</li>
+<li>Co-owned houses: split the lines by share once co-ownership exists (D-CREW-02).</li>
+</ul>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>6 · Build plan</h2>
+<p class="ko">구현 순서</p>
+<div class="timeline">
+  <div class="step"><h4>1 · Re-skin the district view</h4><small>viz-rs + three.js fallback</small><p>Dark glossy bodies, outline edges on every building, no pitched roof, white window bands, lit floor grid. Keep the layout parity fixture green; three.js fallback must match.</p></div>
+  <div class="step"><h4>2 · Bloom</h4><small>viz-rs</small><p>HDR camera + bloom on the district camera; measure frame time on a phone (WebGL2). Keep a no-bloom path for weak devices.</p></div>
+  <div class="step"><h4>3 · Owner colours</h4><small>dashboard + viz-rs</small><p>Palette index from the owner hash; civic and unowned colours reserved. No Grid change.</p></div>
+  <div class="step"><h4>4 · Catalog next version</h4><small>Grid, Tier 0</small><p>Add dark finishes (e.g. graphite, obsidian gloss) and an outline flag to the Form DSL. New catalog version, new pinned digest.</p></div>
+  <div class="step"><h4>5 · House shells as forms</h4><small>Grid + viz-rs</small><p>A shell form per house with its own caps and the style gate; the district view draws the Nous’s shell instead of the fixed type shape.</p></div>
+  <div class="step"><h4>6 · Teach the Brain the style</h4><small>Brain (Python + Rust)</small><p>The build prompt states the style rules; a Nous proposes a shell form. Prompt change → parity fixtures re-recorded (D-V3-42).</p></div>
+</div>
+
+<div class="call"><b>Expect little to change on production at first.</b> Today production has 53 lots, none owned and none built by a Nous; the only buildings are the 4 pre-built civic venues. Steps 1–3 will re-skin those and the empty lots. Houses in this style appear only once Brains build on the live Grid.<br><span class="ko">운영 서버에는 아직 Nous가 지은 집이 없어서, 1–3단계는 공연장 4개와 빈 부지만 바뀐다.</span></div>
+
+<div class="card">
+<h3 style="margin-top:0">Decisions needed from the operator</h3>
+<ul>
+<li>Is the style a <b>default</b> (a Nous may choose another look), or a <b>Grid rule</b> (Genesis Polis law: every house must follow it)? My pick: Polis law for Genesis — it makes ownership and condition readable for everyone, which is a civic good — but other Grids decide their own.</li>
+<li>Does an owner choose its colour, or is it assigned? (My pick: assigned from the palette, so no one can copy a neighbour’s.)</li>
+<li>Do venues, shops and workshops follow the same style, with only shapes differing?</li>
+</ul>
+</div>
+
+<p class="meta" style="margin-top:30px">Sources: <code>main</code> at a58f014b — <code>viz-rs/src/district.rs</code> (<code>building</code>, <code>box_edges</code>, <code>glow</code>, camera), <code>viz-rs/Cargo.toml</code>, <code>grid/src/civic/form-dsl.ts</code> (FORM_BASES, FORM_GATE_CAPS, FormMaterial), <code>grid/src/civic/genesis-catalog.ts</code> (FINISHES); production counts from the Grid’s public parcel feed, 2026-11-27. All drawings are original illustrations of the style, not film imagery.</p>
+</div>
+
+<script>
+(function(){
+  var NS='http://www.w3.org/2000/svg', svg=document.getElementById('demo');
+  function el(t,a,p){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e;}
+  var OWN=[['#5ff3ff','cyan'],['#ff9f43','amber'],['#c86bff','violet'],['#7dff8a','green']];
+  var S={own:0,cond:'maintained',co:1,home:true,bloom:true};
+  var defs=el('defs',{});
+  var f=el('filter',{id:'gb',x:'-50%',y:'-50%',width:'200%',height:'200%'},defs);
+  el('feGaussianBlur',{stdDeviation:'3.5',result:'b'},f);var m=el('feMerge',{},f);el('feMergeNode',{in:'b'},m);el('feMergeNode',{in:'SourceGraphic'},m);
+
+  // Isometric helpers: world (x,y,z) metres -> screen
+  var O=[480,300],K=14;
+  function P(x,y,z){return [O[0]+(x-y)*K*0.87,O[1]+(x+y)*K*0.5-z*K];}
+  function pts(a){return a.map(function(p){var s=P(p[0],p[1],p[2]);return s[0].toFixed(1)+','+s[1].toFixed(1);}).join(' ');}
+  function boxFaces(x,y,z,w,d,h){ // returns left, right, top polygons
+    return {l:[[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]],
+            r:[[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]],
+            t:[[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]]};}
+  function boxEdges(x,y,z,w,d,h){ // visible silhouette + front edges
+    return [[[x,y+d,z],[x+w,y+d,z]],[[x+w,y+d,z],[x+w,y,z]],[[x+w,y+d,z],[x+w,y+d,z+h]],[[x,y+d,z],[x,y+d,z+h]],[[x+w,y,z],[x+w,y,z+h]],
+            [[x,y,z+h],[x+w,y,z+h]],[[x+w,y,z+h],[x+w,y+d,z+h]],[[x+w,y+d,z+h],[x,y+d,z+h]],[[x,y+d,z+h],[x,y,z+h]]];}
+  var vols=[[-6,-5,0,12,10,4.2],[-9,-3,4.2,10,7,3.6]]; // ground slab + cantilevered upper volume
+
+  var floor=el('g',{}), house=el('g',{}), lines=el('g',{}), sign=el('g',{});
+  for(var i=-12;i<=12;i+=2){
+    el('line',{x1:P(i,-12,0)[0],y1:P(i,-12,0)[1],x2:P(i,12,0)[0],y2:P(i,12,0)[1],'stroke-width':1},floor);
+    el('line',{x1:P(-12,i,0)[0],y1:P(-12,i,0)[1],x2:P(12,i,0)[0],y2:P(12,i,0)[1],'stroke-width':1},floor);
+  }
+  vols.forEach(function(v){var F=boxFaces.apply(null,v);
+    el('polygon',{points:pts(F.l),fill:'#0b1120'},house);el('polygon',{points:pts(F.r),fill:'#0f1729'},house);el('polygon',{points:pts(F.t),fill:'#141f35'},house);});
+  var win=el('polygon',{points:pts([[-3,4,5.1],[1,4,5.1],[1,4,6.6],[-3,4,6.6]])},house);
+  var win2=el('polygon',{points:pts([[6,-3,1.2],[6,3,1.2],[6,3,2.6],[6,-3,2.6]])},house);
+  var edges=[];vols.forEach(function(v){edges=edges.concat(boxEdges.apply(null,v));});
+  var segs=edges.map(function(e){var a=P.apply(null,e[0]),b=P.apply(null,e[1]);return el('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],'stroke-width':2.4,'stroke-linecap':'round'},lines);});
+  var label=el('text',{x:24,y:36,fill:'#c9d3e6','font-size':14,'font-weight':600},sign);
+  var sub=el('text',{x:24,y:58,fill:'#7d8597','font-size':12.5},sign);
+
+  var t0=0;
+  function colourFor(i){ // co-owners split the edges by share
+    if(S.co===1) return OWN[S.own][0];
+    var shares=S.co===2?[0.6,0.4]:[0.5,0.3,0.2], cut=0, r=i/segs.length;
+    for(var k=0;k<shares.length;k++){cut+=shares[k];if(r<cut) return OWN[(S.own+k)%OWN.length][0];}
+    return OWN[S.own][0];
+  }
+  function draw(){
+    var lvl={maintained:1,worn:0.45,derelict:0.12}[S.cond];
+    segs.forEach(function(s,i){
+      var c=colourFor(i), o=lvl;
+      if(S.cond==='derelict'){var flick=Math.sin(t0*0.9+i*1.7)>0.55; o=flick?0.55:0.08;}
+      s.setAttribute('stroke',c);s.setAttribute('opacity',o.toFixed(2));
+    });
+    lines.setAttribute('filter',S.bloom&&S.cond!=='derelict'?'url(#gb)':'');
+    var lit=S.cond!=='derelict';
+    [win,win2].forEach(function(w){w.setAttribute('fill',lit?(S.home?'#eef8ff':'#2a4a63'):'#070a12');w.setAttribute('opacity',lit?(S.home?0.92:0.7):1);});
+    floor.setAttribute('stroke',OWN[S.own][0]);floor.setAttribute('opacity',(0.12+0.2*lvl).toFixed(2));
+    label.textContent='Owner colour: '+OWN[S.own][1]+(S.co>1?' + '+(S.co-1)+' co-owner'+(S.co>2?'s':''):'')+' · '+S.cond;
+    sub.textContent=(S.cond==='maintained'?'upkeep paid → full light':S.cond==='worn'?'upkeep missed → lines dim':'reclaim threshold → lines fail and flicker')+(lit?(S.home?' · someone home: white window light':' · nobody home: cool window light'):' · no window light');
+    document.getElementById('caption').textContent=S.co>1?'Edges are split by share: '+(S.co===2?'60% / 40%':'50% / 30% / 20%')+' (work + investment, D-CREW-02). Illustration only — co-ownership is not built yet.':'One owner: every line carries the owner’s colour. Illustration of the target; not the current renderer.';
+  }
+  function group(id,items,key,render){
+    var box=document.getElementById(id);
+    items.forEach(function(it){var b=document.createElement('button');render(b,it);
+      b.onclick=function(){S[key]=it.v;[].forEach.call(box.children,function(c){c.setAttribute('aria-pressed','false');});b.setAttribute('aria-pressed','true');draw();};
+      b.setAttribute('aria-pressed',String(S[key]===it.v));box.appendChild(b);});
+  }
+  group('cOwner',OWN.map(function(o,i){return {v:i,c:o[0],n:o[1]};}),'own',function(b,it){b.className='sw';b.style.background=it.c;b.title=it.n;b.setAttribute('aria-label','owner colour '+it.n);});
+  group('cCond',['maintained','worn','derelict'].map(function(v){return {v:v};}),'cond',function(b,it){b.textContent=it.v;});
+  group('cCo',[1,2,3].map(function(v){return {v:v};}),'co',function(b,it){b.textContent=it.v===1?'sole owner':it.v+' owners';});
+  var misc=document.getElementById('cMisc');
+  [['home','someone home'],['bloom','bloom']].forEach(function(p){var b=document.createElement('button');b.textContent=p[1];b.setAttribute('aria-pressed','true');
+    b.onclick=function(){S[p[0]]=!S[p[0]];b.setAttribute('aria-pressed',String(S[p[0]]));draw();};misc.appendChild(b);});
+  draw();
+  setInterval(function(){t0+=1;if(S.cond==='derelict')draw();},120);
+})();
+</script>
+</body>
+</html>

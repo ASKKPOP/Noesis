@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Noēsis — Light-Line District · Interactive Demo</title>
+<meta name="description" content="Interactive demo of the light-line house style: a district you can rotate, switch between today's look and the target look, watch a Nous build a house, let upkeep lapse, add co-owners and toggle the glow.">
+<style>
+:root{--bg:#04060c;--panel:#0b1020;--line:#1d2538;--ink:#e6ebf5;--muted:#8a93a8;--acc:#5ff3ff;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px 40px}
+h1{font-size:24px;margin:0 0 2px;letter-spacing:.01em}
+.ko{color:var(--muted);font-size:.92em}
+.meta{font-size:12.5px;color:var(--muted)}
+a{color:var(--acc)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;margin-top:12px}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+.view{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#0a1428 0%,#04060c 70%)}
+canvas{display:block;width:100%;height:clamp(320px,62vw,620px);touch-action:none;cursor:grab}
+canvas.drag{cursor:grabbing}
+.hud{position:absolute;left:12px;top:10px;max-width:calc(100% - 96px);font-size:12px;color:var(--muted);pointer-events:none;text-shadow:0 1px 2px #000}
+.hud b{color:var(--ink)}
+.zoom{position:absolute;right:10px;top:10px;display:flex;gap:6px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.panel h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.group{margin-bottom:14px}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+button{font:inherit;font-size:13px;padding:5px 11px;border-radius:7px;border:1px solid var(--line);background:#111829;color:var(--ink);cursor:pointer}
+button:hover{border-color:#3a4a6a}
+button[aria-pressed="true"]{border-color:var(--acc);color:#fff;background:#10303a}
+button.go{border-color:#2a7f8f;background:#0f2a32}
+#info{font-size:13px;min-height:120px}
+#info .k{color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;margin-right:4px}
+.log{font-size:12px;color:var(--muted);max-height:120px;overflow:auto;border-top:1px solid var(--line);padding-top:6px;margin-top:8px}
+.note{font-size:12.5px;color:var(--muted);margin-top:12px;border-left:3px solid #2a7f8f;padding-left:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="meta">Noēsis · interactive demo · 2026-11-27 · companion to <a href="noesis-nous-house-style-lightline-2026-11-27.html">Nous House Style — the Light-Line Target</a></p>
+<h1>Light-Line District — Demo</h1>
+<p class="ko">라이트라인 구역 데모 — 드래그로 회전, 부지를 눌러 정보 보기, Nous가 집 짓기, 관리비 미납, 공동 소유, 빛 번짐</p>
+
+<div class="layout">
+  <div class="view">
+    <canvas id="cv" aria-label="Rotatable district of lots and houses drawn in the light-line style"></canvas>
+    <div class="hud" id="hud"></div>
+    <div class="zoom"><button id="zIn" aria-label="Zoom in">+</button><button id="zOut" aria-label="Zoom out">−</button></div>
+  </div>
+  <div class="panel">
+    <div class="group"><h3>Look</h3><div class="row" id="gStyle"></div></div>
+    <div class="group"><h3>District</h3><div class="row" id="gPreset"></div></div>
+    <div class="group"><h3>Act</h3><div class="row">
+      <button class="go" id="bBuild">Nous builds a house</button>
+      <button id="bCrew">Crew of 3 builds</button>
+      <button id="bDecay">Upkeep period passes</button>
+      <button id="bPay">Everyone pays upkeep</button>
+    </div></div>
+    <div class="group"><h3>View</h3><div class="row" id="gView"></div></div>
+    <div class="group"><h3>Selected lot</h3><div id="info">Click a lot.</div>
+      <div class="row" id="lotActs" style="margin-top:6px"></div></div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<p class="note">Illustration, not live data. “Production today” uses today’s counts from the Grid’s public parcel feed (53 lots, 4 pre-built civic venues, 0 houses built by a Nous), not the real lot positions. Owner colours, crews and the light-line look are the <i>proposed</i> design; the live district view still draws the “today” look.<br><span class="ko">실제 데이터가 아닌 예시입니다. “운영 서버 현재”는 오늘의 수치만 반영합니다.</span></p>
+</div>
+
+<script>
+(function(){
+'use strict';
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var PALETTE=[['#5ff3ff','cyan'],['#ff9f43','amber'],['#c86bff','violet'],['#7dff8a','green'],['#ff5fa2','rose'],['#ffe45f','yellow'],['#5f8bff','blue'],['#ff6b5f','coral']];
+var CIVIC='#f4f1e6', LAND='#2c6f8a';
+var S={style:'target',bloom:true,spin:true,theta:0.62,zoom:1,sel:null,t:0};
+var lots=[], nousN=0, seed=11;
+function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
+function log(msg){var l=document.getElementById('log');var p=document.createElement('div');p.textContent='tick '+(1000+Math.floor(S.t/10))+' · '+msg;l.prepend(p);}
+
+// ---------- world ----------
+var LOT=14, GAP=4;
+function makeLots(cols,rows){
+  lots=[];var w=cols*(LOT+GAP), h=rows*(LOT+GAP);
+  for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){
+    lots.push({id:'genesis:lot:'+String(lots.length+1).padStart(4,'0'),x:c*(LOT+GAP)-w/2+GAP/2,y:r*(LOT+GAP)-h/2+GAP/2,kind:'empty',owners:[],cond:'maintained',home:false,vols:[],grow:1,builder:null});
+  }
+}
+function design(kind){ // a Nous designs its own shell: stacked, offset volumes
+  var v=[];
+  if(kind==='venue'){v.push([1,1,0,12,12,3.2]);v.push([3,3,3.2,8,8,2.6]);v.push([5,5,5.8,4,4,1.4]);return v;}
+  if(kind==='shop'){var w=9+rnd()*3;v.push([(LOT-w)/2,2,0,w,9,3.4+rnd()]);v.push([(LOT-w)/2+1,1.2,4.6,w-2,1,1.1]);return v;}
+  if(kind==='workshop'){v.push([2,2,0,10,9,4.6]);v.push([9,3,0,2,2,9+rnd()*3]);return v;}
+  var n=1+Math.floor(rnd()*3), z=0, w0=8+rnd()*3, d0=7+rnd()*3, x0=(LOT-w0)/2, y0=(LOT-d0)/2;
+  for(var i=0;i<n;i++){
+    var w=Math.max(4,w0-i*(1+rnd()*2.5)), d=Math.max(4,d0-i*(rnd()*2.5)), h=2.8+rnd()*1.8;
+    var ox=x0+(rnd()-0.4)*3.2*i, oy=y0+(rnd()-0.5)*2.4*i;
+    ox=Math.max(0.5,Math.min(LOT-w-0.5,ox));oy=Math.max(0.5,Math.min(LOT-d-0.5,oy));
+    v.push([ox,oy,z,w,d,h]);z+=h;
+  }
+  return v;
+}
+function freeColour(){var used={};lots.forEach(function(l){l.owners.forEach(function(o){used[o.c]=1;});});
+  for(var i=0;i<PALETTE.length;i++)if(!used[i])return i;return Math.floor(rnd()*PALETTE.length);}
+function newNous(){nousN++;return {n:'Nous-'+String(nousN).padStart(2,'0'),c:freeColour(),share:1};}
+function place(l,kind,owners,grow){l.kind=kind;l.owners=owners;l.vols=design(kind);l.cond='maintained';l.home=kind!=='venue'&&rnd()<0.6;l.grow=grow?0:1;}
+
+function presetProd(){
+  seed=11;nousN=0;makeLots(8,7);lots.length=53;
+  [26,27,34,35].forEach(function(i){var l=lots[i];place(l,'venue',[{n:'Genesis Polis',c:-1,share:1}],false);l.home=true;});
+  S.sel=null;log('production today: 53 lots, 4 civic venues, 0 Nous houses');
+}
+function presetFuture(){
+  seed=23;nousN=0;makeLots(8,6);
+  [19,20].forEach(function(i){place(lots[i],'venue',[{n:'Genesis Polis',c:-1,share:1}],false);});
+  lots.forEach(function(l,i){if(l.kind!=='empty')return;var r=rnd();
+    if(r<0.45)place(l,'home',[newNous()],false);else if(r<0.58)place(l,'shop',[newNous()],false);else if(r<0.66)place(l,'workshop',[newNous()],false);
+    else if(r<0.72){var a=newNous(),b=newNous();a.share=0.6;b.share=0.4;place(l,'home',[a,b],false);}
+    if(l.kind!=='empty'&&l.kind!=='venue'){var q=rnd();l.cond=q<0.75?'maintained':q<0.9?'worn':'derelict';}
+  });
+  S.sel=null;log('a future district: houses designed by their Nous');
+}
+
+// ---------- projection ----------
+var W=0,H=0,DPR=1;
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);var r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);}
+function K(){return Math.min(W/152,H/88)*S.zoom;}
+function P(x,y,z){var c=Math.cos(S.theta),s=Math.sin(S.theta),k=K();var rx=x*c-y*s, ry=x*s+y*c;return [W/2+rx*k, H*0.56+ry*k*0.5-z*k*0.82, ry];}
+function unproject(px,py){var c=Math.cos(S.theta),s=Math.sin(S.theta),k=K();var rx=(px-W/2)/k, ry=(py-H*0.56)/(k*0.5);return [rx*c+ry*s, -rx*s+ry*c];}
+
+// ---------- drawing ----------
+function hexA(h,a){var n=parseInt(h.slice(1),16);return 'rgba('+(n>>16)+','+((n>>8)&255)+','+(n&255)+','+a.toFixed(3)+')';}
+function ownerHex(o){return o.c<0?CIVIC:PALETTE[o.c][0];}
+function poly(pts){ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(var i=1;i<pts.length;i++)ctx.lineTo(pts[i][0],pts[i][1]);ctx.closePath();}
+function glowStroke(pts,col,a,w){
+  if(a<=0.01)return;
+  if(S.bloom){ctx.strokeStyle=hexA(col,a*0.16);ctx.lineWidth=w*4.2;poly(pts);ctx.stroke();ctx.strokeStyle=hexA(col,a*0.32);ctx.lineWidth=w*2;poly(pts);ctx.stroke();}
+  ctx.strokeStyle=hexA(col,a);ctx.lineWidth=w;poly(pts);ctx.stroke();
+}
+function lightLevel(l,i){
+  if(l.cond==='maintained')return 1; if(l.cond==='worn')return 0.42;
+  return Math.sin(S.t*0.35+i*1.9+l.x)>0.6?0.5:0.07;
+}
+function edgeColour(l,i,n){
+  if(!l.owners.length)return LAND; if(l.owners.length===1)return ownerHex(l.owners[0]);
+  var r=i/n,cut=0;for(var k=0;k<l.owners.length;k++){cut+=l.owners[k].share;if(r<cut)return ownerHex(l.owners[k]);}return ownerHex(l.owners[0]);
+}
+function shade(base,f){var n=parseInt(base.slice(1),16),r=(n>>16)*f,g=((n>>8)&255)*f,b=(n&255)*f;return 'rgb('+(r|0)+','+(g|0)+','+(b|0)+')';}
+
+function drawBox(l,b,faceIdx,total){
+  var x=l.x+b[0],y=l.y+b[1],z=b[2]*l.grow,w=b[3],d=b[4],h=b[5]*l.grow; if(h<0.05)return faceIdx;
+  var C=[[x,y],[x+w,y],[x+w,y+d],[x,y+d]];
+  var c=Math.cos(S.theta),s=Math.sin(S.theta);
+  var sides=[[0,1,0,-1],[1,2,1,0],[2,3,0,1],[3,0,-1,0]];
+  var today=S.style==='today';
+  var body=today?(l.cond==='worn'?'#8d9099':l.cond==='derelict'?'#4b4d55':'#cfd6e4'):'#121b2e';
+  if(l.kind==='venue'&&today)body='#cfd6e4';
+  sides.forEach(function(sd){
+    var depth=sd[2]*s+sd[3]*c; if(depth<=0)return;
+    var a=C[sd[0]],bb=C[sd[1]];var pts=[P(a[0],a[1],z),P(bb[0],bb[1],z),P(bb[0],bb[1],z+h),P(a[0],a[1],z+h)];
+    var lightF=0.62+0.3*(sd[2]*0.6+sd[3]*-0.4+0.5)/1.1;
+    ctx.fillStyle=shade(body,today?lightF:lightF*0.9);poly(pts);ctx.fill();
+    if(today){ // window band
+      if(l.cond!=='derelict'&&h>2.4){var wy=z+h*0.45,wh=Math.min(1.1,h*0.25);var wp=[P(a[0],a[1],wy),P(bb[0],bb[1],wy),P(bb[0],bb[1],wy+wh),P(a[0],a[1],wy+wh)];ctx.fillStyle=l.home?'rgba(255,217,160,.85)':'rgba(95,147,179,.7)';poly(wp);ctx.fill();}
+    } else {
+      if(l.cond!=='derelict'&&h>2.2&&l.kind!=='venue'){var t0=0.22,t1=0.78,wy2=z+h*0.42,wh2=Math.min(1.0,h*0.24);
+        var ax=a[0]+(bb[0]-a[0])*t0,ay=a[1]+(bb[1]-a[1])*t0,bx=a[0]+(bb[0]-a[0])*t1,by=a[1]+(bb[1]-a[1])*t1;
+        var wq=[P(ax,ay,wy2),P(bx,by,wy2),P(bx,by,wy2+wh2),P(ax,ay,wy2+wh2)];ctx.fillStyle=l.home?'rgba(236,248,255,.9)':'rgba(48,86,115,.75)';poly(wq);ctx.fill();}
+      glowStroke(pts,edgeColour(l,faceIdx,total),lightLevel(l,faceIdx)*(0.35+0.65*l.grow),1.6);
+    }
+    faceIdx++;
+  });
+  var top=[P(x,y,z+h),P(x+w,y,z+h),P(x+w,y+d,z+h),P(x,y+d,z+h)];
+  ctx.fillStyle=today?shade(body,1):'#18243b';poly(top);ctx.fill();
+  if(!today)glowStroke(top,edgeColour(l,faceIdx,total),lightLevel(l,faceIdx)*(0.35+0.65*l.grow),1.6);
+  return faceIdx+1;
+}
+function drawRoof(l,b){ // today's pitched roof on homes (district.rs)
+  var x=l.x+b[0],y=l.y+b[1],z=(b[2]+b[5])*l.grow,w=b[3],d=b[4],ap=[x+w/2,y+d/2,z+3.6*l.grow];
+  var C=[[x-0.5,y-0.5],[x+w+0.5,y-0.5],[x+w+0.5,y+d+0.5],[x-0.5,y+d+0.5]];
+  var c=Math.cos(S.theta),s=Math.sin(S.theta),sides=[[0,1,0,-1],[1,2,1,0],[2,3,0,1],[3,0,-1,0]];
+  var col=l.cond==='derelict'?'#3a3536':'#7a5a4a';
+  sides.forEach(function(sd){if(sd[2]*s+sd[3]*c<=-0.2)return;var a=C[sd[0]],bb=C[sd[1]];
+    ctx.fillStyle=shade(col,0.75+0.25*(sd[2]*0.6-sd[3]*0.4+0.5));poly([P(a[0],a[1],z),P(bb[0],bb[1],z),P(ap[0],ap[1],ap[2])]);ctx.fill();});
+}
+function drawLot(l){
+  var sel=S.sel===l, today=S.style==='today';
+  var pad=[P(l.x,l.y,0),P(l.x+LOT,l.y,0),P(l.x+LOT,l.y+LOT,0),P(l.x,l.y+LOT,0)];
+  ctx.fillStyle=today?'#1b2333':'#070c18';poly(pad);ctx.fill();
+  if(!today){ // floor grid inside the lot
+    var gc=l.owners.length?edgeColour(l,0,1):LAND, ga=(l.owners.length?0.16:0.1)*(l.cond==='derelict'?0.4:1);
+    ctx.strokeStyle=hexA(gc,ga);ctx.lineWidth=1;
+    for(var i=2;i<LOT;i+=3){var a=P(l.x+i,l.y,0),b=P(l.x+i,l.y+LOT,0);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+      a=P(l.x,l.y+i,0);b=P(l.x+LOT,l.y+i,0);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+  }
+  if(l.kind==='empty'){glowStroke(pad,today?'#5a84c4':LAND,today?0.45:0.55,1.3);}
+  else if(!today){glowStroke(pad,edgeColour(l,0,1),0.28*lightLevel(l,0),1.1);}
+  if(sel){ctx.setLineDash([5,4]);ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=1.5;poly(pad);ctx.stroke();ctx.setLineDash([]);}
+  var total=l.vols.length*3, fi=0;
+  l.vols.forEach(function(b){fi=drawBox(l,b,fi,total);});
+  if(today&&l.kind==='home'&&l.vols.length)drawRoof(l,l.vols[l.vols.length-1]);
+}
+function drawStreets(){
+  if(S.style==='today')return;
+  var xs={},ys={};lots.forEach(function(l){xs[l.x]=1;ys[l.y]=1;});
+  var minx=Math.min.apply(null,Object.keys(xs).map(Number)),maxx=Math.max.apply(null,Object.keys(xs).map(Number))+LOT;
+  var miny=Math.min.apply(null,Object.keys(ys).map(Number)),maxy=Math.max.apply(null,Object.keys(ys).map(Number))+LOT;
+  ctx.lineWidth=1.2;
+  Object.keys(xs).map(Number).forEach(function(x){var a=P(x-GAP/2,miny-GAP,0),b=P(x-GAP/2,maxy+GAP,0);ctx.strokeStyle=hexA(LAND,0.35);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();});
+  Object.keys(ys).map(Number).forEach(function(y){var a=P(minx-GAP,y-GAP/2,0),b=P(maxx+GAP,y-GAP/2,0);ctx.strokeStyle=hexA(LAND,0.35);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();});
+  // light pulses running along one street
+  var k=(S.t*0.6)%(maxy-miny+2*GAP);var pp=P(minx-GAP/2,miny-GAP+k,0.2);ctx.fillStyle=hexA('#5ff3ff',0.9);ctx.beginPath();ctx.arc(pp[0],pp[1],2.2,0,7);ctx.fill();
+}
+function render(){
+  ctx.clearRect(0,0,W,H);
+  drawStreets();
+  var order=lots.map(function(l){return [P(l.x+LOT/2,l.y+LOT/2,0)[2],l];}).sort(function(a,b){return a[0]-b[0];});
+  order.forEach(function(o){drawLot(o[1]);});
+  var built=lots.filter(function(l){return l.kind!=='empty'&&l.kind!=='venue';}).length, ven=lots.filter(function(l){return l.kind==='venue';}).length;
+  document.getElementById('hud').innerHTML='<b>'+lots.length+'</b> lots · <b>'+ven+'</b> civic venues · <b>'+built+'</b> Nous-built · look: <b>'+(S.style==='today'?'today (district.rs)':'light-line target')+'</b><br>drag to rotate · click a lot';
+}
+
+// ---------- info panel ----------
+function showInfo(){
+  var el=document.getElementById('info'), acts=document.getElementById('lotActs');acts.innerHTML='';
+  var l=S.sel;if(!l){el.textContent='Click a lot.';return;}
+  var h='<div><span class="k">lot</span> '+l.id+'</div><div><span class="k">kind</span> '+l.kind+'</div>';
+  if(l.owners.length){h+='<div><span class="k">owner'+(l.owners.length>1?'s':'')+'</span></div>';
+    l.owners.forEach(function(o){h+='<div><span class="dot" style="background:'+ownerHex(o)+'"></span>'+o.n+(l.owners.length>1?' · '+Math.round(o.share*100)+'%':'')+'</div>';});
+    h+='<div><span class="k">condition</span> '+l.cond+(l.kind!=='venue'?' · '+(l.home?'someone home':'nobody home'):'')+'</div>';
+  } else h+='<div class="k">unowned land</div>';
+  el.innerHTML=h;
+  function act(t,f){var b=document.createElement('button');b.textContent=t;b.onclick=function(){f();showInfo();};acts.appendChild(b);}
+  if(l.kind==='empty')act('Build here',function(){build(l,1);});
+  else if(l.kind!=='venue'){
+    act(l.home?'Leave home':'Come home',function(){l.home=!l.home;});
+    if(l.cond!=='maintained')act('Pay upkeep',function(){l.cond='maintained';log(l.owners[0].n+' paid upkeep on '+l.id);});
+    if(l.owners.length<3)act('A late joiner buys in',function(){var j=newNous();var cut=0.2;l.owners.forEach(function(o){o.share*= (1-cut);});j.share=cut;l.owners.push(j);log(j.n+' bought 20% of '+l.id+' (D-CREW-03)');});
+  }
+}
+
+// ---------- acts ----------
+function build(l,crew){
+  if(!l||l.kind!=='empty'){l=lots.filter(function(x){return x.kind==='empty';})[Math.floor(rnd()*lots.filter(function(x){return x.kind==='empty';}).length)];}
+  if(!l){log('no free lot left');return;}
+  var owners=[newNous()];
+  if(crew>1){var sh=[0.5,0.3,0.2];owners[0].share=sh[0];for(var i=1;i<crew;i++){var o=newNous();o.share=sh[i];owners.push(o);}}
+  place(l,rnd()<0.75?'home':(rnd()<0.5?'shop':'workshop'),owners,true);
+  S.sel=l;showInfo();
+  log(crew>1?owners[0].n+' leads a crew of '+crew+' on '+l.id+' (shares 50/30/20)':owners[0].n+' designs and builds a '+l.kind+' on '+l.id);
+}
+function decay(){var n=0;lots.forEach(function(l){if(l.kind==='empty'||l.kind==='venue')return;if(rnd()<0.35){l.cond=l.cond==='maintained'?'worn':'derelict';n++;}});log('upkeep period: '+n+' houses missed upkeep and dimmed');showInfo();}
+function payAll(){lots.forEach(function(l){if(l.kind!=='empty'&&l.kind!=='venue')l.cond='maintained';});log('every owner paid upkeep: full light');showInfo();}
+
+// ---------- controls ----------
+function toggleGroup(id,items,get,set){var box=document.getElementById(id);
+  items.forEach(function(it){var b=document.createElement('button');b.textContent=it[1];b.setAttribute('aria-pressed',String(get()===it[0]));
+    b.onclick=function(){set(it[0]);[].forEach.call(box.children,function(c,i){c.setAttribute('aria-pressed',String(get()===items[i][0]));});};box.appendChild(b);});}
+toggleGroup('gStyle',[['target','Light-line target'],['today','Today']],function(){return S.style;},function(v){S.style=v;});
+var preset='future';
+toggleGroup('gPreset',[['future','Future district'],['prod','Production today']],function(){return preset;},function(v){preset=v;v==='prod'?presetProd():presetFuture();showInfo();});
+var vb=document.getElementById('gView');
+[['bloom','Glow (bloom)'],['spin','Auto-rotate']].forEach(function(p){var b=document.createElement('button');b.textContent=p[1];b.setAttribute('aria-pressed',String(S[p[0]]));b.onclick=function(){S[p[0]]=!S[p[0]];b.setAttribute('aria-pressed',String(S[p[0]]));};vb.appendChild(b);});
+document.getElementById('bBuild').onclick=function(){build(null,1);};
+document.getElementById('bCrew').onclick=function(){build(null,3);};
+document.getElementById('bDecay').onclick=decay;
+document.getElementById('bPay').onclick=payAll;
+document.getElementById('zIn').onclick=function(){S.zoom=Math.min(2.6,S.zoom*1.2);};
+document.getElementById('zOut').onclick=function(){S.zoom=Math.max(0.5,S.zoom/1.2);};
+
+var drag=null;
+cv.addEventListener('pointerdown',function(e){drag={x:e.clientX,th:S.theta,moved:false};cv.setPointerCapture(e.pointerId);cv.classList.add('drag');});
+cv.addEventListener('pointermove',function(e){if(!drag)return;var dx=e.clientX-drag.x;if(Math.abs(dx)>3)drag.moved=true;S.theta=drag.th+dx*0.008;});
+cv.addEventListener('pointerup',function(e){cv.classList.remove('drag');
+  if(drag&&!drag.moved){var r=cv.getBoundingClientRect(),g=unproject(e.clientX-r.left,e.clientY-r.top);
+    S.sel=lots.filter(function(l){return g[0]>=l.x&&g[0]<=l.x+LOT&&g[1]>=l.y&&g[1]<=l.y+LOT;})[0]||null;showInfo();}
+  drag=null;});
+cv.addEventListener('wheel',function(e){e.preventDefault();S.zoom=Math.max(0.5,Math.min(2.6,S.zoom*(e.deltaY<0?1.1:1/1.1)));},{passive:false});
+
+window.addEventListener('resize',resize);
+resize();presetFuture();showInfo();
+function frame(){S.t++;if(S.spin&&!drag)S.theta+=0.0025;
+  lots.forEach(function(l){if(l.grow<1)l.grow=Math.min(1,l.grow+0.012);});
+  render();requestAnimationFrame(frame);}
+frame();
+})();
+</script>
+</body>
+</html>
