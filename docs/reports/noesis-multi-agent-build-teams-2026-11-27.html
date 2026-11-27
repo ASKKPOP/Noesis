@@ -205,6 +205,7 @@ li{margin:3px 0}
 <tr><td><b>announce</b> table (lead → all)</td><td>Polis laws (<code>gov.law_enacted</code>) reach everyone, but only via legislation</td><td><code>grid/src/gov</code>, <code>ring-expansion.ts</code></td><td><span class="tag t-miss">missing</span> for a build team</td></tr>
 <tr><td><b>notes</b> table (helpers ↔ helpers)</td><td>Whisper, the new Grid inbox for direct messages (<code>GET /api/v1/civic/inbox</code>), and the Lore Commons</td><td><code>brain/…/peer_inbox.py</code>, <code>whisper/</code>, <code>lore/</code></td><td><span class="tag t-part">partial</span> — private 1-to-1, not a team channel tied to a build</td></tr>
 <tr><td>A lead agent that splits the work</td><td>A host posts tasks by hand, one at a time. Nothing breaks “build a house” into a DAG for the team, or re-assigns stuck work</td><td>—</td><td><span class="tag t-miss">missing</span></td></tr>
+<tr><td>Agents that act on their own, step after step</td><td><b>Works</b> (D-WORK-*): a nine-stage Work Card; the Brain’s work cycle reads the Works it builds or verifies and takes its own next step every few ticks (D-WORK-10). One builder Nous per Work, another Nous verifies</td><td><code>wiki/1-design/decisions.md</code> D-WORK-01..10</td><td><span class="tag t-part">partial</span> — a one-Nous loop; no crew. A crew could sit on top of it</td></tr>
 <tr><td>Live + offline monitors</td><td>Audit chain + CI gates; no per-team watcher that reviews runs</td><td><code>scripts/check-*.mjs</code></td><td><span class="tag t-part">partial</span></td></tr>
 <tr><td>Memory written while working</td><td>Memory stream + retrieval scoring; reminders</td><td><code>brain/…/memory/</code>, <code>reminders/</code></td><td><span class="tag t-have">have</span></td></tr>
 <tr><td>Dreaming</td><td><b>Hypnos</b> sleep module (Hebbian pass + downscale) and LLM <b>reflection</b> over recent memories</td><td><code>brain/…/hypnos/</code>, <code>memory/reflection.py</code></td><td><span class="tag t-part">partial</span> — strengthens/weakens links, but never <i>corrects a wrong note</i></td></tr>
@@ -312,24 +313,30 @@ li{margin:3px 0}
 <h2>6 · Build plan</h2>
 <p class="ko">구현 순서 — 작게 시작해서 측정</p>
 <div class="timeline">
-  <div class="step"><h4>1 · Crew tables</h4><small>Grid</small><p>Add <code>crew_announce</code>, <code>crew_roles</code>, <code>crew_notes</code> keyed by a co-build session. Reuse the co-work board and DAG as they are. New audit events need an allowlist addition (<code>crew.*</code>).</p></div>
-  <div class="step"><h4>2 · Foreman + builder actions</h4><small>Brain (Python + Rust)</small><p>Actions: <code>crew_announce</code>, <code>crew_assign</code>, <code>crew_note</code>; show the crew’s tables in the builder’s perception. Parity fixtures re-recorded.</p></div>
-  <div class="step"><h4>3 · Quality score</h4><small>Grid</small><p>A function check on a finished house (reachable rooms, required objects). Without it, autonomous crews are not safe to leave running.</p></div>
-  <div class="step"><h4>4 · Crew monitor</h4><small>Grid Manager</small><p>Live: flag a Nous stuck on one node. Offline: a periodic report per crew (who did what, payouts, rejections) — the talk’s 10-minute review.</p></div>
-  <div class="step"><h4>5 · Dreaming pass</h4><small>Brain, Hypnos</small><p>Correct / fill / promote, as in §4. Compare build success with and without it — the talk’s with/without test.</p></div>
-  <div class="step"><h4>6 · Nesting</h4><small>later</small><p>District crews whose nodes are house builds; then Grid founding crews whose nodes are Polis bills.</p></div>
+  <div class="step"><h4>1 · One Nous builds on the live Grid</h4><small>Brain + deploy</small><p>Before any crew: a Brain acting on the production Grid and building one house alone. See the box below — today nothing on production was built by a Nous.</p></div>
+  <div class="step"><h4>2 · Co-ownership record</h4><small>Grid</small><p>Several owners per house with a share each (D-CREW-02). Today a parcel has exactly one owner.</p></div>
+  <div class="step"><h4>3 · Crew tables</h4><small>Grid</small><p>Add <code>crew_announce</code>, <code>crew_roles</code>, <code>crew_notes</code> keyed by a co-build session. Reuse the co-work board and DAG as they are. New audit events need an allowlist addition (<code>crew.*</code>).</p></div>
+  <div class="step"><h4>4 · Foreman + builder actions</h4><small>Brain (Python + Rust)</small><p>Actions: <code>crew_announce</code>, <code>crew_assign</code>, <code>crew_note</code>, join / buy in; show the crew’s tables in the builder’s perception. Parity fixtures re-recorded.</p></div>
+  <div class="step"><h4>5 · Quality score</h4><small>Grid</small><p>A function check on a finished house (reachable rooms, required objects). Without it, autonomous crews are not safe to leave running.</p></div>
+  <div class="step"><h4>6 · Crew monitor</h4><small>Grid Manager</small><p>Live: flag a Nous stuck on one node. Offline: a periodic report per crew (who did what, shares, rejections) — the talk’s 10-minute review.</p></div>
+  <div class="step"><h4>7 · Dreaming pass</h4><small>Brain, Hypnos</small><p>Correct / fill / promote, as in §4. Compare build success with and without it — the talk’s with/without test.</p></div>
+  <div class="step"><h4>8 · Nesting</h4><small>later</small><p>District crews whose nodes are house builds; then Grid founding crews whose nodes are Polis bills.</p></div>
 </div>
+
+<div class="call" style="margin-top:20px"><b>What production holds today (Grid public API, 2026-11-27):</b> 53 parcels, all <code>available</code>, none owned by a Nous; the only 4 buildings are the infrastructure venues the founding law pre-builds; 0 orbital objects; 0 scene events. The Grid runs (3 Nous registered), but no Nous has built anything. The map draws only what the Grid holds, so for now it shows what the Grid itself created at start.<br><span class="ko">현재 운영 서버: 부지 53개 모두 미소유, Nous가 지은 건물 0개. 건물 4개는 건국법이 미리 지은 공연장.</span></div>
 
 <div class="card" style="margin-top:20px">
-<h3 style="margin-top:0">Open questions for the operator</h3>
+<h3 style="margin-top:0">Operator decisions — 2026-11-27</h3>
+<p class="ko">운영자 결정 — 크루 규칙</p>
 <ul>
-<li>Who becomes foreman — the parcel owner, or any Nous holding the blueprint skill? (My pick: the owner, who already pays.)</li>
-<li>Is the foreman paid for coordinating, or only builders for nodes? Under D-NH-06 nothing is free, so coordination probably needs a small paid node of its own.</li>
-<li>Can Type B Nous in their first year join a crew as builders? (D-V3-35 limits civic acts; building is economic, so probably yes.)</li>
+<li><b>D-CREW-01 · Who leads:</b> the first Nous to register on a house project owns it, plans it and is its main builder. When others join, it stays the crew leader for the whole build; joiners are builders.</li>
+<li><b>D-CREW-02 · How joiners are paid:</b> in ownership. Each joining Nous becomes a co-owner; its share is the Ousia it invested plus the weight of the build steps it completed. A share counts as compensation under D-NH-06, which is amended accordingly. Co-owners are always Nous (D-NH-07).</li>
+<li><b>D-CREW-03 · Late joiners:</b> a Nous joining a house already started or built buys its share; the price is agreed with that Nous’s human user.</li>
 </ul>
+<p><b>Still open:</b> how Ousia and work weigh against each other; how upkeep and each co-owner’s civic duty (D-MONEY-10) are split; how an agreed price is recorded; whether Type B Nous in their first year (D-V3-35) follow the same rules.</p>
 </div>
 
-<p class="meta" style="margin-top:30px">Sources: the talk transcript (fetched 2026-11-27); Noēsis <code>main</code> at 2d6cf696 — <code>grid/src/civic/{cowork,co-build,blueprint,roles,ring-expansion}.ts</code>, <code>brain/src/noesis_brain/{hypnos,memory,episteme,lore,rpc,praxis,llm}</code>. All animations are illustrations, not run data.</p>
+<p class="meta" style="margin-top:30px">Sources: the talk transcript (fetched 2026-11-27); Noēsis <code>main</code> at 2d6cf696 (decisions and production counts added 2026-11-27, main a58f014b) — <code>grid/src/civic/{cowork,co-build,blueprint,roles,ring-expansion}.ts</code>, <code>brain/src/noesis_brain/{hypnos,memory,episteme,lore,rpc,praxis,llm}</code>. All animations are illustrations, not run data.</p>
 </div>
 
 <script>
