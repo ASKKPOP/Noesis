@@ -185,6 +185,8 @@ function table() {
   h += '<tr><td>Spine · Government Core</td><td><span class="dot" style="background:#8e54b8"></span>government · 1</td><td>front end of the spine</td><td>≈ 0 g</td><td>core block</td><td>1 civic block</td></tr>';
   h += '<tr><td>Spine · hub</td><td>—</td><td>middle, where the spokes meet</td><td>≈ 0 g</td><td>—</td><td>the gravity generator · elevator hub</td></tr>';
   h += '<tr><td>Spine · operations ring</td><td>—</td><td>between hub and core</td><td>low</td><td>—</td><td>planner / Grid Manager (proposal)</td></tr>';
+  const lens = []; ARMS.forEach(a => [-0.55, 0.55].forEach(u => { const g = spokeGeom(a, u); lens.push(g.p0.distanceTo(g.p1)); }));
+  h += '<tr><td>Spokes ×6 (2 per arm)</td><td>—</td><td>hub → arm</td><td>0 g at the hub → 1 g at the arm</td><td>' + Math.min(...lens).toFixed(0) + '–' + Math.max(...lens).toFixed(0) + ' m long × ' + SPOKE_D + ' m across · 16 m docking collars</td><td>enclosed elevator shaft (proposal)</td></tr>';
   h += '<tr><td>Spine · power plant + radiators</td><td>—</td><td>rear end of the spine</td><td>≈ 0 g</td><td>—</td><td>power for the Grid; radiators shed its heat (proposal)</td></tr>';
   ARMS.forEach(a => {
     const zs = a.zones.map(z => '<span class="dot" style="background:' + z[2] + '"></span>' + z[0] + ' · ' + z[1]).join('<br>');
@@ -240,24 +242,34 @@ function sphereTex(w, h, fn) {
   }
   g.putImageData(img, 0, 0); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 8; return t;
 }
+let LAST_N = 0, LAST_DRY = false;
 function earthColor(x, y, z, lat) {
-    const n = fbm(x * 2.1 + 5, y * 2.1, z * 2.1, 7, 5);
+    const n = fbm(x * 2.1 + 5, y * 2.1, z * 2.1, 7, 5); LAST_N = n; LAST_DRY = false;
     const ice = Math.abs(lat) > 1.22 - 0.08 * fbm(x * 6, y * 6, z * 6, 3, 2);
-    if (ice) return [232, 238, 244];
+    if (ice) { LAST_N = 0; return [232, 238, 244]; }
     if (n > 0.53) {
-      const m = fbm(x * 9, y * 9, z * 9, 11, 3), dry = Math.abs(lat) < 0.5 && m > 0.5;
+      const m = fbm(x * 9, y * 9, z * 9, 11, 3), dry = Math.abs(lat) < 0.5 && m > 0.5; LAST_DRY = dry;
       return dry ? [168 + 30 * m, 140 + 20 * m, 96] : [52 + 50 * m, 88 + 40 * m, 46 + 20 * m];
     }
     const deep = Math.min(1, (0.53 - n) * 5); return [10 + 20 * (1 - deep), 42 + 40 * (1 - deep), 92 + 50 * (1 - deep)];
 }
 function earthTexture() { return sphereTex(512, 256, earthColor); }
+function cityLight(x, y, z, lat, ix, iy) { // call right after earthColor for the same point; towns are single bright pixels
+  if (LAST_N <= 0.53) return 0; const coast = 1 - Math.min(1, (LAST_N - 0.53) / 0.12);
+  const region = vnoise(x * 22, y * 22, z * 22, 77) * 0.65 + vnoise(x * 70, y * 70, z * 70, 78) * 0.35;
+  const dens = Math.max(0, region - 0.5) * 2.4 * (0.25 + 0.75 * coast) * (LAST_DRY ? 0.3 : 1) * (Math.abs(lat) > 1.0 ? 0.2 : 1);
+  if (dens <= 0) return 0;
+  return hash(ix, iy, 3, 99) < dens * 0.7 ? 0.65 + 0.35 * hash(ix, iy, 4, 99) : Math.min(0.32, dens * 0.7);
+}
 function earthHiRes(mat) { // build a 2048×1024 texture a few rows at a time, then swap it in
   const w = 2048, h = 1024, c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); let y = 0;
-  const step = () => { const rows = 24, img = g.createImageData(w, rows), d = img.data;
+  const lc = document.createElement('canvas'); lc.width = w; lc.height = h; const lg = lc.getContext('2d');
+  const step = () => { const rows = 24, img = g.createImageData(w, rows), d = img.data, limg = lg.createImageData(w, rows), ld = limg.data;
     for (let r = 0; r < rows && y + r < h; r++) { const lat = Math.PI * (0.5 - (y + r + 0.5) / h), cl = Math.cos(lat), sl = Math.sin(lat);
-      for (let x = 0; x < w; x++) { const lon = 2 * Math.PI * (x + 0.5) / w, col = earthColor(cl * Math.cos(lon), sl, cl * Math.sin(lon), lat), o = (r * w + x) * 4; d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = 255; } }
-    g.putImageData(img, 0, y); y += rows;
-    if (y < h) setTimeout(step, 0); else { const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 8; mat.map.dispose(); mat.map = t; mat.needsUpdate = true; } };
+      for (let x = 0; x < w; x++) { const lon = 2 * Math.PI * (x + 0.5) / w, px = cl * Math.cos(lon), pz = cl * Math.sin(lon), col = earthColor(px, sl, pz, lat), L = cityLight(px, sl, pz, lat, x, y + r) * 255, o = (r * w + x) * 4; d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = 255; ld[o] = L; ld[o + 1] = L * 0.78; ld[o + 2] = L * 0.45; ld[o + 3] = 255; } }
+    g.putImageData(img, 0, y); lg.putImageData(limg, 0, y); y += rows;
+    if (y < h) setTimeout(step, 0); else { window.__earthHiRes = true; const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 8; mat.map.dispose(); mat.map = t;
+      const lt = new T.CanvasTexture(lc); lt.colorSpace = T.SRGBColorSpace; lt.generateMipmaps = false; lt.minFilter = T.LinearFilter; mat.emissiveMap = lt; mat.emissive.set(0xffffff); mat.emissiveIntensity = 2.2; mat.needsUpdate = true; } };
   setTimeout(step, 400);
 }
 function cloudTexture() {
@@ -320,7 +332,12 @@ scene.add(new T.AmbientLight(0x202530, 0.25));
 
 // Earth at real scale, 420 km below
 const RE = 6371e3, ALT = 420e3, EARTH_Y = -(RE + ALT);
-const earth = new T.Mesh(new T.SphereGeometry(RE, 128, 64), new T.MeshStandardMaterial({ map: earthTexture(), roughness: 0.92, metalness: 0 }));
+const earth = new T.Mesh(new T.SphereGeometry(RE, 128, 64), new T.MeshStandardMaterial({ map: earthTexture(), roughness: 0.92, metalness: 0, emissive: 0x000000 }));
+earth.material.onBeforeCompile = sh => { // city lights show only where it is night
+  sh.uniforms.sunDir = { value: SUN };
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWN;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvWN = normalize(mat3(modelMatrix) * objectNormal);');
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 sunDir; varying vec3 vWN;').replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= 1.0 - smoothstep(-0.18, 0.04, dot(normalize(vWN), sunDir));');
+};
 const orbitGroup = new T.Group(); orbitGroup.position.y = EARTH_Y; scene.add(orbitGroup); // turns once per orbit in the station's frame
 const earthTilt = new T.Group(); earthTilt.rotation.z = Math.PI / 2 - 0.6; orbitGroup.add(earthTilt); earthTilt.add(earth); // ground track near 34° latitude
 earthHiRes(earth.material);
@@ -365,8 +382,12 @@ function put(m, p, r) { if (p) m.position.copy(p); if (r) m.rotation.copy(r); re
 function add(mesh, parent) { mesh.castShadow = true; mesh.receiveShadow = true; (parent || station).add(mesh); return mesh; }
 function cylX(x0, x1, r, mat, seg) { const m = new T.Mesh(new T.CylinderGeometry(r, r, x1 - x0, seg || 40, 1), mat); m.rotation.z = Math.PI / 2; m.position.x = (x0 + x1) / 2; return add(m); }
 const _up = new T.Vector3(0, 1, 0);
-function rod(a, b, r, mat, parent) { const d = new T.Vector3().subVectors(b, a); const m = new T.Mesh(new T.CylinderGeometry(r, r, d.length(), 10, 1), mat); m.position.copy(a).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(_up, d.clone().normalize()); return add(m, parent); }
+function rod(a, b, r, mat, parent, seg) { const d = new T.Vector3().subVectors(b, a); const m = new T.Mesh(new T.CylinderGeometry(r, r, d.length(), seg || 10, 1), mat); m.position.copy(a).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(_up, d.clone().normalize()); return add(m, parent); }
 const radial = (r, a, x) => new T.Vector3(x, r * Math.cos(a), r * Math.sin(a));
+const SPOKE_D = 10; // pressurized shaft: elevator, stairs, power and air
+function collar(at, dir, r, len, mat, parent) { const m = new T.Mesh(new T.CylinderGeometry(r, r, len, 32, 1), mat); m.position.copy(at); m.quaternion.setFromUnitVectors(_up, dir); return add(m, parent); }
+M.spoke = M.hull.clone(); M.spoke.map = M.hull.map.clone(); M.spoke.map.repeat.set(2, 6); M.spoke.map.needsUpdate = true;
+function spokeGeom(a, u) { const ang = a.theta + u * SPAN / 2, xc = a.x + u * TWIST, hx = Math.max(-66, Math.min(66, xc * 0.5)); return { p0: radial(19, ang, hx), p1: radial(R_IN, ang, xc) }; }
 
 // spine: power plant + radiators → truss → storage → hub (gravity generator) → tube → operations ring → Government Core → shield
 put(new T.Mesh(new T.SphereGeometry(24, 48, 32), M.hullDark), new T.Vector3(-440, 0, 0));
@@ -429,11 +450,13 @@ function buildArm(a) {
   // spokes (paired tubes) with elevator cars
   a.cars = [];
   for (const u of [-0.55, 0.55]) {
-    const ang = a.theta + u * SPAN / 2, xc = a.x + u * TWIST, hx = Math.max(-66, Math.min(66, xc * 0.5));
-    for (const off of [-5, 5]) rod(radial(18, ang, hx + off), radial(R_IN, ang, xc + off), 2.2, M.truss, grp);
-    rod(radial(18, ang, hx), radial(R_IN, ang, xc), 3.4, M.hullDark, grp);
-    const car = new T.Mesh(new T.BoxGeometry(6, 9, 6), M.car); car.castShadow = true; grp.add(car);
-    a.cars.push({ car, from: radial(20, ang, hx), to: radial(R_IN - 2, ang, xc), ph: hash(u * 10 | 0, a.id.charCodeAt(0), 1, 2) * 6 });
+    const { p0, p1 } = spokeGeom(a, u), dir = new T.Vector3().subVectors(p1, p0), len = dir.length(); dir.normalize();
+    rod(p0, p1, SPOKE_D / 2, M.spoke, grp, 40);                                   // the shaft's hull
+    for (let s = 16; s < len - 10; s += 24) collar(p0.clone().addScaledVector(dir, s), dir, SPOKE_D / 2 + 0.9, 2.2, M.hullDark, grp); // stiffening rings
+    collar(p0.clone().addScaledVector(dir, 4), dir, 8, 8, M.foil, grp); collar(p1.clone().addScaledVector(dir, -4), dir, 8, 8, M.foil, grp); // docking collars, 16 m
+    for (const side of [-1, 1]) { const off = new T.Vector3(0, 0, 0).crossVectors(dir, new T.Vector3(1, 0, 0)).normalize().multiplyScalar(side * (SPOKE_D / 2 + 2.5)); rod(p0.clone().add(off), p1.clone().add(off), 0.7, M.truss, grp); } // utility rails
+    const car = new T.Mesh(new T.CylinderGeometry(SPOKE_D / 2 + 0.12, SPOKE_D / 2 + 0.12, 6, 32, 1, true), M.car); car.quaternion.setFromUnitVectors(_up, dir); grp.add(car); // the car's light seen through the window band
+    a.cars.push({ car, from: p0.clone().addScaledVector(dir, 12), to: p1.clone().addScaledVector(dir, -12), ph: hash(u * 10 | 0, a.id.charCodeAt(0), 1, 2) * 6 });
   }
   grp.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   station.add(grp); a.group = grp;
@@ -452,7 +475,7 @@ const CAM = { az: 0.95, el: 0.32, dist: 1500, target: new T.Vector3(-20, 0, 0) }
 const PRESETS = {
   overview: { az: 0.95, el: 0.32, dist: 1500, target: [-20, 0, 0] },
   spine: { az: 0.08, el: 0.12, dist: 1150, target: [-20, 0, 0] },
-  earth: { az: 0.9, el: 0.05, dist: 3800, target: [0, -40, 0] },
+  earth: { az: 0.9, el: 0.5, dist: 3200, target: [0, -260, 0] },
   arm: { az: 0.7, el: 0.2, dist: 360, target: [0, 0, 0], follow: true },
 };
 let goal = null;
@@ -497,7 +520,7 @@ function frame(now) {
   genRing.rotation.z += dt * 0.8;
   clouds.rotation.y += dt * S.speed * 2 * Math.PI / 400000;
   navs.forEach((n, i) => n.visible = ((now / 1000 + i * 0.5) % 1.6) < 0.25);
-  ARMS.forEach(a => a.cars.forEach(c => { const s = (Math.sin(now / 1000 * 0.25 + c.ph) + 1) / 2; c.car.position.lerpVectors(c.from, c.to, s); c.car.lookAt(station.localToWorld(v.set(0, 0, 0))); }));
+  ARMS.forEach(a => a.cars.forEach(c => { const s = (Math.sin(now / 1000 * 0.25 + c.ph) + 1) / 2; c.car.position.lerpVectors(c.from, c.to, s); }));
   if (goal) { const k = 0.06; CAM.az += (goal.az - CAM.az) * k; CAM.el += (goal.el - CAM.el) * k; CAM.dist += (goal.dist - CAM.dist) * k; CAM.target.lerp(goal.target, k); }
   else if (!ptrs.size) CAM.az += dt * 0.02;
   const dk = CAM.dist * Math.max(1, 1.3 / camera.aspect); // pull back on tall (phone) screens
