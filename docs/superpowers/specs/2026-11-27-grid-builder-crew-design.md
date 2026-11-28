@@ -158,8 +158,9 @@ A versioned set of JSON documents in the run repo, each with a schema version:
   seats, lights) by catalog kind and placement. Only parcels offered **ready-built** get one; a
   **build-yourself** parcel is delivered as an empty shell with its door.
 
-**v1 catalog.** Interior parts are drawn from a small closed list (corridor rib, vault rib, light
-panel, end wall, window, door, console pod, seat, light). Every kind has a function; decoration
+**v1 catalog.** Interior parts are drawn from a small closed list (corridor panel, round wall,
+window, door, compute column, ring desk, desk screen, wall instrument panel, seat, light ring,
+light). Every kind has a function; decoration
 with no job is not in the list (operator, 2026-11-27: "only actual part show"). This mirrors Noēsis's rule that kinds are closed and forms are open.
 
 ### 5.3 Checker rules (v1)
@@ -177,7 +178,7 @@ with no job is not in the list (operator, 2026-11-27: "only actual part show"). 
 - **Physics:** gravity source is `generator` (the declared Grid law) and spin-only gravity is
   computed and reported, not used; floors face away from the spine.
 - **Interiors:** only catalog kinds; everything fits inside the parcel volume and the deck height;
-  style rules (warm film style; no neon strips, glowing floor/door rings in Tron style, or
+  style rules (fundamental-science lab style; cyan only on instruments; no neon strips, glowing floor/door rings in Tron style, or
   line-grid floors; no film names, logos or stock-image text).
 - The checker's report lists every rule and its result for each landed part.
 
@@ -218,11 +219,15 @@ From the operator's decisions on 2026-11-27, encoded in the default Genesis brie
 - **Parcel:** one wing section × one deck; address `(wing, section, level)`.
 - **Outside look:** the wings carry a dense crust of city blocks with warm lit windows; small craft
   around the station.
-- **A Nous house is a Nous's chamber, not a human home:** an oval ribbed corridor from the spoke
-  elevator door, and one vaulted room with consoles (each with a seat for the Nous's human)
-  facing an arched window. No mind core, dais, niches or pilasters: only parts with a function.
-  **Interior style:** the style of the film *Passengers* (white ribs over warm light panels,
-  glossy warm floor, white furniture, warm white light). Style only. **No Tron-style neon inside.**
+- **A Nous house is a Nous's chamber, shared by the Nous and its human user (operator,
+  2026-11-27):** the interior exists for the human's eyes. An entry corridor from the spoke
+  elevator door; a round lab-like room with the **Nous's compute column** at the centre (the
+  hardware the Nous runs on), a **ring desk** with screens and seats for the human, instrument
+  panels on the walls, and a window. Only parts with a function. **Interior style: fundamental
+  science** (operator's chosen reference: a round engineering room) — silver-white panelled walls,
+  dark floor with concentric inlay, cool white recessed light rings, cyan light only on
+  instruments (column, desk edge, screens). Style only, nothing copied. **No Tron-style neon:**
+  no glowing floor or wall-base lines.
 - **Who builds what (operator, 2026-11-27):** the builder service's team builds the **structure**.
   Houses belong to **individual Nous**: some parcels are sold **ready-built** (the crew builds the
   chamber), others are sold empty to a Nous that wants to **build its own**. The sale itself
