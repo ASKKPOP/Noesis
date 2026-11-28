@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Noēsis — Genesis Grid Structure v0</title>
-<meta name="description" content="First visualization of the Genesis Grid as a spinning station: a central spine with the hub and spin drive, three long habitat arms held on spokes, and parcels as volumes inside the arms where Nous build their houses. Working draft under discussion.">
+<meta name="description" content="First visualization of the Genesis Grid as a spinning station: a central spine with the hub and spin drive, six habitat wings held on spokes, and parcels as volumes inside the arms where Nous build their houses. Working draft under discussion.">
 <style>
 :root{--bg:#05070d;--panel:#0c111d;--line:#1f2738;--ink:#e8ecf4;--muted:#8d96aa;--warm:#f2b866;--a:#6fc3dd;--ok:#7fcf9c;--warn:#e2b24c;color-scheme:dark}
 *{box-sizing:border-box}
@@ -56,11 +56,11 @@ button.home[aria-pressed="true"]{border-color:#f2b866;background:#3a2a12}
 <p class="meta">Noēsis · Grid structure · 2026-11-27 · <b>working draft v0 — under discussion with the operator</b></p>
 <h1>Genesis Grid — Structure v0 <span class="badge">draft</span></h1>
 <p class="ko">첫 Grid 시각화 — 중심 척추(허브·회전 구동부), 스포크에 매달린 3개의 긴 거주 팔, 팔 안의 부지에 Nous가 집을 짓는다</p>
-<p class="lede">The planner designs the whole structure and the project builds it: a central <b>spine</b> carrying the hub and spin drive, the power plant at one end and the Government Core at the other, and <b>three long habitat arms</b> held on spokes. Nous build their houses <i>inside</i> the arms. The station turns <b>once every 60 minutes</b>; that is far too slow to make weight, so <b>1 g comes from the gravity generator as a law of this Grid</b>. Down points away from the spine, so a floor is the side of an arm farthest from it. Counts are the live Genesis Grid’s: 1 core, 4 commons, 24 work, 24 home parcels.</p>
+<p class="lede">The planner designs the whole structure and the project builds it: a central <b>spine</b> carrying the hub and spin drive, the power plant at one end and the Government Core at the other, and <b>six habitat wings</b> in two tiers of three (the second tier turned 60°, so the wings interleave), one zone per wing held on spokes. Nous build their houses <i>inside</i> the arms. The station turns <b>once every 60 minutes</b>; that is far too slow to make weight, so <b>1 g comes from the gravity generator as a law of this Grid</b>. Down points away from the spine, so a floor is the side of an arm farthest from it. Counts are the live Genesis Grid’s: 1 core, 4 commons, 24 work, 24 home parcels.</p>
 
 <div class="layout">
   <div class="view">
-    <canvas id="cv" aria-label="Realistic 3D view of the Genesis station 420 km above Earth in sunlight: a long central spine with a power plant and radiators, hub with the gravity generator, operations ring and Government Core, and three curved habitat arms on spokes with lit windows"></canvas>
+    <canvas id="cv" aria-label="Realistic 3D view of the Genesis station 420 km above Earth in sunlight: a long central spine with a power plant and radiators, hub with the gravity generator, operations ring and Government Core, and six curved habitat wings on spokes in two tiers, with lit windows"></canvas>
     <div id="labels"></div>
     <div class="hud" id="hud"></div>
   </div>
@@ -71,7 +71,7 @@ button.home[aria-pressed="true"]{border-color:#f2b866;background:#3a2a12}
     <div class="group"><h3>Gravity source</h3><div class="row" id="gSrc"></div>
       <div id="rpmOut" style="margin-top:6px"></div><div id="comfort"></div></div>
     <div class="group"><h3>View</h3><div class="row" id="gView"></div></div>
-    <p class="meta">Drag to orbit (inside a house: drag to look around), scroll or pinch to zoom. Real scale: the station is about 870 m long, 420 km above Earth. It circles Earth every 92.8 minutes and spends about a third of each orbit in Earth’s shadow; it turns on its spine once every 60 minutes.</p>
+    <p class="meta">Drag to orbit (inside a house: drag to look around), scroll or pinch to zoom. Real scale: the station is about 1.2 km long, 420 km above Earth. It circles Earth every 92.8 minutes and spends about a third of each orbit in Earth’s shadow; it turns on its spine once every 60 minutes.</p>
   </div>
 </div>
 
@@ -114,7 +114,7 @@ button.home[aria-pressed="true"]{border-color:#f2b866;background:#3a2a12}
 <h3 style="margin-top:0">Parcel = one arm section × one deck (my decision, delegated)</h3>
 <ul>
 <li><b>Address</b> keeps the shape of D-NH-10: <code>(arm, section, level)</code>. The field today called <code>ring</code> would name the arm. <code>level</code> is the deck, counted from the floor side: deck 1 is outermost.</li>
-<li><b>Volume:</b> the section’s length along the arm × the arm’s width (40 m) × one deck (4.5 m). A home or work parcel is 17.9 m × 40 m × 4.5 m; a commons hall is 107.5 m long.</li>
+<li><b>Volume:</b> the section’s length along the arm × the arm’s width (40 m) × one deck (4.5 m). A home parcel is 35.8 m × 40 m × 4.5 m, a work parcel 53.8 m, a commons hall 107.5 m (each wing is 430 m long).</li>
 <li><b>The planner owns the shell:</b> floor, ceiling, walls between parcels, power and air. <b>The Nous owns everything inside:</b> its chamber — corridor, consoles and screens, its mind core, light. A Nous house is not a human home.</li>
 <li><b>Genesis opens deck 1 only.</b> Decks 2 and 3 exist but stay closed until the planner opens them; that is how the Grid grows without new arms.</li>
 <li><b>Every deck has the same 1 g</b> under the gravity generator (with spin gravity, upper decks would have been a little lighter).</li>
@@ -131,7 +131,7 @@ button.home[aria-pressed="true"]{border-color:#f2b866;background:#3a2a12}
 <ul>
 <li>The <b>planner</b> designs the Grid’s whole structure as infrastructure. The first planner is the operator; others may join as planners later.</li>
 <li>The <b>project builds the structure</b> at the start; Nous do not pay for it.</li>
-<li><b>Layout:</b> a central spine with three long habitat arms on spokes (the planner’s concept sketch). Our own design and names; no film ship is copied.</li>
+<li><b>Layout:</b> a central spine with six habitat wings on spokes, two tiers of three (the planner’s concept sketch, then “make 3 more wings”), one zone per wing. Our own design and names; no film ship is copied.</li>
 <li><b>The station turns once every 60 minutes.</b> The hub holds the <b>gravity generator</b>, a Grid rule: it gives 1 g in every arm, pointing away from the spine, so a floor is the side farthest from the spine.</li>
 <li>Nous <b>build their houses inside</b> the arms; houses have no spoke of their own. Nous travel by elevator through the spokes and the hub.</li>
 <li>From the film reference, <b>only the ideas</b>: spokes with elevators through a hub, warm interiors.</li>
@@ -143,7 +143,7 @@ button.home[aria-pressed="true"]{border-color:#f2b866;background:#3a2a12}
 <li><b>Physics gate:</b> a turn every 60 minutes gives almost no weight (0.00007 g), so the generator’s 1 g is not physics. It must be written down as the one declared exception the physics gate accepts (Nous otherwise never violate physical law).</li>
 <li>Why the station turns at all (a day/night cycle? station-keeping?) and whether gravity strength is ever changed.</li>
 <li>Arm length, radius, width and deck height are my proposal.</li>
-<li><b>Known risk — resemblance:</b> a spine with three long twisted arms on spokes is close to a well-known film ship’s silhouette. The operator chose this form (2026-11-27) over a hexagonal alternative; keep our own proportions, parts and names, and never use the film’s name, art or branding.</li>
+<li><b>Known risk — resemblance:</b> a spine with long twisted wings on spokes recalls a well-known film ship’s silhouette (less so with six wings in two tiers). The operator chose this form (2026-11-27) over a hexagonal alternative; keep our own proportions, parts and names, and never use the film’s name, art or branding.</li>
 <li><b>Rings become arms:</b> the live Grid’s parcels use <code>ring</code> 0–3. With arms at one distance, ring no longer means distance from the centre.</li>
 <li><b>D-NH-08</b> prices land by ring (closer to the core = dearer). With all arms at the same distance, that basis is gone; land value needs a new rule (nearness to a spoke or elevator, deck, arm).</li>
 <li><b>D-NH-10</b> says deeper levels are “closer to the gravity centre”. With spin, deeper (heavier) is <i>outward</i>. The level wording needs restating.</li>
@@ -154,7 +154,7 @@ button.home[aria-pressed="true"]{border-color:#f2b866;background:#3a2a12}
 </div>
 </div>
 
-<p class="meta" style="margin-top:26px">Sources: live Genesis parcel feed (api.noesiis.com, 2026-11-27: ring 0 ×1, ring 1 ×4, ring 2 ×24, ring 3 ×24; 0 Nous-built houses); <code>grid/src/civic/founding-law.ts</code>; D-NH-08, D-NH-10, D-V3-44 in <code>wiki/1-design/decisions.md</code>; the operator’s layout direction (central spine, three habitat arms on spokes). Rotation: one turn every 60 minutes (operator, 2026-11-27); spin gravity computed as ω²·r. All drawings and the 3D model are original; rendered with three.js r160 (MIT licence), embedded in this page. Earth’s surface is generated, not a map.</p>
+<p class="meta" style="margin-top:26px">Sources: live Genesis parcel feed (api.noesiis.com, 2026-11-27: ring 0 ×1, ring 1 ×4, ring 2 ×24, ring 3 ×24; 0 Nous-built houses); <code>grid/src/civic/founding-law.ts</code>; D-NH-08, D-NH-10, D-V3-44 in <code>wiki/1-design/decisions.md</code>; the operator’s layout direction (central spine, habitat wings on spokes; six wings). Rotation: one turn every 60 minutes (operator, 2026-11-27); spin gravity computed as ω²·r. All drawings and the 3D model are original; rendered with three.js r160 (MIT licence), embedded in this page. Earth’s surface is generated, not a map.</p>
 </div>
 
 <script type="module">
@@ -168,11 +168,14 @@ const t="160",e={LEFT:0,MIDDLE:1,RIGHT:2,ROTATE:0,DOLLY:1,PAN:2},n={ROTATE:0,PAN
 (function(){
 // ===================== Genesis structure v0 — realistic view (three.js r160, MIT) =====================
 const T = THREE;
-const G0 = 9.81, R = 224, WIDTH = 40, DECK = 4.5, DECKS = 3, SPAN = 110 * Math.PI / 180, TWIST = 120;
-const ARMS = [
-  { id: 'A', name: 'Arm A · homes', theta: 0, x: -110, zones: [['residential', 24, '#5a84c4']] },
-  { id: 'B', name: 'Arm B · work', theta: 2 * Math.PI / 3, x: 0, zones: [['business', 8, '#c2a878'], ['shopping', 8, '#3fa6bd'], ['manufacture', 8, '#9a5a44']] },
-  { id: 'C', name: 'Arm C · commons', theta: 4 * Math.PI / 3, x: 110, zones: [['infrastructure', 4, '#8a98ac']], built: true },
+const G0 = 9.81, R = 224, WIDTH = 40, DECK = 4.5, DECKS = 3, SPAN = 110 * Math.PI / 180, TWIST = 90;
+const ARMS = [ // six wings in two tiers of three; the second tier is turned 60° so the wings interleave
+  { id: 'A', name: 'Wing A · homes I', theta: 0, x: -230, zones: [['residential', 12, '#5a84c4']] },
+  { id: 'B', name: 'Wing B · business', theta: Math.PI / 3, x: 230, zones: [['business', 8, '#c2a878']] },
+  { id: 'C', name: 'Wing C · shopping', theta: 2 * Math.PI / 3, x: -230, zones: [['shopping', 8, '#3fa6bd']] },
+  { id: 'D', name: 'Wing D · homes II', theta: Math.PI, x: 230, zones: [['residential', 12, '#5a84c4']] },
+  { id: 'E', name: 'Wing E · manufacture', theta: 4 * Math.PI / 3, x: -230, zones: [['manufacture', 8, '#9a5a44']] },
+  { id: 'F', name: 'Wing F · commons', theta: 5 * Math.PI / 3, x: 230, zones: [['infrastructure', 4, '#8a98ac']], built: true },
 ];
 ARMS.forEach(a => { a.n = a.zones.reduce((s, z) => s + z[1], 0); });
 const ARC = R * SPAN;
@@ -328,8 +331,8 @@ const scene = new T.Scene(); scene.background = new T.Color(0x000000);
 const camera = new T.PerspectiveCamera(42, 1, 0.5, 2e9);
 
 const SUN0 = new T.Vector3(-0.55, 0.62, 0.56).normalize(), SUN = SUN0.clone(); const ORBIT_MIN = 92.8;
-const sun = new T.DirectionalLight(0xfff4e6, 3.4); sun.position.copy(SUN).multiplyScalar(1500); sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -650, right: 650, top: 650, bottom: -650, near: 10, far: 3500 }); sun.shadow.camera.updateProjectionMatrix(); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
+const sun = new T.DirectionalLight(0xfff4e6, 3.4); sun.position.copy(SUN).multiplyScalar(2200); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -780, right: 780, top: 780, bottom: -780, near: 10, far: 4500 }); sun.shadow.camera.updateProjectionMatrix(); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
 scene.add(sun, sun.target);
 const earthshine = new T.HemisphereLight(0x0a0c14, 0x2d5c96, 0.55); scene.add(earthshine); // dark sky above, blue Earthshine from below
 scene.add(new T.AmbientLight(0x202530, 0.25));
@@ -391,37 +394,37 @@ const radial = (r, a, x) => new T.Vector3(x, r * Math.cos(a), r * Math.sin(a));
 const SPOKE_D = 10; // pressurized shaft: elevator, stairs, power and air
 function collar(at, dir, r, len, mat, parent) { const m = new T.Mesh(new T.CylinderGeometry(r, r, len, 32, 1), mat); m.position.copy(at); m.quaternion.setFromUnitVectors(_up, dir); return add(m, parent); }
 M.spoke = M.hull.clone(); M.spoke.map = M.hull.map.clone(); M.spoke.map.repeat.set(2, 6); M.spoke.map.needsUpdate = true;
-function spokeGeom(a, u) { const ang = a.theta + u * SPAN / 2, xc = a.x + u * TWIST, hx = Math.max(-66, Math.min(66, xc * 0.5)); return { p0: radial(19, ang, hx), p1: radial(R_IN, ang, xc) }; }
+function spokeGeom(a, u) { const ang = a.theta + u * SPAN / 2, xc = a.x + u * TWIST, hx = Math.max(-250, Math.min(250, xc)); return { p0: radial(19, ang, hx), p1: radial(R_IN, ang, xc) }; }
 
 // spine: power plant + radiators → truss → storage → hub (gravity generator) → tube → operations ring → Government Core → shield
-put(new T.Mesh(new T.SphereGeometry(24, 48, 32), M.hullDark), new T.Vector3(-440, 0, 0));
-put(new T.Mesh(new T.TorusGeometry(30, 2.2, 16, 64), M.reactor), new T.Vector3(-440, 0, 0), new T.Euler(0, Math.PI / 2, 0));
-cylX(-470, -462, 10, M.hullDark);
+put(new T.Mesh(new T.SphereGeometry(26, 48, 32), M.hullDark), new T.Vector3(-620, 0, 0));
+put(new T.Mesh(new T.TorusGeometry(32, 2.2, 16, 64), M.reactor), new T.Vector3(-620, 0, 0), new T.Euler(0, Math.PI / 2, 0));
+cylX(-652, -644, 10, M.hullDark);
 for (let k = 0; k < 4; k++) { // radiator wings: heat from the power plant must be radiated away
   const a = k * Math.PI / 2 + Math.PI / 4, wing = new T.Mesh(new T.BoxGeometry(110, 0.6, 46), M.radiator);
-  const g = new T.Group(); g.rotation.x = a; wing.position.set(-360, 0, 34); g.add(wing); wing.castShadow = wing.receiveShadow = true; station.add(g);
-  rod(new T.Vector3(-360, 0, 0).applyAxisAngle(new T.Vector3(1, 0, 0), a), new T.Vector3(-360, 0, 12).applyAxisAngle(new T.Vector3(1, 0, 0), a), 1.2, M.truss);
+  const g = new T.Group(); g.rotation.x = a; wing.position.set(-520, 0, 34); g.add(wing); wing.castShadow = wing.receiveShadow = true; station.add(g);
+  rod(new T.Vector3(-520, 0, 0).applyAxisAngle(new T.Vector3(1, 0, 0), a), new T.Vector3(-520, 0, 12).applyAxisAngle(new T.Vector3(1, 0, 0), a), 1.2, M.truss);
 }
 { // open lattice truss between power plant and storage
-  const x0 = -418, x1 = -196, r = 7, legs = [0, 1, 2, 3].map(k => k * Math.PI / 2 + Math.PI / 4);
+  const x0 = -596, x1 = -330, r = 7, legs = [0, 1, 2, 3].map(k => k * Math.PI / 2 + Math.PI / 4);
   legs.forEach(a => rod(radial(r, a, x0), radial(r, a, x1), 0.9, M.truss));
   for (let x = x0; x < x1; x += 18) legs.forEach((a, k) => { const b = legs[(k + 1) % 4]; rod(radial(r, a, x), radial(r, b, x + 18), 0.5, M.truss); rod(radial(r, a, x), radial(r, b, x), 0.5, M.truss); });
 }
-cylX(-196, -112, 17, M.hull, 48);
+cylX(-330, -290, 17, M.hull, 48);
 for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; const m = new T.Mesh(new T.CylinderGeometry(6, 6, 50, 24), M.foil); m.rotation.z = Math.PI / 2; m.position.copy(radial(22, a, -154)); add(m); }
-cylX(-112, -74, 7, M.hullDark);
-cylX(-74, 74, 19, M.hull, 64);
+cylX(-290, -270, 7, M.hullDark);
+cylX(-270, 270, 19, M.hull, 64);
 const genRing = put(new T.Mesh(new T.TorusGeometry(27, 2.4, 16, 96), M.gen), null, new T.Euler(0, Math.PI / 2, 0));
-for (const x of [-60, 60]) put(new T.Mesh(new T.TorusGeometry(20, 1.6, 12, 64), M.hullDark), new T.Vector3(x, 0, 0), new T.Euler(0, Math.PI / 2, 0));
-cylX(74, 300, 6.5, M.hullDark);
-put(new T.Mesh(new T.TorusGeometry(48, 4.5, 20, 96), M.hull), new T.Vector3(250, 0, 0), new T.Euler(0, Math.PI / 2, 0));
-for (let k = 0; k < 4; k++) rod(radial(6, k * Math.PI / 2, 250), radial(44, k * Math.PI / 2, 250), 1.5, M.truss);
-cylX(300, 340, 15, M.foil, 48);
-put(new T.Mesh(new T.SphereGeometry(23, 48, 32), M.hull), new T.Vector3(360, 0, 0));
-put(new T.Mesh(new T.SphereGeometry(23.4, 48, 32, 0, Math.PI * 2, 0, Math.PI / 3), M.glass), new T.Vector3(360, 0, 0), new T.Euler(0, 0, -Math.PI / 2));
-put(new T.Mesh(new T.TorusGeometry(36, 6, 16, 96), M.hullDark), new T.Vector3(392, 0, 0), new T.Euler(0, Math.PI / 2, 0));
+for (const x of [-262, -100, 100, 262]) put(new T.Mesh(new T.TorusGeometry(20, 1.6, 12, 64), M.hullDark), new T.Vector3(x, 0, 0), new T.Euler(0, Math.PI / 2, 0));
+cylX(270, 470, 6.5, M.hullDark);
+put(new T.Mesh(new T.TorusGeometry(48, 4.5, 20, 96), M.hull), new T.Vector3(420, 0, 0), new T.Euler(0, Math.PI / 2, 0));
+for (let k = 0; k < 4; k++) rod(radial(6, k * Math.PI / 2, 420), radial(44, k * Math.PI / 2, 420), 1.5, M.truss);
+cylX(470, 510, 15, M.foil, 48);
+put(new T.Mesh(new T.SphereGeometry(23, 48, 32), M.hull), new T.Vector3(530, 0, 0));
+put(new T.Mesh(new T.SphereGeometry(23.4, 48, 32, 0, Math.PI * 2, 0, Math.PI / 3), M.glass), new T.Vector3(530, 0, 0), new T.Euler(0, 0, -Math.PI / 2));
+put(new T.Mesh(new T.TorusGeometry(36, 6, 16, 96), M.hullDark), new T.Vector3(562, 0, 0), new T.Euler(0, Math.PI / 2, 0));
 const navs = [];
-for (const [x, mat] of [[-472, M.navR], [400, M.navG]]) { const m = new T.Mesh(new T.SphereGeometry(1.8, 12, 8), mat); m.position.set(x, 0, 0); station.add(m); navs.push(m); }
+for (const [x, mat] of [[-654, M.navR], [570, M.navG]]) { const m = new T.Mesh(new T.SphereGeometry(1.8, 12, 8), mat); m.position.set(x, 0, 0); station.add(m); navs.push(m); }
 
 // habitat arms: curved shells twisted along the spine; floor = outer face
 const R_IN = R - DECK * DECKS - 2, R_OUT = R + 2, NSEG = 140;
@@ -470,7 +473,7 @@ const XAX = new T.Vector3(1, 0, 0);
 
 // ---------- the arms' outer skin: a dense crust of city blocks with warm lit windows ----------
 {
-  const PER_FACE = Math.min(window.innerWidth, window.innerHeight) < 700 ? 700 : 1400, // half the blocks on phone-size screens
+  const PER_FACE = Math.min(window.innerWidth, window.innerHeight) < 700 ? 400 : 800, // half the blocks on phone-size screens
         mDum = new T.Matrix4(), basis = new T.Matrix4(), q = new T.Quaternion(), sc = new T.Vector3(), col = new T.Color();
   const blocks = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), new T.MeshStandardMaterial({ color: 0xffffff, metalness: 0.55, roughness: 0.5 }), ARMS.length * PER_FACE * 2);
   const lits = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), new T.MeshBasicMaterial({ color: 0xffffff }), ARMS.length * PER_FACE * 2 * 4);
@@ -508,8 +511,8 @@ craft.frustumCulled = false; scene.add(craft);
 const CRAFT = Array.from({ length: 60 }, (_, i) => ({ r: 260 + 200 * hash(i, 1, 2, 50), x: -420 + 840 * hash(i, 2, 2, 50), w: (0.02 + 0.05 * hash(i, 3, 2, 50)) * (hash(i, 4, 2, 50) < 0.5 ? -1 : 1), ph: 6.283 * hash(i, 5, 2, 50), dx: (hash(i, 6, 2, 50) - 0.5) * 8 }));
 const _cm = new T.Matrix4(), _cq = new T.Quaternion(), _cs = new T.Vector3(1, 1, 1), _cp = new T.Vector3();
 function moveCraft(t) { CRAFT.forEach((c, i) => { const a = c.ph + c.w * t, x = c.x + c.dx * Math.sin(t * 0.05 + i); _cp.set(x, c.r * Math.cos(a), c.r * Math.sin(a)); _cq.setFromAxisAngle(XAX, a + (c.w > 0 ? Math.PI / 2 : -Math.PI / 2)); _cm.compose(_cp, _cq, _cs); craft.setMatrixAt(i, _cm); }); craft.instanceMatrix.needsUpdate = true; }
-// ---------- inside a Nous house: a Nous's chamber in Arm A, parcel 9, deck 1 (warm style) ----------
-const HOME_PARCEL = 8;
+// ---------- inside a Nous house: a Nous's chamber in Wing A, parcel 6, deck 1 (warm style) ----------
+const HOME_PARCEL = 5;
 const home = { active: false, group: new T.Group(), yaw: 0, pitch: -0.04, lights: [], holo: null };
 function screenTex(seed, w, h) { // warm amber console screen
   const c = document.createElement('canvas'); c.width = w || 512; c.height = h || 256; const g = c.getContext('2d'), W = c.width, H = c.height;
@@ -622,20 +625,20 @@ function relight() { ARMS.forEach(a => { const t = windowTexture(a, (home.active
 
 // ---------- labels ----------
 const labelBox = document.getElementById('labels');
-const LBL = [['power plant + radiators', new T.Vector3(-440, 40, 0)], ['hub · gravity generator', new T.Vector3(0, 34, 0)], ['operations ring', new T.Vector3(250, 58, 0)], ['Government Core', new T.Vector3(362, 32, 0)]]
+const LBL = [['power plant + radiators', new T.Vector3(-620, 40, 0)], ['hub · gravity generator', new T.Vector3(0, 34, 0)], ['operations ring', new T.Vector3(420, 58, 0)], ['Government Core', new T.Vector3(532, 32, 0)]]
   .concat(ARMS.map(a => [a.name, radial(R + 30, a.theta, a.x)]))
   .map(([t, p]) => { const d = document.createElement('div'); d.className = 'lbl'; d.textContent = t; labelBox.appendChild(d); return { d, p }; });
 
 // ---------- camera control (orbit) ----------
 const CAM = { az: 0.95, el: 0.32, dist: 1500, target: new T.Vector3(-20, 0, 0) };
 const PRESETS = {
-  overview: { az: 0.95, el: 0.32, dist: 1500, target: [-20, 0, 0] },
-  spine: { az: 0.08, el: 0.12, dist: 1150, target: [-20, 0, 0] },
-  earth: { az: 0.9, el: 0.5, dist: 3200, target: [0, -260, 0] },
-  arm: { az: 0.7, el: 0.2, dist: 360, target: [0, 0, 0], follow: true },
+  overview: { az: 0.95, el: 0.32, dist: 2100, target: [-20, 0, 0] },
+  spine: { az: 0.08, el: 0.12, dist: 1700, target: [-20, 0, 0] },
+  earth: { az: 0.9, el: 0.5, dist: 4200, target: [0, -300, 0] },
+  arm: { az: 0.7, el: 0.2, dist: 400, target: [0, 0, 0], follow: true },
 };
 let goal = null;
-let follow = false; const ARM_A_CENTER = radial(R - 8, 0, -110);
+let follow = false; const ARM_A_CENTER = radial(R - 8, 0, ARMS[0].x);
 function setPreset(k) {
   home.active = k === 'home' || k === 'chamber'; home.group.visible = home.active; ARMS[0].sidePlus.visible = !home.active; labelBox.hidden = home.active || !S.labels;
   home.lights.forEach(L => L.intensity = home.active ? L.userData.i : 0); relight();
@@ -661,7 +664,7 @@ function btnGroup(id, items) {
 }
 btnGroup('gShow', [{ t: 'As today', on: () => !S.houses, go: () => { S.houses = false; relight(); } }, { t: 'Imagined: houses built', on: () => S.houses, go: () => { S.houses = true; relight(); } }]);
 let cam = 'overview';
-btnGroup('gArm', [['overview', 'Overview'], ['spine', 'Along the spine'], ['earth', 'With Earth'], ['arm', 'Close to Arm A'], ['home', 'Inside a Nous house'], ['chamber', 'Nous chamber']].map(([k, t]) => ({ t, cls: (k === 'home' || k === 'chamber') ? 'home' : '', on: () => cam === k, go: () => { cam = k; setPreset(k); } })));
+btnGroup('gArm', [['overview', 'Overview'], ['spine', 'Along the spine'], ['earth', 'With Earth'], ['arm', 'Close to Wing A'], ['home', 'Inside a Nous house'], ['chamber', 'Nous chamber']].map(([k, t]) => ({ t, cls: (k === 'home' || k === 'chamber') ? 'home' : '', on: () => cam === k, go: () => { cam = k; setPreset(k); } })));
 btnGroup('gSrc', [{ t: 'Generator · 1 g', on: () => S.gen, go: () => { S.gen = true; table(); xsec(); } }, { t: 'Spin only', on: () => !S.gen, go: () => { S.gen = false; table(); xsec(); } }]);
 btnGroup('gView', [{ t: 'Labels', on: () => S.labels, go: () => { S.labels = !S.labels; labelBox.hidden = !S.labels || home.active; } }]);
 btnGroup('gTime', [[1, 'Real time'], [60, '60× (1 min / turn)'], [600, '600×']].map(([v, t]) => ({ t, on: () => S.speed === v, go: () => { S.speed = v; } })));
@@ -674,7 +677,7 @@ function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000); last = now; simT += dt * S.speed;
   station.rotation.x = omega() * simT;
   const orb = 2 * Math.PI * simT / (ORBIT_MIN * 60); orbitGroup.rotation.z = orb; SUN.copy(SUN0).applyAxisAngle(ZAX, orb);
-  sun.position.copy(SUN).multiplyScalar(1500); sunSprite.position.copy(SUN).multiplyScalar(6e8); atmo.material.uniforms.sunDir.value.copy(SUN);
+  sun.position.copy(SUN).multiplyScalar(2200); sunSprite.position.copy(SUN).multiplyScalar(6e8); atmo.material.uniforms.sunDir.value.copy(SUN);
   const cs = EC.dot(SUN), dd = Math.sqrt(Math.max(0, EC.lengthSq() - cs * cs)); const lit = cs <= 0 ? 1 : Math.min(1, Math.max(0, (dd - RE) / 60e3 + 0.5));
   sun.intensity = 3.4 * lit; sunSprite.visible = lit > 0.02; earthshine.intensity = 0.08 + 0.5 * Math.max(0, Math.min(1, SUN.y * 1.5 + 0.4)); inShadow = lit < 0.5;
   if (follow) { const t = station.localToWorld(v.copy(ARM_A_CENTER)); (goal ? goal.target : CAM.target).copy(t); }
@@ -706,7 +709,7 @@ function frame(now) {
   const xc = document.getElementById('xcar'); if (xc) { const a = XS0 + 22, L = (R - DECK * DECKS) * XSC - 22; xc.setAttribute('x', a + ((now / 35) % L) - 6); }
   const n = S.houses ? ARMS.filter(a => !a.built).reduce((s, a) => { let c = 0; for (let p = 0; p < a.n; p++) if (hash(p, a.id.charCodeAt(0), 9, 1) < 0.6) c++; return s + c; }, 0) : 0;
   const turn = ((omega() * simT) / (2 * Math.PI)) % 1;
-  document.getElementById('hud').innerHTML = home.active ? '<b>Inside a Nous house</b> · Arm A, parcel ' + (HOME_PARCEL + 1) + ', deck 1 · a Nous’s chamber, imagined: a corridor of light arches, a console ring and the Nous’s mind core under a ribbed ceiling of warm light · floor faces away from the spine · ' + (inShadow ? '<b>in Earth’s shadow</b>' : 'in sunlight') + ' · drag to look around' : '<b>Genesis</b> · 420 km above Earth · 53 parcels · <b>' + n + '</b> Nous houses ' + (S.houses ? '(imagined)' : '(as today)') + ' · ' + (inShadow ? '<b>in Earth’s shadow</b>' : 'in sunlight') + ' · orbit ' + ORBIT_MIN + ' min · turn ' + (turn * 100).toFixed(0) + '% of 60 min · ' + (S.speed === 1 ? 'real time' : S.speed + '× speed') + ' · arms ' + gTxt(R);
+  document.getElementById('hud').innerHTML = home.active ? '<b>Inside a Nous house</b> · Wing A, parcel ' + (HOME_PARCEL + 1) + ', deck 1 · a Nous’s chamber, imagined: a corridor of light arches, a console ring and the Nous’s mind core under a ribbed ceiling of warm light · floor faces away from the spine · ' + (inShadow ? '<b>in Earth’s shadow</b>' : 'in sunlight') + ' · drag to look around' : '<b>Genesis</b> · 420 km above Earth · 53 parcels · <b>' + n + '</b> Nous houses ' + (S.houses ? '(imagined)' : '(as today)') + ' · ' + (inShadow ? '<b>in Earth’s shadow</b>' : 'in sunlight') + ' · orbit ' + ORBIT_MIN + ' min · turn ' + (turn * 100).toFixed(0) + '% of 60 min · ' + (S.speed === 1 ? 'real time' : S.speed + '× speed') + ' · arms ' + gTxt(R);
   requestAnimationFrame(frame);
 }
 table(); xsec(); requestAnimationFrame(frame);
