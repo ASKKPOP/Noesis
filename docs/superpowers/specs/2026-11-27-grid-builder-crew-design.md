@@ -178,7 +178,7 @@ with no job is not in the list (operator, 2026-11-27: "only actual part show"). 
 - **Physics:** gravity source is `generator` (the declared Grid law) and spin-only gravity is
   computed and reported, not used; floors face away from the spine.
 - **Interiors:** only catalog kinds; everything fits inside the parcel volume and the deck height;
-  style rules (fundamental-science lab style; cyan only on instruments; no neon strips, glowing floor/door rings in Tron style, or
+  style rules (fundamental-science lab style; cyan only on instruments and the floor rings around them; no neon strips, glowing floor/door rings in Tron style, or
   line-grid floors; no film names, logos or stock-image text).
 - The checker's report lists every rule and its result for each landed part.
 
@@ -224,10 +224,12 @@ From the operator's decisions on 2026-11-27, encoded in the default Genesis brie
   elevator door; a round lab-like room with the **Nous's compute column** at the centre (the
   hardware the Nous runs on), a **ring desk** with screens and seats for the human, instrument
   panels on the walls, and a window. Only parts with a function. **Interior style: fundamental
-  science** (operator's chosen reference: a round engineering room) — silver-white panelled walls,
-  dark floor with concentric inlay, cool white recessed light rings, cyan light only on
-  instruments (column, desk edge, screens). Style only, nothing copied. **No Tron-style neon:**
-  no glowing floor or wall-base lines.
+  science** (operator's chosen reference: a round engineering room, "more similar"): gunmetal and
+  silver panelled walls with two rows of instrument screens all round, a tiered ceiling of
+  overhanging rings with white light strips, a dark glossy floor, a bright cyan core column with
+  glowing bands, a glowing ring desk, and cyan rings on the floor **only around the column and
+  desk**. Style only, nothing copied. Cyan anywhere else (corridor, wall bases, open floor) is
+  still refused.
 - **Who builds what (operator, 2026-11-27):** the builder service's team builds the **structure**.
   Houses belong to **individual Nous**: some parcels are sold **ready-built** (the crew builds the
   chamber), others are sold empty to a Nous that wants to **build its own**. The sale itself

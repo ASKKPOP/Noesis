@@ -24,7 +24,7 @@
 - Multi-Grid (operator 2026-11-27): the team initialises the structure of **every** Grid. Grids live in `crew.grids`; each has its own skeleton + pinned counts. `referenceFor(grid)` returns the skeleton from the Grid's brief (`brief.skeleton`), with `genesisReference()` as the built-in default; the checker reads counts from that, never from Genesis constants. Acceptance adds a second small Grid (2 wings, structure only) created from a brief.
 - Interiors the crew builds are starters; the owning Nous may rebuild them (no lock, no crew ownership).
 - v1 crew freedom: **details only**. The skeleton is seeded and fixed; the crew writes the chamber interiors of the **ready-built** home parcels (Genesis default: Wing A's 12) and the exterior detail; **build-yourself** parcels (Wing D's 12) stay empty shells with a door.
-- Interiors: shared by the Nous and its human; fundamental-science lab style (silver-white panels, dark floor with concentric inlay, cool white light rings, cyan only on instruments); only parts with a function; no glowing floor/wall-base lines. **No Tron-style neon**, no film names, logos or stock-image text.
+- Interiors: shared by the Nous and its human; fundamental-science lab style after the operator's round engineering-room reference (gunmetal/silver walls with screen rows, tiered ring ceiling with white strips, dark glossy floor, bright cyan core column, glowing ring desk, cyan floor rings only around column and desk); only parts with a function. **No Tron-style neon**, no film names, logos or stock-image text.
 
 ## Review Focus
 
@@ -153,7 +153,7 @@ test('InteriorDoc rejects an unknown kind', () => {
   - two `seat`s overlapping (axis-aligned boxes after `rotY`) → `interior.overlap` fails;
   - an interior without `door`, `window` or `compute_column` → `interior.required` fails;
   - an interior file for a `build_yourself` parcel → `interior.offer` fails;
-  - a `light_ring` placed on the floor (`y < 0.1`) → `style.no_floor_glow` fails; a `light_ring` with `color: '#3aa8ff'` → `style.palette` fails (blue is not in `LAB_PALETTE`; cyan is allowed only on instruments);
+  - a `light_ring` on the floor (`y < 0.1`) more than 5 m from the `compute_column` → `style.no_floor_glow` fails (floor rings within 5 m pass); a `light_ring` with `color: '#3aa8ff'` → `style.palette` fails (blue is not in `LAB_PALETTE`; cyan is allowed only on instruments);
   - `label: 'SPACE-CORP 21'` → `style.text` fails;
   - an exterior block with `H: 20` → `exterior.bounds` fails (max 14);
   - a 300 KB file → `file.size` fails (limit 256 KB).
