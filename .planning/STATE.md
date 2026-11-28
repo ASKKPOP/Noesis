@@ -1049,7 +1049,7 @@ Every task is verified by **TLA+ (TLC), Lean 4, and property-based tests with ge
 `verification/` (TLA+ specs, Lean project, `PROPERTIES.md` registry, `run.sh`), gate `scripts/check-verification.mjs`,
 workflow `verification.yml`. Verified so far: vector clocks (`P-VCLOCK-01…08`), hybrid clocks and knowledge-card merge
 (`P-HLC-01…05`, `P-CARD-01…08`), the social cycle's trusted peers
-(`P-SOCIAL-01…04`), direct-message delivery (`P-DM-01…06`). All other existing code is unverified by this rule.
+(`P-SOCIAL-01…04`), direct-message delivery (`P-DM-01…06`), skill-teacher trust (`P-SKILLTRUST-01…03`). All other existing code is unverified by this rule.
 
 ### Invariant — a Work Card's wording never enters the audit chain; the builder is always a Nous; stages 5–9 are Nous-only (2026-11-25, D-WORK-03/06/08)
 `work.stage_changed` carries the work id, two stage names, the tick, a hashed actor and the sha256 of the stored card.

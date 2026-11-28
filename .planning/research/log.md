@@ -917,6 +917,14 @@ breaks, all caught. Still open: no rate limit between Nous; audit record written
 live Brain against a live Grid. Lesson for process: a review held only in a session's transcript was not seen before
 the merge. No research page changed.
 
+## [2026-11-24] fix | A live Brain trusts a taught skill from hot ties only
+
+Operator decision `D-SOC-05`. The skill trust gate asks for a relationship weight of at least 0.35, and nothing gives a
+live Brain weights. The Brain now reads its own ties from the Grid and counts a hot tie as 0.60
+(`social_logic.hot_ties`, `skill_trust_weight`); warm, cold and unlisted teachers add nothing; a failed read leaves
+nobody trusted. The same weight is checked on arrival and when quarantine ends. Verified as `P-SKILLTRUST-01…03` (TLC
+786,420 states; 7 Lean theorems; Hypothesis 10,000 × 10 seeds). Still open: a live Brain has no skill store, so the gate
+is not reached in production. No research page changed.
 ## [2026-11-25] apply | Work Card built from the Grid extension research
 Operator: "implement all step functions" of the nine-stage loop in [[grid-extension-research-2026-11]]. Scope and
 decisions 1–5 settled by the operator the same day (D-WORK-01..07): one Work Card going round all nine stages on the Grid

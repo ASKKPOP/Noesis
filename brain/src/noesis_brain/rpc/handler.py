@@ -59,7 +59,7 @@ from noesis_brain.prompts.property_decision import (
     parse_property_decision,
 )
 from noesis_brain import property_logic
-from noesis_brain.social_logic import trusted_peers
+from noesis_brain.social_logic import hot_ties, skill_trust_weight, trusted_peers
 from noesis_brain.peer_inbox import (
     message_id as peer_message_id, parse_peer_message, parse_system_notice,
 )
@@ -189,6 +189,8 @@ class BrainHandler:
         self._last_social_tick = -10_000
         self._last_conversation_tick = -10_000
         self._last_peer_inbox_tick = -10_000
+        self._hot_ties: frozenset[str] = frozenset()
+        self._last_hot_ties_tick = -10_000
         self._last_work_tick = -10_000
         self._work_cycle: Any = None
         self._governance_state = GovernanceState()
@@ -258,7 +260,7 @@ class BrainHandler:
                 self._cached_peer_weights: dict[str, float] = {}
                 self._peer_filter: _PeerSkillFilter | None = _PeerSkillFilter(
                     skill_store=_skill_store,
-                    relationship_weight_fn=lambda did: self._cached_peer_weights.get(did, 0.0),
+                    relationship_weight_fn=self._skill_trust_weight,
                 )
                 self._quarantine_store: _QuarantineStore | None = _QuarantineStore(
                     self.memory._conn
@@ -1674,6 +1676,81 @@ class BrainHandler:
     _PEER_INBOX_COOLDOWN_TICKS = 1
     _PEER_INBOX_PER_CYCLE = 10
 
+    def _sweep_quarantine(self, params: dict[str, Any]) -> list[dict[str, Any]]:
+        """Promote or evict the quarantined skills that are due at this tick. Trust
+        is checked again here, with the same weight as on arrival (P-SKILLTRUST-03)."""
+        actions: list[dict[str, Any]] = []
+        # Update cached trust weights from relationship_context (Pitfall 2 solution).
+        if self._quarantine_store is not None and self._peer_filter is not None:
+            rel_ctx = params.get("relationship_context", [])
+            if isinstance(rel_ctx, list):
+                for edge in rel_ctx:
+                    if isinstance(edge, dict) and "did" in edge and "weight" in edge:
+                        try:
+                            self._cached_peer_weights[edge["did"]] = float(edge["weight"])
+                        except (TypeError, ValueError):
+                            pass
+            _sweep_tick = int(params.get("tick", 0) or 0)
+            sweep_results = self._quarantine_store.sweep(
+                current_tick=_sweep_tick,
+                trust_fn=self._skill_trust_weight,
+            )
+            for result in sweep_results:
+                if result.promoted:
+                    if result.source == "observed":
+                        # OL-path promotion: emit SKILL_INFERRED (SKILL-03)
+                        # source_event_hash stored in payload_json by observational.py
+                        import json as _json
+                        try:
+                            payload_data = _json.loads(result.payload_json)
+                            source_event_hash = payload_data.get("source_event_hash", result.skill_hash)
+                        except (_json.JSONDecodeError, ValueError):
+                            source_event_hash = result.skill_hash
+                        actions.append(Action(
+                            action_type=ActionType.SKILL_INFERRED,
+                            metadata={
+                                "skill_hash": result.skill_hash,
+                                "source_event_hash": source_event_hash,
+                            },
+                        ).to_dict())
+                    else:
+                        # Peer-path promotion: emit SKILL_TAUGHT (unchanged)
+                        actions.append(Action(
+                            action_type=ActionType.SKILL_TAUGHT,
+                            metadata={
+                                "skill_hash": result.skill_hash,
+                                "teacher_did": result.source_did,
+                                "parent_hash": result.parent_hash,
+                            },
+                        ).to_dict())
+                else:
+                    actions.append(Action(
+                        action_type=ActionType.SKILL_REJECTED,
+                        metadata={"rejection_reason": "low_trust"},
+                    ).to_dict())
+        return actions
+
+    _HOT_TIES_REFRESH_TICKS = 60
+
+    def _skill_trust_weight(self, did: str) -> float:
+        """The weight the skill gates hold a teacher to (P-SKILLTRUST-01)."""
+        return skill_trust_weight(self._cached_peer_weights, self._hot_ties, did)
+
+    async def _refresh_hot_ties(self, tick: int) -> None:
+        """Read this Nous's own ties from the Grid and keep the hot ones. Nothing
+        pushes relationship weights to a live-wired mind, so this is how it knows
+        whom to trust with a taught skill. A read that fails leaves nobody
+        trusted — the earlier answer is not kept (P-SKILLTRUST-02)."""
+        self._last_hot_ties_tick = tick
+        ties: Any = []
+        fetch_ties = getattr(self._grid_wire_client, "fetch_relationships", None)
+        if fetch_ties is not None:
+            try:
+                ties = await fetch_ties(self.did)
+            except Exception:
+                ties = []
+        self._hot_ties = hot_ties(ties, self.did)
+
     def _should_run_peer_inbox_cycle(self, tick: int) -> bool:
         """Live-wired minds only. No model call is involved, so it runs awake or
         resting: one cheap GET per tick."""
@@ -1703,6 +1780,15 @@ class BrainHandler:
             rows = await fetch(self._PEER_INBOX_PER_CYCLE)
             if not isinstance(rows, list):
                 return
+            # The hot ties are read again before a taught skill is handed over,
+            # before the tick a quarantined skill is due (the sweep runs at the
+            # start of the next tick), and at least every 60 ticks.
+            if self._peer_filter is not None and (
+                rows
+                or (tick - self._last_hot_ties_tick) >= self._HOT_TIES_REFRESH_TICKS
+                or (self._quarantine_store is not None and self._quarantine_store.due_by(tick + 1))
+            ):
+                await self._refresh_hot_ties(tick)
             for row in rows[: self._PEER_INBOX_PER_CYCLE]:
                 mid = peer_message_id(row)
                 if mid is None:
@@ -2038,54 +2124,7 @@ class BrainHandler:
         actions: list[dict[str, Any]] = []
 
         # Phase 18 SKILL-01: quarantine sweep — synchronous, runs before OL dispatch.
-        # Update cached trust weights from relationship_context (Pitfall 2 solution).
-        if self._quarantine_store is not None and self._peer_filter is not None:
-            rel_ctx = params.get("relationship_context", [])
-            if isinstance(rel_ctx, list):
-                for edge in rel_ctx:
-                    if isinstance(edge, dict) and "did" in edge and "weight" in edge:
-                        try:
-                            self._cached_peer_weights[edge["did"]] = float(edge["weight"])
-                        except (TypeError, ValueError):
-                            pass
-            _sweep_tick = int(params.get("tick", 0) or 0)
-            sweep_results = self._quarantine_store.sweep(
-                current_tick=_sweep_tick,
-                trust_fn=lambda did: self._cached_peer_weights.get(did, 0.0),
-            )
-            for result in sweep_results:
-                if result.promoted:
-                    if result.source == "observed":
-                        # OL-path promotion: emit SKILL_INFERRED (SKILL-03)
-                        # source_event_hash stored in payload_json by observational.py
-                        import json as _json
-                        try:
-                            payload_data = _json.loads(result.payload_json)
-                            source_event_hash = payload_data.get("source_event_hash", result.skill_hash)
-                        except (_json.JSONDecodeError, ValueError):
-                            source_event_hash = result.skill_hash
-                        actions.append(Action(
-                            action_type=ActionType.SKILL_INFERRED,
-                            metadata={
-                                "skill_hash": result.skill_hash,
-                                "source_event_hash": source_event_hash,
-                            },
-                        ).to_dict())
-                    else:
-                        # Peer-path promotion: emit SKILL_TAUGHT (unchanged)
-                        actions.append(Action(
-                            action_type=ActionType.SKILL_TAUGHT,
-                            metadata={
-                                "skill_hash": result.skill_hash,
-                                "teacher_did": result.source_did,
-                                "parent_hash": result.parent_hash,
-                            },
-                        ).to_dict())
-                else:
-                    actions.append(Action(
-                        action_type=ActionType.SKILL_REJECTED,
-                        metadata={"rejection_reason": "low_trust"},
-                    ).to_dict())
+        actions.extend(self._sweep_quarantine(params))
 
         # Phase 16 D-16-07: Drain pending SLEEP_COMPLETED from previous async run_sleep task.
         if self._pending_sleep_completed is not None:

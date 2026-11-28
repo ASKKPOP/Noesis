@@ -53,6 +53,9 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
 | P-NOUSWORK-01 | The step a Nous's Brain picks on a Work is its own: answer, build, test, deploy and notice only on a Work it builds, verify only on a Work it does not build, and nothing while a Work is being defined or planned, is finished, or its card is not well-formed. | N/A (V-9.2) pure function, no state between calls | verification/lean/Verification/NousWork.lean | brain/test/test_work_properties.py |
 | P-NOUSWORK-02 | Whatever the model says, what the Brain sends for a step is well-formed for its route — the right fields and types, each text of 1 to its limit in characters, a reason with every verdict and every refusal — or nothing is sent; a step the Nous says it could not do is never marked done. | N/A (V-9.2) pure function, no state between calls | verification/lean/Verification/NousWork.lean | brain/test/test_work_properties.py |
 | P-NOUSWORK-03 | In one cycle a Brain sends at most one write per Work, for the step that is its own on the card it read and naming that card's version; a write the Grid applies was on the version read, and a refused one changes nothing. | verification/tla/Work.tla | verification/lean/Verification/NousWork.lean | brain/test/test_work_properties.py |
+| P-SKILLTRUST-01 | A Brain trusts a peer to teach it a skill only if it holds a relationship weight of at least 0.35 for that peer, or the Grid's latest answer lists that peer as a hot tie: never a warm, cold or unlisted peer, never the mind itself, never on a weight that is not a finite number. | verification/tla/SkillTrust.tla | verification/lean/Verification/SkillTrust.lean | brain/test/test_skill_trust_properties.py |
+| P-SKILLTRUST-02 | A ties read that fails, or answers with something that is not a list of ties, leaves nobody trusted as a hot tie; the earlier answer is not kept. | verification/tla/SkillTrust.tla | verification/lean/Verification/SkillTrust.lean | brain/test/test_skill_trust_properties.py |
+| P-SKILLTRUST-03 | A taught skill is quarantined only if its teacher was trusted when it arrived, and joins the skills only if the teacher is trusted again when the quarantine ends; otherwise it is thrown away. | verification/tla/SkillTrust.tla | verification/lean/Verification/SkillTrust.lean | brain/test/test_skill_trust_properties.py |
 
 ## Stated limits
 
@@ -172,3 +175,14 @@ Run the model legs with `./verification/run.sh`; the property tests run in each 
     the Brain. A Work left alone after a failed step is tried again after 120 ticks; nothing promises it finishes.
   - In Lean a text is its length after trimming; `parse_test`, `parse_deploy` and `parse_notice` are checked by the
     property tests only.
+- **P-SKILLTRUST-\*** are about the Brain's last read of its ties, not the tie at that instant. The Brain reads its ties
+  before it handles a taught skill, in the tick before a quarantined skill is due, and at least every 60 ticks. A tie
+  can cool after the read and before the sweep (one tick apart when the Brain keeps up), and the skill still joins.
+  A hot tie is taken from the Grid's public answer as given: the Brain does not check that the answer is true.
+- **P-SKILLTRUST-\*** change nothing while a live Brain has no skill store (the entry point never passes
+  `hypnos_db_dir`): the gate is then never reached and a taught skill is dropped. The tests build the store themselves.
+- The flood cap (3 skills per teacher) and the injection scan are older gates and are not registered properties; the
+  stateful property test models the cap so that its expectations are exact.
+- TLA+ bounds for `SkillTrust`: 2 peers, 3 taught skills, no held weights (the live-wired case). Held weights are in
+  Lean and the property tests. The Lean theorems have no bound and use whole hundredths for weights; they also show
+  why the rule is hot and not warm (`hot_bucket_reaches_threshold`, `warm_bucket_can_miss_threshold`).
