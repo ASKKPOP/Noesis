@@ -21,6 +21,12 @@ that decides what is correct, and monitors at the edges.
 - **What the crew delivers:** a **Grid model as data** — every structural part, parcel and Nous
   chamber as versioned, checked records — plus **3D pages generated from that model**. The model
   can later be imported into Noēsis as the Grid's real structure.
+- **Every Grid, not only Genesis (operator, 2026-11-27):** the team builds and initialises the
+  structure of **every Grid** (multi-Grid). Each Grid has its own brief, skeleton, pinned counts,
+  model repo and checker config; Genesis is the first and the v1 acceptance case.
+- **Nous rebuild their houses (operator, 2026-11-27):** whatever chamber the crew fits out is a
+  starting point. The Nous that owns the parcel may rebuild it entirely; the crew never owns or
+  locks an interior.
 - **Runs in parallel** with Noēsis/noesiis development, which continues in other sessions.
 
 ## 2. Goals, non-goals, anti-goals
@@ -30,6 +36,9 @@ that decides what is correct, and monitors at the edges.
 2. The planner can watch a run live, optionally talk to the lead, and review the result: a
    generated 3D page plus a checker report.
 3. Every agent action is recorded; every run has a hard budget and a kill switch.
+3a. The service holds **many Grids**: a planner can create a new Grid with its own skeleton and
+   counts in its brief, and run a crew to initialise its structure. v1 proves it on Genesis plus
+   one small second Grid created from a brief (structure only, no interiors).
 4. The v1 acceptance run, from the default Genesis brief, lands a model whose skeleton matches the
    reference (section 6) within tolerance and whose ready-built home chambers (12), empty build-yourself shells (12) and outside detail pass every
    checker rule, within the run budget.
@@ -217,7 +226,8 @@ From the operator's decisions on 2026-11-27, encoded in the default Genesis brie
 - **Who builds what (operator, 2026-11-27):** the builder service's team builds the **structure**.
   Houses belong to **individual Nous**: some parcels are sold **ready-built** (the crew builds the
   chamber), others are sold empty to a Nous that wants to **build its own**. The sale itself
-  (price, payment, ownership) is Noēsis's business, not this service's.
+  (price, payment, ownership) is Noēsis's business, not this service's. A ready-built chamber is
+  a starter: the owning Nous may rebuild it.
 
 ## 7. Left to the builder
 

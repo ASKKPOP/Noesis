@@ -21,6 +21,8 @@
 - Agents never block waiting for the planner. Planner notes are data the lead may read.
 - Offline monitor runs every **10 minutes** per active run.
 - Genesis v0 (from the spec, §6): six wings A–F at `theta = k·60°`, tiers at x = −230 (A, C, E) and +230 (B, D, F), floor radius **224 m**, wing arc **110°** (430 m) × **40 m**, **3 decks × 4.5 m** (deck 1 open), spokes ~190–192 m × 10 m with 16 m collars, one turn per **60 min**, **1 g from the gravity generator** (declared Grid law). Zones: A residential 12, B business 8, C shopping 8, D residential 12, E manufacture 8, F infrastructure 4 (pre-built venues). Parcel lengths 35.8 / 53.8 / 107.5 m.
+- Multi-Grid (operator 2026-11-27): the team initialises the structure of **every** Grid. Grids live in `crew.grids`; each has its own skeleton + pinned counts. `referenceFor(grid)` returns the skeleton from the Grid's brief (`brief.skeleton`), with `genesisReference()` as the built-in default; the checker reads counts from that, never from Genesis constants. Acceptance adds a second small Grid (2 wings, structure only) created from a brief.
+- Interiors the crew builds are starters; the owning Nous may rebuild them (no lock, no crew ownership).
 - v1 crew freedom: **details only**. The skeleton is seeded and fixed; the crew writes the chamber interiors of the **ready-built** home parcels (Genesis default: Wing A's 12) and the exterior detail; **build-yourself** parcels (Wing D's 12) stay empty shells with a door.
 - Interiors: the *Passengers*-like style (white ribs over warm light panels, glossy warm floor, white furniture, warm white light); only parts with a function (no mind core, dais, niches, pilasters). **No Tron-style neon**, no film names, logos or stock-image text.
 
@@ -375,6 +377,7 @@ test('InteriorDoc rejects an unknown kind', () => {
   - the Result page shows 12 ready-built chambers (Wing A), 12 empty build-yourself shells (Wing D) and exterior detail;
   - the checker report has every rule `ok` for landed parts;
   - the cost is ≤ $40.
+  - a second Grid created from a 2-wing brief initialises its structure and passes the checker with its own counts (no Genesis constants used);
   - If the crew did not finish all 12 chambers within the cap, record how far it got and the cost. That is a finding, not a failure to hide.
 - [ ] **Step 5: Run the gates twice:** `npm run typecheck && npm test` both green on two consecutive runs.
 - [ ] **Step 6: Record** the outcome, cost, time, lead-created tables and screenshots (embedded) in `docs/acceptance/…md`. Commit, push, PR, merge.
