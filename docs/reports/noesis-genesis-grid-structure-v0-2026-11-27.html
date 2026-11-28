@@ -103,11 +103,11 @@ button.home[aria-pressed="true"]{border-color:#f2b866;background:#3a2a12}
     <line x1="208" y1="206" x2="208" y2="266" stroke="#05070d" stroke-width="3"/>
   </g>
   <g fill="#f2b866" opacity=".22"><rect x="58" y="120" width="150" height="146"/><rect x="338" y="120" width="128" height="146"/></g>
-  <g fill="none" stroke="#ffe3b0" stroke-width="1"><path d="M66 266v-22h56v22M82 244v-10h24v10"/><path d="M350 266v-14h90v14M360 252v-18"/><circle cx="273" cy="196" r="9"/><path d="M228 266v-30h90v30"/></g>
+  <g fill="none" stroke="#ffe3b0" stroke-width="1"><path d="M66 266v-22h56v22M82 244v-10h24v10"/><path d=""/><path d="M228 266v-30h90v30"/></g>
   <g fill="#ffd28a"><circle cx="133" cy="128" r="3"/><circle cx="273" cy="158" r="3"/><circle cx="402" cy="128" r="3"/></g>
   <text x="133" y="108" fill="#f2b866" font-size="12" text-anchor="middle">corridor</text>
-  <text x="273" y="140" fill="#f2b866" font-size="12" text-anchor="middle">mind core</text>
-  <text x="402" y="108" fill="#f2b866" font-size="12" text-anchor="middle">consoles</text>
+  <text x="273" y="140" fill="#f2b866" font-size="12" text-anchor="middle">consoles</text>
+  <text x="402" y="108" fill="#f2b866" font-size="12" text-anchor="middle">window</text>
   <text x="260" y="84" fill="#e8ecf4" font-size="13" text-anchor="middle" font-weight="600">Nous house — designed &amp; built by the Nous</text>
 </svg></div>
 <div class="card">
@@ -115,7 +115,7 @@ button.home[aria-pressed="true"]{border-color:#f2b866;background:#3a2a12}
 <ul>
 <li><b>Address</b> keeps the shape of D-NH-10: <code>(arm, section, level)</code>. The field today called <code>ring</code> would name the arm. <code>level</code> is the deck, counted from the floor side: deck 1 is outermost.</li>
 <li><b>Volume:</b> the section’s length along the arm × the arm’s width (40 m) × one deck (4.5 m). A home parcel is 35.8 m × 40 m × 4.5 m, a work parcel 53.8 m, a commons hall 107.5 m (each wing is 430 m long).</li>
-<li><b>The planner owns the shell:</b> floor, ceiling, walls between parcels, power and air. <b>The Nous owns everything inside:</b> its chamber — corridor, consoles and screens, its mind core, light. A Nous house is not a human home.</li>
+<li><b>The planner owns the shell:</b> floor, ceiling, walls between parcels, power and air. <b>The Nous owns everything inside:</b> its chamber — corridor, consoles and screens, window, light. A Nous house is not a human home.</li>
 <li><b>Genesis opens deck 1 only.</b> Decks 2 and 3 exist but stay closed until the planner opens them; that is how the Grid grows without new arms.</li>
 <li><b>Every deck has the same 1 g</b> under the gravity generator (with spin gravity, upper decks would have been a little lighter).</li>
 </ul>
@@ -513,7 +513,7 @@ const _cm = new T.Matrix4(), _cq = new T.Quaternion(), _cs = new T.Vector3(1, 1,
 function moveCraft(t) { CRAFT.forEach((c, i) => { const a = c.ph + c.w * t, x = c.x + c.dx * Math.sin(t * 0.05 + i); _cp.set(x, c.r * Math.cos(a), c.r * Math.sin(a)); _cq.setFromAxisAngle(XAX, a + (c.w > 0 ? Math.PI / 2 : -Math.PI / 2)); _cm.compose(_cp, _cq, _cs); craft.setMatrixAt(i, _cm); }); craft.instanceMatrix.needsUpdate = true; }
 // ---------- inside a Nous house: a Nous's chamber in Wing A, parcel 6, deck 1 (warm style) ----------
 const HOME_PARCEL = 5;
-const home = { active: false, group: new T.Group(), yaw: 0, pitch: -0.04, lights: [], holo: null };
+const home = { active: false, group: new T.Group(), yaw: 0, pitch: -0.04, lights: [] };
 function screenTex(seed, w, h) { // warm amber console screen
   const c = document.createElement('canvas'); c.width = w || 512; c.height = h || 256; const g = c.getContext('2d'), W = c.width, H = c.height;
   g.fillStyle = '#140d06'; g.fillRect(0, 0, W, H); g.strokeStyle = 'rgba(255,205,140,.10)'; g.lineWidth = 1;
@@ -547,76 +547,57 @@ function decalTex(lines, fg, bg, w, h) {
   };
   const box = (w, h, d, m, x, y, z, ry) => { const b = new T.Mesh(new T.BoxGeometry(w, h, d), m); b.position.set(x, y + h / 2, z); if (ry) b.rotation.y = ry; b.receiveShadow = true; g.add(b); return b; };
   const flatRing = (r, tube, m, y, z, x) => { const o = new T.Mesh(new T.TorusGeometry(r, tube, 10, 128), m); o.rotation.x = Math.PI / 2; o.position.set(x || 0, y, z); g.add(o); return o; };
-  // ── chamber shell: glossy black floor with soft light rings, cream walls with gold pilasters, a concentric ribbed ceiling of warm light
-  box(LEN, 0.1, D1 - D0, W.gloss, 0, -0.1, (D0 + D1) / 2);
-  box(LEN, 0.15, D1 - D0, W.ceil, 0, HT, (D0 + D1) / 2);
-  flatRing(3.7, 0.045, W.softRing, 0.012, CZ); flatRing(6.0, 0.04, W.softRing, 0.012, CZ);
-  for (let i = 1; i <= 6; i++) { const r = 1.0 + i * 0.95; flatRing(r, 0.09, i % 2 ? W.lightGold : W.cream, HT - 0.1 - 0.06 * i, CZ); if (i % 2 === 0) flatRing(r + 0.25, 0.05, W.lightWhite, HT - 0.12 - 0.06 * i, CZ); }
-  for (const sx of [-1, 1]) {
-    box(0.2, HT, D1 - D0, W.cream, sx * LEN / 2, 0, (D0 + D1) / 2);
-    for (let z = D0 + 1.2; z < D1 - 0.4; z += 2.4) { box(0.14, HT - 0.2, 0.28, W.gold, sx * (LEN / 2 - 0.12), 0.1, z); box(0.04, HT - 0.9, 0.06, W.lightGold, sx * (LEN / 2 - 0.2), 0.45, z); }
-  }
-  // back wall: honeycomb niches of warm light either side of the door
-  for (const sx of [-1, 1]) box(LEN / 2 - 1.9, HT, 0.25, W.creamPanel, sx * (LEN / 4 + 0.95), 0, D0);
-  box(3.8, HT - 3.55, 0.25, W.creamPanel, 0, 3.55, D0);
-  for (const sx of [-1, 1]) for (let r = 0; r < 4; r++) for (let q = 0; q < 4; q++) {
-    const x = sx * (2.7 + q * 1.05 + (r % 2) * 0.52), y = 0.9 + r * 0.9; if (Math.abs(x) > LEN / 2 - 0.6) continue;
-    const hx = new T.Mesh(new T.CylinderGeometry(0.46, 0.46, 0.18, 6), W.brass); hx.rotation.x = Math.PI / 2; hx.rotation.y = Math.PI / 6; hx.position.set(x, y, D0 + 0.2); g.add(hx);
-    if (hash(r, q, sx + 3, 81) < 0.55) { const lit = new T.Mesh(new T.CylinderGeometry(0.36, 0.36, 0.05, 6), W.niche); lit.rotation.x = Math.PI / 2; lit.rotation.y = Math.PI / 6; lit.position.set(x, y, D0 + 0.3); g.add(lit); }
-  }
-  box(LEN, 0.55, 0.3, W.cream, 0, 0, D1); box(LEN, 0.5, 0.3, W.cream, 0, HT - 0.5, D1);
-  for (let x = -LEN / 2; x <= LEN / 2 + 0.01; x += 2) box(0.1, HT, 0.22, W.gold, x, 0, D1);
-  box(LEN, HT - 1.05, 0.04, W.glass, 0, 0.55, D1);
-  // ── the mind core: a round dais of dark stone ringed with soft light, the Nous's holographic mind above it
-  const dais = new T.Mesh(new T.CylinderGeometry(2.4, 2.55, 0.22, 96), W.stone); dais.position.set(0, 0.11, CZ); g.add(dais);
-  flatRing(2.5, 0.035, W.softRing, 0.23, CZ);
-  const holo = new T.Group(); holo.position.set(0, 2.05, CZ); g.add(holo); home.holo = holo;
-  holo.add(new T.Mesh(new T.SphereGeometry(1.15, 48, 32), new T.MeshStandardMaterial({ color: 0x2a1404, emissive: 0xffa040, emissiveIntensity: 1.0, transparent: true, opacity: 0.4, depthWrite: false })));
-  holo.add(new T.LineSegments(new T.WireframeGeometry(new T.SphereGeometry(1.22, 20, 14)), new T.LineBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.4 })));
-  for (const [r, tilt] of [[1.5, 0.4], [1.65, -0.9]]) { const o = new T.Mesh(new T.TorusGeometry(r, 0.018, 6, 96), W.gold); o.rotation.x = Math.PI / 2 + tilt; holo.add(o); }
-  holo.add(new T.Mesh(new T.SphereGeometry(0.2, 24, 16), new T.MeshBasicMaterial({ color: 0xfff3dc })));
-  // ── sleek white console pods with gold trim and warm screens, facing the core
+  // ── the chamber: one vault of white ribs over warm light panels (the room's lamps), a glossy floor, an arched window
+  const AR = LEN / 2, VL = D1 - D0, VZ = (D0 + D1) / 2;
+  const glow = new T.MeshStandardMaterial({ color: 0xf1e6d2, emissive: 0xffd49c, emissiveIntensity: 0.95, roughness: 0.9, side: T.DoubleSide });
+  const rib = mat(0xf4f1eb, 0.28, 0.05), floorM = mat(0x4a3b2e, 0.22, 0.08), wallM = new T.MeshStandardMaterial({ color: 0xf2eee7, roughness: 0.4, metalness: 0.03, side: T.DoubleSide });
+  const vault = (rx, ry, len, zc, step, tube) => { // half-ellipse tunnel along z: glowing shell behind, white ribs in front
+    const sh = new T.Mesh(new T.CylinderGeometry(rx + 0.2, rx + 0.2, len, 64, 1, true, -Math.PI / 2, Math.PI), glow);
+    sh.rotation.x = -Math.PI / 2; sh.scale.set(1, 1, (ry + 0.1) / (rx + 0.2)); sh.position.set(0, 0, zc); g.add(sh);
+    for (let z = zc - len / 2 + step / 2; z < zc + len / 2; z += step) { const r = new T.Mesh(new T.TorusGeometry(rx, tube, 10, 72, Math.PI), rib); r.scale.y = ry / rx; r.position.set(0, 0, z); g.add(r); }
+  };
+  const endWall = (rx, ry, z, hole, holeY, hrx, hry) => { // half-ellipse wall, optional half-ellipse opening
+    const s = new T.Shape(); s.moveTo(rx + 0.25, 0); s.absellipse(0, 0, rx + 0.25, ry + 0.15, 0, Math.PI, false); s.lineTo(rx + 0.25, 0);
+    if (hole) { const h = new T.Path(); h.moveTo(hrx, holeY); h.absellipse(0, holeY, hrx, hry, 0, Math.PI, false); h.lineTo(hrx, holeY); s.holes.push(h); }
+    const m = new T.Mesh(new T.ShapeGeometry(s, 48), wallM); m.position.z = z; g.add(m); return m;
+  };
+  box(LEN + 0.5, 0.1, VL, floorM, 0, -0.1, VZ);
+  vault(AR, HT, VL, VZ, 1.7, 0.16);
+  endWall(AR, HT, D0, true, 0, 1.7, 3.5);                          // back wall, opening to the corridor
+  endWall(AR, HT, D1, true, 0.7, AR - 1.6, HT - 1.3);               // window wall
+  { const s = new T.Shape(); s.moveTo(AR - 1.6, 0); s.absellipse(0, 0, AR - 1.6, HT - 1.3, 0, Math.PI, false); s.lineTo(AR - 1.6, 0);
+    const gl = new T.Mesh(new T.ShapeGeometry(s, 48), W.glass); gl.position.set(0, 0.7, D1 + 0.02); g.add(gl);
+    for (let x = -AR + 3.6; x < AR - 3.5; x += 2.2) box(0.07, (HT - 1.3) * Math.sqrt(Math.max(0, 1 - (x / (AR - 1.6)) ** 2)), 0.08, rib, x, 0.7, D1 + 0.04); }
+  // ── consoles: the Nous's work stations, a shallow arc facing the window, each with a seat for its human
   let sid = 0;
-  for (const deg of [-145, -110, -75, 75, 110, 145]) {
-    const th = deg * Math.PI / 180, cx = Math.sin(th) * 5.0, cz = CZ + Math.cos(th) * 5.0, face = th + Math.PI;
-    const k = new T.Group(); k.position.set(cx, 0, cz); k.rotation.y = face; g.add(k);
+  for (const cx of [-4.2, -1.4, 1.4, 4.2]) {
+    const k = new T.Group(); k.position.set(cx, 0, D1 - 4.2 + Math.abs(cx) * 0.18); k.rotation.y = Math.PI - cx * 0.06; g.add(k);
     const base = new T.Mesh(new T.CapsuleGeometry(0.34, 1.1, 8, 24), W.white); base.rotation.z = Math.PI / 2; base.position.set(0, 0.62, 0); k.add(base);
     const ped = new T.Mesh(new T.CylinderGeometry(0.22, 0.32, 0.45, 32), W.white); ped.position.y = 0.22; k.add(ped);
-    const trim = new T.Mesh(new T.BoxGeometry(1.5, 0.035, 0.05), W.gold); trim.position.set(0, 0.62, 0.36); k.add(trim);
-    const scr = new T.Mesh(new T.PlaneGeometry(1.3, 0.7), new T.MeshBasicMaterial({ map: screenTex(sid++) })); scr.position.set(0, 1.45, -0.12); scr.rotation.x = -0.12; k.add(scr);
-    const frame = new T.Mesh(new T.BoxGeometry(1.38, 0.78, 0.04), W.gold); frame.position.set(0, 1.45, -0.15); frame.rotation.x = -0.12; k.add(frame);
-    const neck = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 0.5, 12), W.gold); neck.position.set(0, 1.0, -0.12); k.add(neck);
-    if (deg > 0) { const seat = new T.Group(); seat.position.set(0, 0, 1.0); k.add(seat);
-      const p = new T.Mesh(new T.CylinderGeometry(0.05, 0.2, 0.42, 16), W.gold); p.position.y = 0.21; seat.add(p);
-      const s = new T.Mesh(new T.CapsuleGeometry(0.26, 0.2, 6, 16), W.leather); s.rotation.z = Math.PI / 2; s.position.y = 0.5; seat.add(s);
-      const bk = new T.Mesh(new T.CapsuleGeometry(0.24, 0.35, 6, 16), W.leather); bk.position.set(0, 0.92, 0.25); seat.add(bk); }
+    const scr = new T.Mesh(new T.PlaneGeometry(1.3, 0.7), new T.MeshBasicMaterial({ map: screenTex(sid++) })); scr.position.set(0, 1.45, -0.12); scr.rotation.x = -0.12; scr.rotation.y = Math.PI; k.add(scr);
+    const frame = new T.Mesh(new T.BoxGeometry(1.38, 0.78, 0.04), W.white); frame.position.set(0, 1.45, -0.15); frame.rotation.x = -0.12; k.add(frame);
+    const neck = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 0.5, 12), W.white); neck.position.set(0, 1.0, -0.12); k.add(neck);
+    const seat = new T.Group(); seat.position.set(0, 0, 1.0); k.add(seat);
+    const p = new T.Mesh(new T.CylinderGeometry(0.05, 0.2, 0.42, 16), W.white); p.position.y = 0.21; seat.add(p);
+    const st = new T.Mesh(new T.CapsuleGeometry(0.26, 0.2, 6, 16), W.leather); st.rotation.z = Math.PI / 2; st.position.y = 0.5; seat.add(st);
+    const bk = new T.Mesh(new T.CapsuleGeometry(0.24, 0.35, 6, 16), W.leather); bk.position.set(0, 0.92, 0.25); seat.add(bk);
   }
-  for (const sx of [-1, 1]) { // wall displays in gold frames
-    const p = new T.Mesh(new T.PlaneGeometry(4.6, 1.9), new T.MeshBasicMaterial({ map: screenTex(20 + sx, 1024, 424) })); p.position.set(sx * (LEN / 2 - 0.26), 2.2, CZ + 1); p.rotation.y = -sx * Math.PI / 2; g.add(p);
-    box(0.06, 2.1, 4.8, W.gold, sx * (LEN / 2 - 0.29), 1.15, CZ + 1);
-  }
-  // ── entry corridor from the spoke elevator: cream walls, glossy floor, arches of warm light
+  // ── entry corridor from the spoke elevator: an oval tunnel of white ribs over warm light
   const CW = 3.4, CH = 3.5, C0 = D0, C1 = -12;
-  box(CW, 0.08, C0 - C1, W.gloss, 0, -0.08, (C0 + C1) / 2);
-  box(CW, 0.1, C0 - C1, W.ceil, 0, CH, (C0 + C1) / 2);
-  for (const sx of [-1, 1]) box(0.15, CH, C0 - C1, W.cream, sx * CW / 2, 0, (C0 + C1) / 2);
-  for (let z = C1 + 1.6; z < C0; z += 2.2) {
-    const arch = new T.Mesh(new T.TorusGeometry(1.55, 0.06, 8, 48, Math.PI), W.lightWhite); arch.position.set(0, 1.85, z); g.add(arch);
-    for (const sx of [-1, 1]) box(0.12, 1.85, 0.12, W.lightWhite, sx * 1.55, 0, z);
-    for (const sx of [-1, 1]) box(0.08, CH, 0.4, W.creamPanel, sx * (CW / 2 - 0.08), 0, z);
-  }
-  box(CW, CH, 0.2, W.cream, 0, 0, C1);
-  const door = new T.Mesh(new T.CircleGeometry(1.3, 64), W.white); door.position.set(0, 1.6, C1 + 0.12); g.add(door);
-  const doorRing = new T.Mesh(new T.TorusGeometry(1.36, 0.06, 8, 64), W.gold); doorRing.position.set(0, 1.6, C1 + 0.13); g.add(doorRing);
+  box(CW + 0.4, 0.08, C0 - C1, floorM, 0, -0.08, (C0 + C1) / 2);
+  vault(CW / 2, CH, C0 - C1, (C0 + C1) / 2, 1.1, 0.11);
+  endWall(CW / 2, CH, C1, false);
+  const door = new T.Mesh(new T.CircleGeometry(1.15, 64), W.white); door.position.set(0, 1.35, C1 + 0.05); g.add(door);
+  const doorRing = new T.Mesh(new T.TorusGeometry(1.2, 0.05, 8, 64), W.gold); doorRing.position.set(0, 1.35, C1 + 0.06); g.add(doorRing);
   const mark = (txt, size, w, x, y, z, ry) => { const p = new T.Mesh(new T.PlaneGeometry(w, w * 0.22), new T.MeshBasicMaterial({ map: decalTex([[txt, size, 40]], '#9a7a3c', null, 380, 84), transparent: true })); p.position.set(x, y, z); p.rotation.y = ry; g.add(p); };
-  mark('A-09 · DECK 1', 40, 1.9, -CW / 2 + 0.09, 2.95, -4.3, Math.PI / 2);
-  mark('GENESIS · ARM A', 36, 1.9, CW / 2 - 0.09, 2.95, -6.5, -Math.PI / 2);
-  mark('ELEVATOR · SPOKE A2', 30, 1.6, 0, 3.05, C1 + 0.12, 0);
-  // ── warm lights
-  for (const [x, y, z, c, i] of [[0, 3.1, -3.5, 0xfff0dc, 24], [0, 3.1, -9, 0xfff0dc, 20], [-4.5, 3.8, CZ - 2, 0xffdcae, 50], [4.5, 3.8, CZ + 2, 0xffdcae, 50], [0, 2.05, CZ, 0xffa050, 34], [0, 4.0, CZ, 0xfff1dc, 34]]) {
+  mark('ELEVATOR · SPOKE A2', 30, 1.35, 0, 2.85, C1 + 0.06, 0);
+  mark('A-06 · DECK 1', 40, 1.9, -4.2, 2.0, D0 + 0.03, 0);
+  mark('GENESIS · WING A', 36, 1.9, 4.2, 2.0, D0 + 0.03, 0);
+  // ── lights (the glowing panels carry the look; these light the floor and the consoles)
+  for (const [x, y, z, c, i] of [[0, 2.7, -3.5, 0xfff0dc, 22], [0, 2.7, -9, 0xfff0dc, 18], [-4.5, 3.4, VZ - 3, 0xffe2b8, 46], [4.5, 3.4, VZ - 3, 0xffe2b8, 46], [0, 3.6, D1 - 4, 0xfff1dc, 40], [0, 3.6, VZ + 1, 0xfff1dc, 30]]) {
     const L = new T.PointLight(c, 0, 18, 2); L.position.set(x, y, z); L.userData.i = i; g.add(L); home.lights.push(L);
   }
-  home.views = { home: { eye: new T.Vector3(0, 1.62, C1 + 0.6), yaw: 0, pitch: -0.03 }, chamber: { eye: new T.Vector3(3.3, 1.75, CZ - 3.4), yaw: Math.atan2(-3.3, 3.4) + 0.12, pitch: 0.02 } };
+  home.views = { home: { eye: new T.Vector3(0, 1.62, C1 + 0.6), yaw: 0, pitch: -0.03 }, chamber: { eye: new T.Vector3(-3.0, 1.7, VZ - 3.5), yaw: Math.atan2(3.6, D1 - VZ + 2), pitch: 0.02 } };
   home.eye = home.views.home.eye;
   home.group.visible = false;
 }
@@ -685,7 +666,6 @@ function frame(now) {
   clouds.rotation.y += dt * S.speed * 2 * Math.PI / 400000;
   navs.forEach((n, i) => n.visible = ((now / 1000 + i * 0.5) % 1.6) < 0.25);
   moveCraft(simT / 60);
-  if (home.active && home.holo) { home.holo.rotation.y += dt * 0.35; home.holo.children[2].rotation.z += dt * 0.6; home.holo.children[3].rotation.z -= dt * 0.4; }
   ARMS.forEach(a => a.cars.forEach(c => { const s = (Math.sin(now / 1000 * 0.25 + c.ph) + 1) / 2; c.car.position.lerpVectors(c.from, c.to, s); }));
   station.updateMatrixWorld(true);
   const fov = home.active ? 68 : 42; if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); }
@@ -709,7 +689,7 @@ function frame(now) {
   const xc = document.getElementById('xcar'); if (xc) { const a = XS0 + 22, L = (R - DECK * DECKS) * XSC - 22; xc.setAttribute('x', a + ((now / 35) % L) - 6); }
   const n = S.houses ? ARMS.filter(a => !a.built).reduce((s, a) => { let c = 0; for (let p = 0; p < a.n; p++) if (hash(p, a.id.charCodeAt(0), 9, 1) < 0.6) c++; return s + c; }, 0) : 0;
   const turn = ((omega() * simT) / (2 * Math.PI)) % 1;
-  document.getElementById('hud').innerHTML = home.active ? '<b>Inside a Nous house</b> · Wing A, parcel ' + (HOME_PARCEL + 1) + ', deck 1 · a Nous’s chamber, imagined: a corridor of light arches, a console ring and the Nous’s mind core under a ribbed ceiling of warm light · floor faces away from the spine · ' + (inShadow ? '<b>in Earth’s shadow</b>' : 'in sunlight') + ' · drag to look around' : '<b>Genesis</b> · 420 km above Earth · 53 parcels · <b>' + n + '</b> Nous houses ' + (S.houses ? '(imagined)' : '(as today)') + ' · ' + (inShadow ? '<b>in Earth’s shadow</b>' : 'in sunlight') + ' · orbit ' + ORBIT_MIN + ' min · turn ' + (turn * 100).toFixed(0) + '% of 60 min · ' + (S.speed === 1 ? 'real time' : S.speed + '× speed') + ' · arms ' + gTxt(R);
+  document.getElementById('hud').innerHTML = home.active ? '<b>Inside a Nous house</b> · Wing A, parcel ' + (HOME_PARCEL + 1) + ', deck 1 · a Nous’s chamber, imagined: an oval corridor from the elevator and a vaulted room of white ribs over warm light, consoles facing an arched window · floor faces away from the spine · ' + (inShadow ? '<b>in Earth’s shadow</b>' : 'in sunlight') + ' · drag to look around' : '<b>Genesis</b> · 420 km above Earth · 53 parcels · <b>' + n + '</b> Nous houses ' + (S.houses ? '(imagined)' : '(as today)') + ' · ' + (inShadow ? '<b>in Earth’s shadow</b>' : 'in sunlight') + ' · orbit ' + ORBIT_MIN + ' min · turn ' + (turn * 100).toFixed(0) + '% of 60 min · ' + (S.speed === 1 ? 'real time' : S.speed + '× speed') + ' · arms ' + gTxt(R);
   requestAnimationFrame(frame);
 }
 table(); xsec(); requestAnimationFrame(frame);
