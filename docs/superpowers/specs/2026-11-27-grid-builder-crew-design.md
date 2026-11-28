@@ -31,7 +31,7 @@ that decides what is correct, and monitors at the edges.
    generated 3D page plus a checker report.
 3. Every agent action is recorded; every run has a hard budget and a kill switch.
 4. The v1 acceptance run, from the default Genesis brief, lands a model whose skeleton matches the
-   reference (section 6) within tolerance and whose 24 home chambers and outside detail pass every
+   reference (section 6) within tolerance and whose ready-built home chambers (12), empty build-yourself shells (12) and outside detail pass every
    checker rule, within the run budget.
 
 **Non-goals (v1)**
@@ -145,12 +145,13 @@ A versioned set of JSON documents in the run repo, each with a schema version:
 - `structure/spine.json`, `structure/hub.json`, `structure/spokes/*.json`,
   `structure/wings/*.json` — geometry in metres in one station frame; materials; light.
 - `parcels/<wing>-<nn>-d<deck>.json` — address `(wing, section, deck)`, volume, zone, today's state.
-- `interiors/<parcel>.json` — a Nous chamber layout: corridor, chamber shell, consoles, displays,
-  mind core, lights, all by catalog kind and placement.
+- `interiors/<parcel>.json` — a Nous chamber layout (corridor, vault, window, door, consoles with
+  seats, lights) by catalog kind and placement. Only parcels offered **ready-built** get one; a
+  **build-yourself** parcel is delivered as an empty shell with its door.
 
-**v1 catalog.** Interior parts are drawn from a small closed list (corridor arch, wall panel,
-pilaster, honeycomb niche, console pod, seat, wall display, ceiling light ring, floor light ring,
-dais, mind core). This mirrors Noēsis's rule that kinds are closed and forms are open.
+**v1 catalog.** Interior parts are drawn from a small closed list (corridor rib, vault rib, light
+panel, end wall, window, door, console pod, seat, light). Every kind has a function; decoration
+with no job is not in the list (operator, 2026-11-27: "only actual part show"). This mirrors Noēsis's rule that kinds are closed and forms are open.
 
 ### 5.3 Checker rules (v1)
 
@@ -208,12 +209,15 @@ From the operator's decisions on 2026-11-27, encoded in the default Genesis brie
 - **Parcel:** one wing section × one deck; address `(wing, section, level)`.
 - **Outside look:** the wings carry a dense crust of city blocks with warm lit windows; small craft
   around the station.
-- **A Nous house is a Nous's chamber, not a human home:** an entry corridor from the spoke
-  elevator, a chamber with a console ring and screens, wall displays, and the Nous's mind core at
-  the centre. **Interior style:** the warm style of the film *Passengers* (cream walls, arches of
-  warm light, glossy black floors with soft white rings, ribbed gold-and-white light ceilings,
-  gold pilasters, honeycomb lit niches, white and gold furniture). Style only. **No Tron-style
-  neon inside.**
+- **A Nous house is a Nous's chamber, not a human home:** an oval ribbed corridor from the spoke
+  elevator door, and one vaulted room with consoles (each with a seat for the Nous's human)
+  facing an arched window. No mind core, dais, niches or pilasters: only parts with a function.
+  **Interior style:** the style of the film *Passengers* (white ribs over warm light panels,
+  glossy warm floor, white furniture, warm white light). Style only. **No Tron-style neon inside.**
+- **Who builds what (operator, 2026-11-27):** the builder service's team builds the **structure**.
+  Houses belong to **individual Nous**: some parcels are sold **ready-built** (the crew builds the
+  chamber), others are sold empty to a Nous that wants to **build its own**. The sale itself
+  (price, payment, ownership) is Noēsis's business, not this service's.
 
 ## 7. Left to the builder
 
@@ -229,8 +233,11 @@ From the operator's decisions on 2026-11-27, encoded in the default Genesis brie
 
 - **Counts** are pinned constants per Grid version in the checker config, never read live from
   Noēsis (keeps the separation).
-- **Interiors in v1:** each of the 24 home parcels gets its own chamber layout (the crew varies
-  them within the catalog and style rules); work, commons and core interiors come later.
+- **Interiors in v1:** each home parcel carries `offer: ready_built | build_yourself`, set by the
+  planner in the brief. The crew builds a chamber only for `ready_built` parcels and must leave
+  `build_yourself` parcels empty (the checker refuses an interior there). Genesis default (my
+  call, the planner can change it): Wing A's 12 homes ready-built, Wing D's 12 build-yourself.
+  Work, commons and core interiors come later.
 - **Sign-in:** the service's own planner accounts (password + session); runs and Grids carry an
   owner from day one so more planners can join later. No Noēsis identity reuse.
 - **Result pages** are served by the new service. Publishing a result to noesiis.com/reports is a
@@ -243,7 +250,8 @@ From the operator's decisions on 2026-11-27, encoded in the default Genesis brie
 
 1. **What the crew decides in v1: details only.** The skeleton (wings, sizes, parcels) is fixed in
    the brief and checked against a reference model with tolerance; the crew designs every home
-   chamber interior and the outside detail (city blocks, lights, fittings).
+   chamber interior and the outside detail (city blocks, lights, fittings). *(Narrowed the same
+   day: only ready-built home parcels get an interior; see §8.)*
 2. **Budget and key:** $40 and 6 hours per run, 1 lead + 4 helpers; $300 per month across runs; a
    dedicated Anthropic API key for this service only, kept out of the repo.
 3. **Host:** the operator's desktop first; extend to a server after the first build. Repository:

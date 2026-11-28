@@ -21,8 +21,8 @@
 - Agents never block waiting for the planner. Planner notes are data the lead may read.
 - Offline monitor runs every **10 minutes** per active run.
 - Genesis v0 (from the spec, §6): six wings A–F at `theta = k·60°`, tiers at x = −230 (A, C, E) and +230 (B, D, F), floor radius **224 m**, wing arc **110°** (430 m) × **40 m**, **3 decks × 4.5 m** (deck 1 open), spokes ~190–192 m × 10 m with 16 m collars, one turn per **60 min**, **1 g from the gravity generator** (declared Grid law). Zones: A residential 12, B business 8, C shopping 8, D residential 12, E manufacture 8, F infrastructure 4 (pre-built venues). Parcel lengths 35.8 / 53.8 / 107.5 m.
-- v1 crew freedom: **details only**. The skeleton is seeded and fixed; the crew writes the 24 home-chamber interiors and the exterior detail.
-- Interiors: the warm style (cream walls, warm light arches, glossy black floor with soft white rings, ribbed gold/white ceiling, gold pilasters, honeycomb niches, white/gold furniture). **No Tron-style neon**, no film names, logos or stock-image text.
+- v1 crew freedom: **details only**. The skeleton is seeded and fixed; the crew writes the chamber interiors of the **ready-built** home parcels (Genesis default: Wing A's 12) and the exterior detail; **build-yourself** parcels (Wing D's 12) stay empty shells with a door.
+- Interiors: the *Passengers*-like style (white ribs over warm light panels, glossy warm floor, white furniture, warm white light); only parts with a function (no mind core, dais, niches, pilasters). **No Tron-style neon**, no film names, logos or stock-image text.
 
 ## Review Focus
 
@@ -90,6 +90,8 @@ test('parcel counts and lengths', () => {
   expect(ps.filter(p => p.zone === 'infrastructure')).toHaveLength(4);
   expect(parcelVolume(ps.find(p => p.zone === 'residential')!).length).toBeCloseTo(35.8, 1);
   expect(parcelVolume(ps.find(p => p.zone === 'business')!).length).toBeCloseTo(53.8, 1);
+  expect(ps.filter(p => p.offer === 'ready_built')).toHaveLength(12);
+  expect(ps.filter(p => p.offer === 'build_yourself')).toHaveLength(12);
 });
 test('grid.json carries the gravity law', () => {
   const g = genesisReference()['grid.json'] as GridDoc;
@@ -107,7 +109,8 @@ test('InteriorDoc rejects an unknown kind', () => {
   - Each parcel has an address `{wing, section, deck}` and an id like `A-06-d1`.
   - `InteriorDoc.items[]` is `{kind, pos:[x,y,z], size:[w,h,d], rotY?, color?, label?}` in **parcel-local** coordinates: x along the wing in `[-L/2, L/2]`, y up in `[0, 4.35]`, z across in `[-W/2, W/2]`.
   - `ExteriorDoc` is `{wing, blocks:[{u, across, face:'inner'|'outer', L, W, H, lit:number}]}`.
-  - `CATALOG_KINDS` = `corridor_arch, wall_panel, pilaster, honeycomb_niche, console_pod, seat, wall_display, ceiling_light_ring, floor_light_ring, dais, mind_core, door`.
+  - `CATALOG_KINDS` = `corridor_rib, vault_rib, light_panel, end_wall, window, door, console_pod, seat, light`.
+  - `ParcelDoc` has `offer: 'ready_built' | 'build_yourself'` (home parcels only; others omit it). `genesisReference()` sets Wing A homes `ready_built`, Wing D homes `build_yourself`.
   - `genesisReference()` builds the skeleton from the Global Constraints values. Spokes: two per wing at `u = ±0.55`; hub endpoint `x = clamp(xc, −250, 250)` at radius 19.
 - [ ] **Step 5: Run** `npm test -w packages/model`. Expected: PASS.
 - [ ] **Step 6: Commit** `feat(model): Grid model schemas and Genesis v0 reference`
@@ -142,12 +145,13 @@ test('InteriorDoc rejects an unknown kind', () => {
 - Consumes: Task 2 `check`, `Report`.
 - Produces: the rules `interior.fit`, `interior.overlap`, `interior.catalog`, `interior.required`, `style.palette`, `style.text`, `exterior.bounds`, `file.size`; exported `FORBIDDEN_TEXT = ['passengers','avalon','tron','space-corp','istock']`; `WARM_PALETTE` (an allowed light-colour list from the spec's warm style).
 
-- [ ] **Step 1: Write failing tests**, using a valid fixture `interiors/A-06-d1.json` (corridor arches, ring of 6 `console_pod`, `dais`, `mind_core`, `ceiling_light_ring`):
+- [ ] **Step 1: Write failing tests**, using a valid fixture `interiors/A-06-d1.json` (`corridor_rib`s, `vault_rib`s, `light_panel`s, `window`, `door`, 4 `console_pod` with `seat`s facing the window):
   - the fixture passes;
   - an item poking 0.5 m above 4.35 → `interior.fit` fails;
   - two `console_pod`s overlapping (axis-aligned boxes after `rotY`) → `interior.overlap` fails;
-  - an interior without `mind_core` or `door` → `interior.required` fails;
-  - a `floor_light_ring` with `color: '#3aa8ff'` → `style.palette` fails (Tron-style blue);
+  - an interior without `door` or `window` → `interior.required` fails;
+  - an interior file for a `build_yourself` parcel → `interior.offer` fails;
+  - a `light_panel` with `color: '#3aa8ff'` → `style.palette` fails (Tron-style blue);
   - `label: 'SPACE-CORP 21'` → `style.text` fails;
   - an exterior block with `H: 20` → `exterior.bounds` fails (max 14);
   - a 300 KB file → `file.size` fails (limit 256 KB).
@@ -328,7 +332,7 @@ test('InteriorDoc rejects an unknown kind', () => {
 - [ ] **Step 2: Run.** Expected: FAIL.
 - [ ] **Step 3: Implement.**
   - Port the scene and replace the `ARMS` constants with data from `grid.json` and the `structure/wings/*` files.
-  - Map each `InteriorDoc.items[].kind` to the existing warm-style builders (corridor arch, console pod, dais, mind core, rings, niches, pilasters).
+  - Map each `InteriorDoc.items[].kind` to the existing warm-style builders (corridor rib, vault rib, light panel, end wall, window, door, console pod, seat, light).
   - Embed three.js the same way the Noesis page does: rewrite `export{…}` into `const THREE={…}` and wrap the scene in a function scope.
 - [ ] **Step 4: Run.** Expected: PASS.
 - [ ] **Step 5: Commit** `feat(crewd): result page generated from the landed model`
@@ -368,9 +372,9 @@ test('InteriorDoc rejects an unknown kind', () => {
 - [ ] **Step 3: Watch.** Live shows 5 agents and the lead creating its own tables within the first minutes; land failures show checker reasons.
 - [ ] **Step 4: Verify** the end state:
   - the run ends `completed` (lead declares done) or `stopped: budget/time`;
-  - the Result page shows 24 home chambers and exterior detail;
+  - the Result page shows 12 ready-built chambers (Wing A), 12 empty build-yourself shells (Wing D) and exterior detail;
   - the checker report has every rule `ok` for landed parts;
   - the cost is ≤ $40.
-  - If the crew did not finish all 24 chambers within the cap, record how far it got and the cost. That is a finding, not a failure to hide.
+  - If the crew did not finish all 12 chambers within the cap, record how far it got and the cost. That is a finding, not a failure to hide.
 - [ ] **Step 5: Run the gates twice:** `npm run typecheck && npm test` both green on two consecutive runs.
 - [ ] **Step 6: Record** the outcome, cost, time, lead-created tables and screenshots (embedded) in `docs/acceptance/…md`. Commit, push, PR, merge.
