@@ -570,14 +570,17 @@ function decalTex(lines, fg, bg, w, h) {
   const steel = mat(0x9aa1a8, 0.3, 0.85), white = mat(0xe8ebee, 0.32, 0.15), black = mat(0x0d0f11, 0.12, 0.5), seatM = mat(0xc9cdd1, 0.45, 0.1);
   const cool = emis(0xf4f8fb, 2.6), cyan = emis(0x2ccfe8, 1.9), amber = emis(0xffa53a, 2.0);
   const glassC = new T.MeshStandardMaterial({ color: 0x9fdce6, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.22, depthWrite: false });
-  const holoM = new T.MeshBasicMaterial({ color: 0x4fe0f2, transparent: true, opacity: 0.5, side: T.DoubleSide, depthWrite: false, blending: T.AdditiveBlending });
+  const holoTex = cnv(512, 256, (x, w, h) => { const gr = x.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(60,210,235,0.05)'); gr.addColorStop(0.15, 'rgba(60,210,235,0.35)'); gr.addColorStop(0.85, 'rgba(60,210,235,0.35)'); gr.addColorStop(1, 'rgba(60,210,235,0.05)'); x.fillStyle = gr; x.fillRect(0, 0, w, h);
+    x.strokeStyle = 'rgba(190,250,255,0.9)'; x.lineWidth = 2; x.strokeRect(6, 6, w - 12, h - 12); x.lineWidth = 1.5; for (let i = 0; i < 6; i++) { x.beginPath(); for (let k = 0; k < w; k += 6) { const y = 40 + i * 32 + Math.sin(k / 30 + i) * 8 * hash(i, 1, 2, 83); k ? x.lineTo(k, y) : x.moveTo(k, y); } x.stroke(); }
+    x.fillStyle = 'rgba(220,255,255,0.9)'; for (let i = 0; i < 14; i++) x.fillRect(20 + i * 34, h - 40 - hash(i, 3, 2, 83) * 60, 18, 4); });
+  const holoM = new T.MeshBasicMaterial({ map: holoTex, transparent: true, opacity: 0.9, side: T.DoubleSide, depthWrite: false, blending: T.AdditiveBlending });
   const VL = D1 - D0, VZ = (D0 + D1) / 2, RR = Math.min(LEN, VL) / 2 - 0.3, DEG = Math.PI / 180;
   const wallArc = (y0, y1, a0, a1, m) => { const c = new T.Mesh(new T.CylinderGeometry(RR, RR, y1 - y0, 96, 1, true, a0 * DEG, (a1 - a0) * DEG), m); c.position.set(0, (y0 + y1) / 2, VZ); g.add(c); return c; };
   const wallM = (deg) => new T.MeshStandardMaterial({ map: wallTex(RR * deg * DEG / 1.5), emissiveMap: wallGlow(RR * deg * DEG / 1.5), emissive: 0xffffff, emissiveIntensity: 1.0, roughness: 0.4, metalness: 0.25, side: T.DoubleSide });
   // floor: dark glossy plates; ceiling: dark with bright white rings and a big white collar over the column
   const floorTex = cnv(1024, 1024, (x, w, h) => { x.fillStyle = '#25292d'; x.fillRect(0, 0, w, h); x.strokeStyle = '#1a1d20'; x.lineWidth = 4; for (let a = 0; a < 16; a++) { const t2 = a * Math.PI / 8; x.beginPath(); x.moveTo(w / 2 + Math.cos(t2) * 120, h / 2 + Math.sin(t2) * 120); x.lineTo(w / 2 + Math.cos(t2) * w / 2, h / 2 + Math.sin(t2) * h / 2); x.stroke(); } for (const r of [120, 260, 400]) { x.beginPath(); x.arc(w / 2, h / 2, r, 0, 7); x.stroke(); } });
   floorTex.wrapS = floorTex.wrapT = T.ClampToEdgeWrapping;
-  const fl = new T.Mesh(new T.CircleGeometry(RR + 0.3, 96), new T.MeshStandardMaterial({ map: floorTex, roughness: 0.12, metalness: 0.4 })); fl.rotation.x = -Math.PI / 2; fl.position.set(0, 0.002, VZ); g.add(fl);
+  const fl = new T.Mesh(new T.CircleGeometry(RR + 0.3, 96), new T.MeshStandardMaterial({ map: floorTex, roughness: 0.12, metalness: 0.4 })); fl.rotation.x = -Math.PI / 2; fl.position.set(0, 0.002, VZ); fl.material.userData.env = 0.4; g.add(fl);
   box(LEN, 0.1, VL, mat(0x1d2024, 0.4, 0.3), 0, -0.1, VZ);
   const ce = new T.Mesh(new T.CircleGeometry(RR + 0.3, 96), mat(0x2a2f34, 0.5, 0.5)); ce.rotation.x = Math.PI / 2; ce.position.set(0, HT, VZ); g.add(ce);
   for (const [r0, r1, y] of [[RR - 1.4, RR + 0.3, HT - 0.55], [RR - 3.0, RR - 1.4, HT - 0.3]]) {
@@ -596,7 +599,7 @@ function decalTex(lines, fg, bg, w, h) {
     const b = new T.Mesh(new T.BoxGeometry(0.32, HT - 0.4, 0.34), white); b.position.set(0, HT / 2 - 0.1, -0.05); b.rotation.x = -0.12; rib.add(b);
     const l = new T.Mesh(new T.BoxGeometry(0.06, HT - 0.8, 0.02), cool); l.position.set(0, HT / 2 - 0.1, -0.23); l.rotation.x = -0.12; rib.add(l); }
   // the Nous's compute column: where the Nous actually runs — cyan coolant-lit racks under glass, amber power conduits
-  const col = new T.Group(); col.position.set(0, 0, VZ); g.add(col);
+  const col = new T.Group(); col.position.set(0, 0, VZ); g.add(col); home.envPos = new T.Vector3(0, 1.8, VZ + 3.2);
   const base = new T.Mesh(new T.CylinderGeometry(1.5, 1.7, 0.5, 64), white); base.position.y = 0.25; col.add(base);
   const cap = new T.Mesh(new T.CylinderGeometry(2.1, 1.6, 0.55, 64), white); cap.position.y = HT - 0.28; col.add(cap);
   for (let i = 0; i < 24; i++) { const a = i / 24 * 2 * Math.PI, d = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, 0.04, 12), amber); d.position.set(Math.sin(a) * 1.5, HT - 0.57, Math.cos(a) * 1.5); col.add(d); }
@@ -606,7 +609,7 @@ function decalTex(lines, fg, bg, w, h) {
   for (let i = 0; i < 10; i++) { const b = new T.Mesh(new T.BoxGeometry(1.1, 0.035, 1.1), mat(0x15323a, 0.4, 0.6)); b.position.y = 0.75 + i * 0.29; col.add(b); }
   for (const a of [-0.35, -0.12, 0.12, 0.35, Math.PI - 0.2, Math.PI + 0.2]) { const p = new T.Mesh(new T.CylinderGeometry(0.035, 0.035, HT - 1.05, 10), amber); p.position.set(Math.sin(a) * 1.04, 0.5 + (HT - 1.05) / 2, Math.cos(a) * 1.04); col.add(p); }
   // floating cyan display sheets running from the column toward the console tables
-  for (const [a, len, y] of [[-55, 3.2, 1.15], [70, 3.6, 1.3], [180, 2.6, 1.05]]) { const s2 = new T.Mesh(new T.PlaneGeometry(len, 0.75), holoM); s2.rotation.order = 'YXZ'; s2.rotation.y = a * DEG + Math.PI / 2; s2.rotation.x = -Math.PI / 2 + 0.06; s2.position.set(Math.sin(a * DEG) * (1.1 + len / 2), y, VZ + Math.cos(a * DEG) * (1.1 + len / 2)); g.add(s2); }
+  for (const [a, len, y] of [[-55, 2.4, 1.25], [70, 2.4, 1.35], [180, 2.2, 1.15], [125, 2.2, 1.3]]) { const s2 = new T.Mesh(new T.PlaneGeometry(len, 1.1), holoM); s2.rotation.order = 'YXZ'; s2.rotation.y = a * DEG + Math.PI / 2; s2.rotation.x = -Math.PI / 2 + 0.45; s2.position.set(Math.sin(a * DEG) * (1.1 + len / 2), y, VZ + Math.cos(a * DEG) * (1.1 + len / 2)); g.add(s2); }
   // low black platform around the column with one cyan edge
   { const pf = new T.Mesh(new T.CylinderGeometry(2.3, 2.35, 0.12, 64), black); pf.position.set(0, 0.06, VZ); g.add(pf); flatRing(2.32, 0.03, cyan, 0.125, VZ); }
   // console tables with round gauge tops, white lit edges, a seat for the human at each
@@ -635,6 +638,17 @@ function decalTex(lines, fg, bg, w, h) {
   mark('ELEVATOR · SPOKE A2', 30, 1.35, 0, 2.95, C1 + 0.13, 0);
   mark('A-06 · DECK 1', 40, 1.6, -CW / 2 + 0.09, 2.85, -4.3, Math.PI / 2);
   mark('GENESIS · WING A', 36, 1.6, CW / 2 - 0.09, 2.85, -6.5, -Math.PI / 2);
+  // ── soft halos (a stand-in for camera bloom) on the light rings, the column and its amber lights
+  const haloTex = cnv(128, 128, (x, w, h) => { const gr = x.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, w, h); });
+  const halo = (c, op) => new T.SpriteMaterial({ map: haloTex, color: c, transparent: true, opacity: op, depthWrite: false, blending: T.AdditiveBlending });
+  const hWhite = halo(0xeaf4ff, 0.22), hCyan = halo(0x3fd6ec, 0.35), hAmber = halo(0xffa53a, 0.5);
+  const sprite = (m, x, y, z, sc) => { const sp = new T.Sprite(m); sp.position.set(x, y, z); sp.scale.set(sc, sc, 1); g.add(sp); };
+  for (const [r, y, n] of [[RR - 1.3, HT - 0.58, 40], [RR - 2.9, HT - 0.33, 30], [RR - 0.5, HT - 0.58, 44]]) for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI; sprite(hWhite, Math.sin(a) * r, y, VZ + Math.cos(a) * r, 0.9); }
+  for (let i = 0; i < 9; i++) sprite(hCyan, 0, 0.8 + i * 0.36, VZ, 3.0);
+  for (let i = 0; i < 24; i++) { const a = i / 24 * 2 * Math.PI; sprite(hAmber, Math.sin(a) * 1.5, HT - 0.62, VZ + Math.cos(a) * 1.5, 0.35); }
+  // one overhead light casts soft shadows; every solid part casts and receives
+  { const L = new T.PointLight(0xf4f8fb, 0, 20, 2); L.position.set(0, HT - 0.7, VZ + 3.5); L.userData.i = 26; L.castShadow = true; L.shadow.mapSize.set(1024, 1024); L.shadow.bias = -0.003; L.shadow.camera.near = 0.1; L.shadow.camera.far = 20; g.add(L); home.lights.push(L); }
+  g.traverse(o => { if (o.isMesh) { const tr = o.material.transparent; o.castShadow = !tr && o.geometry.type !== 'CircleGeometry' && o.geometry.type !== 'RingGeometry'; o.receiveShadow = !tr; } });
   // ── lights
   for (const [x, y, z, c, i] of [[0, 3.0, -3.5, 0xf4f8fb, 20], [0, 3.0, -9, 0xf4f8fb, 18], [-4.6, 3.4, VZ, 0xf2f6fa, 30], [4.6, 3.4, VZ, 0xf2f6fa, 30], [0, 3.4, VZ + 4.5, 0xf6f8fb, 26], [0, 3.4, VZ - 4.5, 0xf6f8fb, 24], [0, 1.8, VZ, 0x3fd6ec, 26]]) {
     const L = new T.PointLight(c, 0, 18, 2); L.position.set(x, y, z); L.userData.i = i; g.add(L); home.lights.push(L);
@@ -722,6 +736,12 @@ function frame(now) {
   const dk = CAM.dist * Math.max(1, 1.3 / camera.aspect); // pull back on tall (phone) screens
   camera.position.set(CAM.target.x + dk * Math.cos(CAM.el) * Math.sin(CAM.az), CAM.target.y + dk * Math.sin(CAM.el), CAM.target.z + dk * Math.cos(CAM.el) * Math.cos(CAM.az));
   camera.lookAt(CAM.target);
+  }
+  if (home.active && !home.env && home.envPos) {           // capture the room once for real reflections
+    const rt = new T.WebGLCubeRenderTarget(256, { type: T.HalfFloatType }), cc = new T.CubeCamera(0.05, 60, rt);
+    cc.position.copy(home.envPos).applyMatrix4(home.group.matrixWorld); cc.updateMatrixWorld(true); cc.update(renderer, scene);
+    const pm = new T.PMREMGenerator(renderer); home.env = pm.fromCubemap(rt.texture).texture; pm.dispose();
+    home.group.traverse(o2 => { const m2 = o2.material; if (m2 && m2.isMeshStandardMaterial) { m2.envMap = home.env; m2.envMapIntensity = m2.userData.env ?? 0.85; m2.needsUpdate = true; } });
   }
   renderer.render(scene, camera);
   if (S.labels && !home.active) {
