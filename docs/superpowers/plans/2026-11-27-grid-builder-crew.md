@@ -24,7 +24,7 @@
 - Multi-Grid (operator 2026-11-27): the team initialises the structure of **every** Grid. Grids live in `crew.grids`; each has its own skeleton + pinned counts. `referenceFor(grid)` returns the skeleton from the Grid's brief (`brief.skeleton`), with `genesisReference()` as the built-in default; the checker reads counts from that, never from Genesis constants. Acceptance adds a second small Grid (2 wings, structure only) created from a brief.
 - Interiors the crew builds are starters; the owning Nous may rebuild them (no lock, no crew ownership).
 - v1 crew freedom: **details only**. The skeleton is seeded and fixed; the crew writes the chamber interiors of the **ready-built** home parcels (Genesis default: Wing A's 12) and the exterior detail; **build-yourself** parcels (Wing D's 12) stay empty shells with a door.
-- Interiors: the *Passengers*-like style (white ribs over warm light panels, glossy warm floor, white furniture, warm white light); only parts with a function (no mind core, dais, niches, pilasters). **No Tron-style neon**, no film names, logos or stock-image text.
+- Interiors: shared by the Nous and its human; fundamental-science lab style after the operator's round engineering-room reference (light panelled walls on slanted ribs with mesh and keypad bands, dark ceiling with white light rings, dark glossy floor, cyan compute column with amber conduits, console tables with round gauge tops, floating cyan display sheets; cyan floor glow only at the column platform edge); only parts with a function. **No Tron-style neon**, no film names, logos or stock-image text.
 
 ## Review Focus
 
@@ -111,7 +111,7 @@ test('InteriorDoc rejects an unknown kind', () => {
   - Each parcel has an address `{wing, section, deck}` and an id like `A-06-d1`.
   - `InteriorDoc.items[]` is `{kind, pos:[x,y,z], size:[w,h,d], rotY?, color?, label?}` in **parcel-local** coordinates: x along the wing in `[-L/2, L/2]`, y up in `[0, 4.35]`, z across in `[-W/2, W/2]`.
   - `ExteriorDoc` is `{wing, blocks:[{u, across, face:'inner'|'outer', L, W, H, lit:number}]}`.
-  - `CATALOG_KINDS` = `corridor_rib, vault_rib, light_panel, end_wall, window, door, console_pod, seat, light`.
+  - `CATALOG_KINDS` = `corridor_panel, round_wall, wall_rib, window, door, compute_column, column_platform, console_table, display_sheet, seat, light_ring, light`.
   - `ParcelDoc` has `offer: 'ready_built' | 'build_yourself'` (home parcels only; others omit it). `genesisReference()` sets Wing A homes `ready_built`, Wing D homes `build_yourself`.
   - `genesisReference()` builds the skeleton from the Global Constraints values. Spokes: two per wing at `u = ±0.55`; hub endpoint `x = clamp(xc, −250, 250)` at radius 19.
 - [ ] **Step 5: Run** `npm test -w packages/model`. Expected: PASS.
@@ -145,22 +145,22 @@ test('InteriorDoc rejects an unknown kind', () => {
 
 **Interfaces:**
 - Consumes: Task 2 `check`, `Report`.
-- Produces: the rules `interior.fit`, `interior.overlap`, `interior.catalog`, `interior.required`, `style.palette`, `style.text`, `exterior.bounds`, `file.size`; exported `FORBIDDEN_TEXT = ['passengers','avalon','tron','space-corp','istock']`; `WARM_PALETTE` (an allowed light-colour list from the spec's warm style).
+- Produces: the rules `interior.fit`, `interior.overlap`, `interior.catalog`, `interior.required`, `style.palette`, `style.no_floor_glow`, `style.text`, `exterior.bounds`, `file.size`; exported `FORBIDDEN_TEXT = ['passengers','avalon','tron','space-corp','istock','uss','ncc','starfleet','enterprise']`; `LAB_PALETTE` (the allowed light colours of the spec's science-lab style).
 
-- [ ] **Step 1: Write failing tests**, using a valid fixture `interiors/A-06-d1.json` (`corridor_rib`s, `vault_rib`s, `light_panel`s, `window`, `door`, 4 `console_pod` with `seat`s facing the window):
+- [ ] **Step 1: Write failing tests**, using a valid fixture `interiors/A-06-d1.json` (`corridor_panel`s, `round_wall`, `wall_rib`s, `window`, `door`, one `compute_column` on a `column_platform`, 4 `console_table`s each with a `seat`, 3 `display_sheet`s, `light_ring`s):
   - the fixture passes;
   - an item poking 0.5 m above 4.35 → `interior.fit` fails;
-  - two `console_pod`s overlapping (axis-aligned boxes after `rotY`) → `interior.overlap` fails;
-  - an interior without `door` or `window` → `interior.required` fails;
+  - two `seat`s overlapping (axis-aligned boxes after `rotY`) → `interior.overlap` fails;
+  - an interior without `door`, `window` or `compute_column` → `interior.required` fails;
   - an interior file for a `build_yourself` parcel → `interior.offer` fails;
-  - a `light_panel` with `color: '#3aa8ff'` → `style.palette` fails (Tron-style blue);
+  - a `light_ring` on the floor (`y < 0.1`) more than 5 m from the `compute_column` → `style.no_floor_glow` fails (floor rings within 5 m pass); a `light_ring` with `color: '#3aa8ff'` → `style.palette` fails (blue is not in `LAB_PALETTE`; cyan is allowed only on instruments);
   - `label: 'SPACE-CORP 21'` → `style.text` fails;
   - an exterior block with `H: 20` → `exterior.bounds` fails (max 14);
   - a 300 KB file → `file.size` fails (limit 256 KB).
 - [ ] **Step 2: Run.** Expected: FAIL.
 - [ ] **Step 3: Implement.**
   - Overlap uses oriented boxes reduced to the xz-plane plus y-ranges. Thin decor kinds (`floor_light_ring`, `ceiling_light_ring`, `wall_panel`) are exempt from overlap.
-  - Style checks colours against `WARM_PALETTE` and labels against `FORBIDDEN_TEXT`, case-insensitive.
+  - Style checks colours against `LAB_PALETTE` (cool whites, greys, and instrument cyan `#5fd4e6`/`#8fe6f2`/`#bff4fb` only on `compute_column`, `console_table`, `display_sheet`, `column_platform`) and labels against `FORBIDDEN_TEXT`, case-insensitive.
 - [ ] **Step 4: Run.** Expected: PASS.
 - [ ] **Step 5: Commit** `feat(checker): geometry, interior and style rules`
 
@@ -334,7 +334,7 @@ test('InteriorDoc rejects an unknown kind', () => {
 - [ ] **Step 2: Run.** Expected: FAIL.
 - [ ] **Step 3: Implement.**
   - Port the scene and replace the `ARMS` constants with data from `grid.json` and the `structure/wings/*` files.
-  - Map each `InteriorDoc.items[].kind` to the existing warm-style builders (corridor rib, vault rib, light panel, end wall, window, door, console pod, seat, light).
+  - Map each `InteriorDoc.items[].kind` to the existing lab-style builders (corridor panel, round wall, wall rib, window, door, compute column, column platform, console table, display sheet, seat, light ring, light).
   - Embed three.js the same way the Noesis page does: rewrite `export{…}` into `const THREE={…}` and wrap the scene in a function scope.
 - [ ] **Step 4: Run.** Expected: PASS.
 - [ ] **Step 5: Commit** `feat(crewd): result page generated from the landed model`

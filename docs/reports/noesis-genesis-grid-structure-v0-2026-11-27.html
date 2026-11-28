@@ -106,7 +106,7 @@ button.home[aria-pressed="true"]{border-color:#f2b866;background:#3a2a12}
   <g fill="none" stroke="#ffe3b0" stroke-width="1"><path d="M66 266v-22h56v22M82 244v-10h24v10"/><path d=""/><path d="M228 266v-30h90v30"/></g>
   <g fill="#ffd28a"><circle cx="133" cy="128" r="3"/><circle cx="273" cy="158" r="3"/><circle cx="402" cy="128" r="3"/></g>
   <text x="133" y="108" fill="#f2b866" font-size="12" text-anchor="middle">corridor</text>
-  <text x="273" y="140" fill="#f2b866" font-size="12" text-anchor="middle">consoles</text>
+  <text x="273" y="140" fill="#f2b866" font-size="12" text-anchor="middle">compute + desk</text>
   <text x="402" y="108" fill="#f2b866" font-size="12" text-anchor="middle">window</text>
   <text x="260" y="84" fill="#e8ecf4" font-size="13" text-anchor="middle" font-weight="600">Nous house — designed &amp; built by the Nous</text>
 </svg></div>
@@ -115,7 +115,7 @@ button.home[aria-pressed="true"]{border-color:#f2b866;background:#3a2a12}
 <ul>
 <li><b>Address</b> keeps the shape of D-NH-10: <code>(arm, section, level)</code>. The field today called <code>ring</code> would name the arm. <code>level</code> is the deck, counted from the floor side: deck 1 is outermost.</li>
 <li><b>Volume:</b> the section’s length along the arm × the arm’s width (40 m) × one deck (4.5 m). A home parcel is 35.8 m × 40 m × 4.5 m, a work parcel 53.8 m, a commons hall 107.5 m (each wing is 430 m long).</li>
-<li><b>The planner owns the shell:</b> floor, ceiling, walls between parcels, power and air. <b>The Nous owns everything inside:</b> its chamber — corridor, consoles and screens, window, light. A Nous house is not a human home.</li>
+<li><b>The planner owns the shell:</b> floor, ceiling, walls between parcels, power and air. <b>The Nous owns everything inside:</b> its chamber — corridor, shared by the Nous and its human — the Nous’s compute column, console tables with seats, floating displays, keypad walls, window, light. A Nous house is not a human home.</li>
 <li><b>Genesis opens deck 1 only.</b> Decks 2 and 3 exist but stay closed until the planner opens them; that is how the Grid grows without new arms.</li>
 <li><b>Every deck has the same 1 g</b> under the gravity generator (with spin gravity, upper decks would have been a little lighter).</li>
 </ul>
@@ -547,91 +547,113 @@ function decalTex(lines, fg, bg, w, h) {
   };
   const box = (w, h, d, m, x, y, z, ry) => { const b = new T.Mesh(new T.BoxGeometry(w, h, d), m); b.position.set(x, y + h / 2, z); if (ry) b.rotation.y = ry; b.receiveShadow = true; g.add(b); return b; };
   const flatRing = (r, tube, m, y, z, x) => { const o = new T.Mesh(new T.TorusGeometry(r, tube, 10, 128), m); o.rotation.x = Math.PI / 2; o.position.set(x || 0, y, z); g.add(o); return o; };
-  // ── finishes in the atrium palette the operator chose: brushed pewter walls with copper-amber lit panels,
-  //    glossy charcoal floor with steel inlay, a light-grey stepped ceiling with white recessed lines. Finishes only; every part has a job.
+  // ── a shared room for the Nous and its human, fundamental-science style after the operator's round engineering-room
+  //    reference: light panelled walls on slanted ribs with keypad bands, the Nous's compute column (cyan under glass,
+  //    amber conduits), floating cyan display sheets, console tables with round gauge tops, white light rings overhead.
   const cnv = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = 8; return t; };
-  const wallTex = (rep) => { const t = cnv(512, 1024, (x, w, h) => {      // brushed pewter panel, copper inset
-    const gr = x.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, '#5f5f5f'); gr.addColorStop(0.5, '#8d8c89'); gr.addColorStop(1, '#5f5f5f'); x.fillStyle = gr; x.fillRect(0, 0, w, h);
-    x.globalAlpha = 0.1; for (let i = 0; i < 160; i++) { x.fillStyle = i % 2 ? '#000' : '#fff'; x.fillRect(0, hash(i, 1, 2, 91) * h, w, 1); } x.globalAlpha = 1;
-    x.fillStyle = '#2e2f31'; x.fillRect(0, 0, 5, h); x.fillRect(w - 5, 0, 5, h);
-    for (const y of [0.14, 0.88]) { x.fillStyle = '#3a3b3d'; x.fillRect(0, h * y, w, 7); x.fillStyle = '#b9bcc0'; x.fillRect(0, h * y + 7, w, 2); }
-    const X0 = w * 0.16, X1 = w * 0.84, Y0 = h * 0.3, Y1 = h * 0.74;
-    x.fillStyle = '#4a2410'; x.fillRect(X0, Y0, X1 - X0, Y1 - Y0); x.strokeStyle = '#b9bcc0'; x.lineWidth = 4; x.strokeRect(X0 - 4, Y0 - 4, X1 - X0 + 8, Y1 - Y0 + 8);
-    x.strokeStyle = '#26120a'; x.lineWidth = 3; for (let cx = X0; cx <= X1; cx += (X1 - X0) / 6) { x.beginPath(); x.moveTo(cx, Y0); x.lineTo(cx, Y1); x.stroke(); } for (let cy = Y0; cy <= Y1; cy += (Y1 - Y0) / 10) { x.beginPath(); x.moveTo(X0, cy); x.lineTo(X1, cy); x.stroke(); }
+  const wallTex = (rep) => { const t = cnv(512, 1024, (x, w, h) => {
+    x.fillStyle = '#d7dadd'; x.fillRect(0, 0, w, h);
+    const mesh = (y0, y1) => { x.fillStyle = '#2b2f33'; x.fillRect(0, h * y0, w, h * (y1 - y0)); x.fillStyle = '#41474d'; for (let yy = h * y0 + 4; yy < h * y1; yy += 8) for (let xx = (yy / 8 % 2) * 4; xx < w; xx += 8) x.fillRect(xx, yy, 3, 3); };
+    mesh(0.04, 0.22); mesh(0.74, 0.9);
+    x.fillStyle = '#16191c'; x.fillRect(w * 0.06, h * 0.36, w * 0.88, h * 0.2);           // keypad band
+    x.fillStyle = '#b9bec3'; x.fillRect(0, h * 0.33, w, 6); x.fillRect(0, h * 0.585, w, 6); x.fillRect(0, h * 0.7, w, 4);
+    x.fillStyle = '#9aa0a6'; x.fillRect(0, 0, 3, h); x.fillRect(w - 3, 0, 3, h);
   }); t.repeat.set(rep, 1); return t; };
   const wallGlow = (rep) => { const t = cnv(512, 1024, (x, w, h) => { x.fillStyle = '#000'; x.fillRect(0, 0, w, h);
-    const X0 = w * 0.16, X1 = w * 0.84, Y0 = h * 0.3, Y1 = h * 0.74, dx = (X1 - X0) / 6, dy = (Y1 - Y0) / 10;
-    for (let i = 0; i < 6; i++) for (let j = 0; j < 10; j++) { const v = 0.45 + 0.55 * hash(i, j, 5, 91); x.fillStyle = 'rgba(255,' + Math.round(95 + 50 * v) + ',45,' + v.toFixed(2) + ')'; x.fillRect(X0 + i * dx + 4, Y0 + j * dy + 4, dx - 8, dy - 8); } }); t.repeat.set(rep, 1); return t; };
-  const floorTex = (rx, rz) => { const t = cnv(512, 512, (x, w, h) => {
-    x.fillStyle = '#1a1b1d'; x.fillRect(0, 0, w, h); x.strokeStyle = '#5d6064'; x.lineWidth = 2;
-    x.beginPath(); x.moveTo(w / 2, 0); x.lineTo(w, h / 2); x.lineTo(w / 2, h); x.lineTo(0, h / 2); x.closePath(); x.stroke();
-    x.lineWidth = 1.5; x.beginPath(); x.moveTo(w / 2, 40); x.lineTo(w - 40, h / 2); x.lineTo(w / 2, h - 40); x.lineTo(40, h / 2); x.closePath(); x.stroke();
-    x.fillStyle = '#8a8e93'; for (const [px, py] of [[0, 0], [w, 0], [0, h], [w, h], [w / 2, h / 2]]) x.fillRect(px - 7, py - 7, 14, 14);
-  }); t.repeat.set(rx, rz); return t; };
-  const dotsTex = (rx, rz) => { const t = cnv(256, 256, (x, w, h) => { x.fillStyle = '#000'; x.fillRect(0, 0, w, h); x.fillStyle = '#fff6ea'; for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { x.beginPath(); x.arc(32 + i * 64 + (j % 2) * 32, 32 + j * 64, 5, 0, 7); x.fill(); } }); t.repeat.set(rx, rz); return t; };
-  const wallM = (len) => new T.MeshStandardMaterial({ map: wallTex(len / 2.2), emissiveMap: wallGlow(len / 2.2), emissive: 0xffffff, emissiveIntensity: 0.7, roughness: 0.32, metalness: 0.55 });
-  const floorM = (lx, lz) => new T.MeshStandardMaterial({ map: floorTex(lx / 2.4, lz / 2.4), roughness: 0.12, metalness: 0.4 });
-  const gold = mat(0xb7babe, 0.26, 0.9), cream = mat(0xc4c6c8, 0.42, 0.45), strip = emis(0xf3f6f9, 2.4);
-  const VL = D1 - D0, VZ = (D0 + D1) / 2, SOF = HT - 0.55;
-  // floor, side walls
-  box(LEN, 0.1, VL, floorM(LEN, VL), 0, -0.1, VZ);
-  for (const sx of [-1, 1]) box(0.2, HT, VL, wallM(VL), sx * LEN / 2, 0, VZ);
-  // back wall around the corridor opening, with a stepped gold frame
-  const CW = 3.4, CH = 3.5;
-  for (const sx of [-1, 1]) box(LEN / 2 - CW / 2, HT, 0.2, wallM(LEN / 2 - CW / 2), sx * (LEN / 4 + CW / 4), 0, D0);
-  box(CW, HT - CH, 0.2, wallM(CW), 0, CH, D0);
-  for (let k = 0; k < 3; k++) { const e = 0.12 + k * 0.16, zf = D0 + 0.12 + k * 0.03; for (const sx of [-1, 1]) box(0.08, CH + e, 0.06, gold, sx * (CW / 2 + e), 0, zf); box(CW + 2 * e + 0.08, 0.08, 0.06, gold, 0, CH + e, zf); }
-  // window wall: a wide window in a stepped gold frame
-  const WW = 9.6, WY0 = 0.85, WY1 = SOF - 0.25;
-  for (const sx of [-1, 1]) box(LEN / 2 - WW / 2, HT, 0.2, wallM(LEN / 2 - WW / 2), sx * (LEN / 4 + WW / 4), 0, D1);
-  box(WW, WY0, 0.2, wallM(WW), 0, 0, D1); box(WW, HT - WY1, 0.2, wallM(WW), 0, WY1, D1);
-  box(WW, WY1 - WY0, 0.03, W.glass, 0, WY0, D1);
-  for (let k = 0; k < 3; k++) { const e = 0.08 + k * 0.15, zf = D1 - 0.12 - k * 0.03; for (const sx of [-1, 1]) box(0.08, WY1 - WY0 + 2 * e, 0.06, gold, sx * (WW / 2 + e), WY0 - e, zf); for (const y of [WY0 - e, WY1 + e - 0.08]) box(WW + 2 * e + 0.08, 0.08, 0.06, gold, 0, y, zf); }
-  for (let x = -WW / 2 + WW / 6; x < WW / 2 - 0.1; x += WW / 6) box(0.05, WY1 - WY0, 0.05, gold, x, WY0, D1 - 0.06);
-  // stepped ceiling: a soffit all round, a raised coffer full of small lights, recessed warm lines along both
-  const CX = LEN - 5, CZL = VL - 5;
-  box(LEN, 0.12, VL, cream, 0, HT, VZ);
-  for (const sx of [-1, 1]) box((LEN - CX) / 2, HT - SOF, VL, cream, sx * (CX / 2 + (LEN - CX) / 4), SOF, VZ);
-  for (const sz of [-1, 1]) box(CX, HT - SOF, (VL - CZL) / 2, cream, 0, SOF, VZ + sz * (CZL / 2 + (VL - CZL) / 4));
-  const cof = new T.Mesh(new T.PlaneGeometry(CX, CZL), new T.MeshStandardMaterial({ color: 0xb4b7ba, roughness: 0.45, metalness: 0.5, emissive: 0xffffff, emissiveMap: dotsTex(CX / 1.2, CZL / 1.2), emissiveIntensity: 0.75 }));
-  cof.rotation.x = Math.PI / 2; cof.position.set(0, HT - 0.01, VZ); g.add(cof);
-  for (const sx of [-1, 1]) { box(0.07, 0.05, CZL, strip, sx * (CX / 2 - 0.12), SOF + 0.02, VZ); box(0.05, 0.03, VL - 0.6, strip, sx * (CX / 2 + 1.1), SOF - 0.03, VZ); }
-  for (const sz of [-1, 1]) box(CX, 0.05, 0.07, strip, 0, SOF + 0.02, VZ + sz * (CZL / 2 - 0.12));
-  for (const sx of [-1, 1]) box(0.06, HT - SOF, VL, gold, sx * CX / 2, SOF, VZ);
-  // ── consoles: the Nous's work stations, a shallow arc facing the window, each with a cream seat for its human
-  let sid = 0;
-  for (const cx of [-4.2, -1.4, 1.4, 4.2]) {
-    const k = new T.Group(); k.position.set(cx, 0, D1 - 4.2 + Math.abs(cx) * 0.18); k.rotation.y = Math.PI - cx * 0.06; g.add(k);
-    const base = new T.Mesh(new T.CapsuleGeometry(0.34, 1.1, 8, 24), W.white); base.rotation.z = Math.PI / 2; base.position.set(0, 0.62, 0); k.add(base);
-    const ped = new T.Mesh(new T.CylinderGeometry(0.22, 0.32, 0.45, 32), gold); ped.position.y = 0.22; k.add(ped);
-    const trim = new T.Mesh(new T.BoxGeometry(1.5, 0.035, 0.05), gold); trim.position.set(0, 0.62, 0.36); k.add(trim);
-    const scr = new T.Mesh(new T.PlaneGeometry(1.3, 0.7), new T.MeshBasicMaterial({ map: screenTex(sid++) })); scr.position.set(0, 1.45, -0.12); scr.rotation.x = -0.12; scr.rotation.y = Math.PI; k.add(scr);
-    const frame = new T.Mesh(new T.BoxGeometry(1.38, 0.78, 0.04), gold); frame.position.set(0, 1.45, -0.15); frame.rotation.x = -0.12; k.add(frame);
-    const neck = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 0.5, 12), gold); neck.position.set(0, 1.0, -0.12); k.add(neck);
-    const seat = new T.Group(); seat.position.set(0, 0, 1.0); k.add(seat);
-    const p = new T.Mesh(new T.CylinderGeometry(0.05, 0.2, 0.42, 16), gold); p.position.y = 0.21; seat.add(p);
-    const st = new T.Mesh(new T.CapsuleGeometry(0.26, 0.2, 6, 16), mat(0xdadbdd, 0.5, 0.05)); st.rotation.z = Math.PI / 2; st.position.y = 0.5; seat.add(st);
-    const bk = new T.Mesh(new T.CapsuleGeometry(0.24, 0.35, 6, 16), mat(0xdadbdd, 0.5, 0.05)); bk.position.set(0, 0.92, 0.25); seat.add(bk);
+    for (let gI = 0; gI < 3; gI++) { const gx = w * 0.1 + gI * w * 0.29; for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) { const v = hash(gI, r * 4 + c, 9, 77); x.fillStyle = v > 0.82 ? '#ffb347' : v > 0.3 ? '#3fd6ec' : '#1b6f7c'; x.fillRect(gx + c * 34, h * 0.385 + r * 50, 26, 30); } }
+    x.fillStyle = '#3fd6ec'; x.fillRect(w * 0.1, h * 0.535, w * 0.8, 5);
+    x.fillStyle = '#f4f8fb'; x.fillRect(0, h * 0.005, w, 10);                                // cove light at the top of the wall
+  }); t.repeat.set(rep, 1); return t; };
+  const hudTex = (seed) => cnv(512, 512, (x, w, h) => { x.fillStyle = '#05090c'; x.fillRect(0, 0, w, h); const cx = w / 2, cy = h / 2; x.lineCap = 'butt';
+    for (let k = 0; k < 6; k++) { const r = 60 + k * 30, n = 12 + k * 6; x.strokeStyle = k % 2 ? '#3fd6ec' : '#8fe6f2'; x.lineWidth = k % 2 ? 14 : 5; for (let i = 0; i < n; i++) if (hash(i, k, seed, 79) > 0.25) { const a0 = i / n * 2 * Math.PI, a1 = a0 + 2 * Math.PI / n * 0.72; x.beginPath(); x.arc(cx, cy, r, a0, a1); x.stroke(); } }
+    x.fillStyle = '#3fd6ec'; x.beginPath(); x.arc(cx, cy, 34, 0, 7); x.fill(); x.fillStyle = '#05090c'; x.beginPath(); x.arc(cx, cy, 18, 0, 7); x.fill(); });
+  const steel = mat(0x9aa1a8, 0.3, 0.85), white = mat(0xe8ebee, 0.32, 0.15), black = mat(0x0d0f11, 0.12, 0.5), seatM = mat(0xc9cdd1, 0.45, 0.1);
+  const cool = emis(0xf4f8fb, 2.6), cyan = emis(0x2ccfe8, 1.9), amber = emis(0xffa53a, 2.0);
+  const glassC = new T.MeshStandardMaterial({ color: 0x9fdce6, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.22, depthWrite: false });
+  const holoTex = cnv(512, 256, (x, w, h) => { const gr = x.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(60,210,235,0.05)'); gr.addColorStop(0.15, 'rgba(60,210,235,0.35)'); gr.addColorStop(0.85, 'rgba(60,210,235,0.35)'); gr.addColorStop(1, 'rgba(60,210,235,0.05)'); x.fillStyle = gr; x.fillRect(0, 0, w, h);
+    x.strokeStyle = 'rgba(190,250,255,0.9)'; x.lineWidth = 2; x.strokeRect(6, 6, w - 12, h - 12); x.lineWidth = 1.5; for (let i = 0; i < 6; i++) { x.beginPath(); for (let k = 0; k < w; k += 6) { const y = 40 + i * 32 + Math.sin(k / 30 + i) * 8 * hash(i, 1, 2, 83); k ? x.lineTo(k, y) : x.moveTo(k, y); } x.stroke(); }
+    x.fillStyle = 'rgba(220,255,255,0.9)'; for (let i = 0; i < 14; i++) x.fillRect(20 + i * 34, h - 40 - hash(i, 3, 2, 83) * 60, 18, 4); });
+  const holoM = new T.MeshBasicMaterial({ map: holoTex, transparent: true, opacity: 0.9, side: T.DoubleSide, depthWrite: false, blending: T.AdditiveBlending });
+  const VL = D1 - D0, VZ = (D0 + D1) / 2, RR = Math.min(LEN, VL) / 2 - 0.3, DEG = Math.PI / 180;
+  const wallArc = (y0, y1, a0, a1, m) => { const c = new T.Mesh(new T.CylinderGeometry(RR, RR, y1 - y0, 96, 1, true, a0 * DEG, (a1 - a0) * DEG), m); c.position.set(0, (y0 + y1) / 2, VZ); g.add(c); return c; };
+  const wallM = (deg) => new T.MeshStandardMaterial({ map: wallTex(RR * deg * DEG / 1.5), emissiveMap: wallGlow(RR * deg * DEG / 1.5), emissive: 0xffffff, emissiveIntensity: 1.0, roughness: 0.4, metalness: 0.25, side: T.DoubleSide });
+  // floor: dark glossy plates; ceiling: dark with bright white rings and a big white collar over the column
+  const floorTex = cnv(1024, 1024, (x, w, h) => { x.fillStyle = '#25292d'; x.fillRect(0, 0, w, h); x.strokeStyle = '#1a1d20'; x.lineWidth = 4; for (let a = 0; a < 16; a++) { const t2 = a * Math.PI / 8; x.beginPath(); x.moveTo(w / 2 + Math.cos(t2) * 120, h / 2 + Math.sin(t2) * 120); x.lineTo(w / 2 + Math.cos(t2) * w / 2, h / 2 + Math.sin(t2) * h / 2); x.stroke(); } for (const r of [120, 260, 400]) { x.beginPath(); x.arc(w / 2, h / 2, r, 0, 7); x.stroke(); } });
+  floorTex.wrapS = floorTex.wrapT = T.ClampToEdgeWrapping;
+  const fl = new T.Mesh(new T.CircleGeometry(RR + 0.3, 96), new T.MeshStandardMaterial({ map: floorTex, roughness: 0.12, metalness: 0.4 })); fl.rotation.x = -Math.PI / 2; fl.position.set(0, 0.002, VZ); fl.material.userData.env = 0.4; g.add(fl);
+  box(LEN, 0.1, VL, mat(0x1d2024, 0.4, 0.3), 0, -0.1, VZ);
+  const ce = new T.Mesh(new T.CircleGeometry(RR + 0.3, 96), mat(0x2a2f34, 0.5, 0.5)); ce.rotation.x = Math.PI / 2; ce.position.set(0, HT, VZ); g.add(ce);
+  for (const [r0, r1, y] of [[RR - 1.4, RR + 0.3, HT - 0.55], [RR - 3.0, RR - 1.4, HT - 0.3]]) {
+    const t = new T.Mesh(new T.RingGeometry(r0, r1, 96), new T.MeshStandardMaterial({ color: 0xdfe3e6, roughness: 0.35, metalness: 0.3, side: T.DoubleSide })); t.rotation.x = Math.PI / 2; t.position.set(0, y, VZ); g.add(t);
+    flatRing(r0 + 0.1, 0.06, cool, y - 0.03, VZ);
   }
-  // ── entry corridor from the spoke elevator: walnut walls, inlaid floor, a recessed warm line overhead
-  const C0 = D0, C1 = -12, CL = C0 - C1, CM = (C0 + C1) / 2;
-  box(CW, 0.08, CL, floorM(CW, CL), 0, -0.08, CM);
-  box(CW, 0.1, CL, cream, 0, CH, CM);
-  for (const sx of [-1, 1]) { box(0.15, CH, CL, wallM(CL), sx * CW / 2, 0, CM); box(0.5, 0.25, CL, cream, sx * (CW / 2 - 0.25), CH - 0.25, CM); }
-  box(0.5, 0.03, CL - 0.4, strip, 0, CH - 0.05, CM);
-  for (const sx of [-1, 1]) box(0.04, 0.03, CL - 0.4, strip, sx * (CW / 2 - 0.52), CH - 0.27, CM);
-  box(CW, CH, 0.2, wallM(CW), 0, 0, C1);
-  const door = new T.Mesh(new T.CircleGeometry(1.15, 64), mat(0xd9dbde, 0.3, 0.5)); door.position.set(0, 1.35, C1 + 0.12); g.add(door);
-  for (const [r, t] of [[1.2, 0.05], [1.36, 0.03], [1.48, 0.02]]) { const ring = new T.Mesh(new T.TorusGeometry(r, t, 8, 64), gold); ring.position.set(0, 1.35, C1 + 0.13); g.add(ring); }
-  const mark = (txt, size, w, x, y, z, ry) => { const p = new T.Mesh(new T.PlaneGeometry(w, w * 0.22), new T.MeshBasicMaterial({ map: decalTex([[txt, size, 40]], '#d3d7dc', null, 380, 84), transparent: true })); p.position.set(x, y, z); p.rotation.y = ry; g.add(p); };
+  flatRing(RR - 0.5, 0.05, cool, HT - 0.58, VZ);
+  // round wall on slanted ribs: window toward the outer hull (+z), corridor door at -z
+  const WIN = 30, DOOR = 13, WY0 = 0.9, WY1 = HT - 0.9, CH = 3.5;
+  wallArc(0, HT, WIN, 180 - DOOR, wallM(180 - DOOR - WIN)); wallArc(0, HT, 180 + DOOR, 360 - WIN, wallM(180 - DOOR - WIN));
+  wallArc(0, WY0, -WIN, WIN, wallM(2 * WIN)); wallArc(WY1, HT, -WIN, WIN, wallM(2 * WIN)); wallArc(CH, HT, 180 - DOOR, 180 + DOOR, wallM(2 * DOOR));
+  wallArc(WY0, WY1, -WIN, WIN, glassC);
+  for (let a = -WIN; a <= WIN + 0.1; a += WIN / 2) { const m = new T.Mesh(new T.BoxGeometry(0.08, WY1 - WY0, 0.08), steel); m.position.set(Math.sin(a * DEG) * (RR - 0.04), (WY0 + WY1) / 2, VZ + Math.cos(a * DEG) * (RR - 0.04)); g.add(m); }
+  for (let a = WIN; a < 360 - WIN + 0.1; a += 18.5) { if (Math.abs(a - 180) < DOOR + 3) continue;   // slanted white ribs between wall panels
+    const rib = new T.Group(); rib.position.set(Math.sin(a * DEG) * (RR - 0.2), 0, VZ + Math.cos(a * DEG) * (RR - 0.2)); rib.rotation.y = a * DEG; g.add(rib);
+    const b = new T.Mesh(new T.BoxGeometry(0.32, HT - 0.4, 0.34), white); b.position.set(0, HT / 2 - 0.1, -0.05); b.rotation.x = -0.12; rib.add(b);
+    const l = new T.Mesh(new T.BoxGeometry(0.06, HT - 0.8, 0.02), cool); l.position.set(0, HT / 2 - 0.1, -0.23); l.rotation.x = -0.12; rib.add(l); }
+  // the Nous's compute column: where the Nous actually runs — cyan coolant-lit racks under glass, amber power conduits
+  const col = new T.Group(); col.position.set(0, 0, VZ); g.add(col); home.envPos = new T.Vector3(0, 1.8, VZ + 3.2);
+  const base = new T.Mesh(new T.CylinderGeometry(1.5, 1.7, 0.5, 64), white); base.position.y = 0.25; col.add(base);
+  const cap = new T.Mesh(new T.CylinderGeometry(2.1, 1.6, 0.55, 64), white); cap.position.y = HT - 0.28; col.add(cap);
+  for (let i = 0; i < 24; i++) { const a = i / 24 * 2 * Math.PI, d = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, 0.04, 12), amber); d.position.set(Math.sin(a) * 1.5, HT - 0.57, Math.cos(a) * 1.5); col.add(d); }
+  { const r = new T.Mesh(new T.TorusGeometry(1.85, 0.05, 8, 96), cool); r.rotation.x = Math.PI / 2; r.position.y = HT - 0.56; col.add(r); }
+  const gl = new T.Mesh(new T.CylinderGeometry(0.95, 0.95, HT - 1.05, 64, 1, true), glassC); gl.position.y = 0.5 + (HT - 1.05) / 2; col.add(gl);
+  const fluid = new T.Mesh(new T.CylinderGeometry(0.85, 0.85, HT - 1.1, 48), new T.MeshStandardMaterial({ color: 0x0b3a44, emissive: 0x2ccfe8, emissiveIntensity: 1.1, transparent: true, opacity: 0.85 })); fluid.position.y = gl.position.y; col.add(fluid);
+  for (let i = 0; i < 10; i++) { const b = new T.Mesh(new T.BoxGeometry(1.1, 0.035, 1.1), mat(0x15323a, 0.4, 0.6)); b.position.y = 0.75 + i * 0.29; col.add(b); }
+  for (const a of [-0.35, -0.12, 0.12, 0.35, Math.PI - 0.2, Math.PI + 0.2]) { const p = new T.Mesh(new T.CylinderGeometry(0.035, 0.035, HT - 1.05, 10), amber); p.position.set(Math.sin(a) * 1.04, 0.5 + (HT - 1.05) / 2, Math.cos(a) * 1.04); col.add(p); }
+  // floating cyan display sheets running from the column toward the console tables
+  for (const [a, len, y] of [[-55, 2.4, 1.25], [70, 2.4, 1.35], [180, 2.2, 1.15], [125, 2.2, 1.3]]) { const s2 = new T.Mesh(new T.PlaneGeometry(len, 1.1), holoM); s2.rotation.order = 'YXZ'; s2.rotation.y = a * DEG + Math.PI / 2; s2.rotation.x = -Math.PI / 2 + 0.45; s2.position.set(Math.sin(a * DEG) * (1.1 + len / 2), y, VZ + Math.cos(a * DEG) * (1.1 + len / 2)); g.add(s2); }
+  // low black platform around the column with one cyan edge
+  { const pf = new T.Mesh(new T.CylinderGeometry(2.3, 2.35, 0.12, 64), black); pf.position.set(0, 0.06, VZ); g.add(pf); flatRing(2.32, 0.03, cyan, 0.125, VZ); }
+  // console tables with round gauge tops, white lit edges, a seat for the human at each
+  let sid = 0;
+  for (const a of [-55, 70, 180, 125]) {
+    const k = new T.Group(); k.position.set(Math.sin(a * DEG) * 4.3, 0, VZ + Math.cos(a * DEG) * 4.3); k.rotation.y = a * DEG; g.add(k);
+    const body = new T.Mesh(new T.BoxGeometry(2.0, 0.82, 1.15), black); body.position.y = 0.41; k.add(body);
+    const top = new T.Mesh(new T.PlaneGeometry(1.1, 1.1), new T.MeshBasicMaterial({ map: hudTex(sid++) })); top.rotation.x = -Math.PI / 2; top.position.set(0, 0.825, 0); k.add(top);
+    for (const sx of [-1, 1]) { const e = new T.Mesh(new T.BoxGeometry(0.04, 0.02, 1.15), cool); e.position.set(sx * 0.98, 0.83, 0); k.add(e); }
+    const e2 = new T.Mesh(new T.BoxGeometry(2.0, 0.02, 0.04), cool); e2.position.set(0, 0.83, 0.56); k.add(e2);
+    const seat = new T.Group(); seat.position.set(0, 0, 1.15); k.add(seat);
+    const p = new T.Mesh(new T.CylinderGeometry(0.05, 0.22, 0.42, 16), steel); p.position.y = 0.21; seat.add(p);
+    const st = new T.Mesh(new T.CapsuleGeometry(0.26, 0.2, 6, 16), seatM); st.rotation.z = Math.PI / 2; st.position.y = 0.5; seat.add(st);
+    const back = new T.Mesh(new T.CapsuleGeometry(0.24, 0.35, 6, 16), seatM); back.position.set(0, 0.92, 0.25); seat.add(back);
+  }
+  // ── entry corridor from the spoke elevator: same light panels and keypad bands, dark floor, white light overhead
+  const CW = 3.4, C0 = VZ - RR * Math.cos(DOOR * DEG) + 0.15, C1 = -12, CL = C0 - C1, CM = (C0 + C1) / 2;
+  box(CW, 0.08, CL, mat(0x25292d, 0.15, 0.4), 0, -0.08, CM);
+  box(CW, 0.1, CL, mat(0x2a2f34, 0.5, 0.5), 0, CH, CM);
+  for (const sx of [-1, 1]) box(0.15, CH, CL, new T.MeshStandardMaterial({ map: wallTex(CL / 1.5), emissiveMap: wallGlow(CL / 1.5), emissive: 0xffffff, emissiveIntensity: 1.0, roughness: 0.4, metalness: 0.25 }), sx * CW / 2, 0, CM);
+  box(0.6, 0.03, CL - 0.4, cool, 0, CH - 0.05, CM);
+  box(CW, CH, 0.2, white, 0, 0, C1);
+  const door = new T.Mesh(new T.CircleGeometry(1.15, 64), mat(0xdfe3e7, 0.3, 0.5)); door.position.set(0, 1.35, C1 + 0.12); g.add(door);
+  for (const [r, t] of [[1.2, 0.05], [1.36, 0.03]]) { const ring = new T.Mesh(new T.TorusGeometry(r, t, 8, 64), steel); ring.position.set(0, 1.35, C1 + 0.13); g.add(ring); }
+  const mark = (txt, size, w, x, y, z, ry) => { const p = new T.Mesh(new T.PlaneGeometry(w, w * 0.22), new T.MeshBasicMaterial({ map: decalTex([[txt, size, 40]], '#3c4650', null, 380, 84), transparent: true })); p.position.set(x, y, z); p.rotation.y = ry; g.add(p); };
   mark('ELEVATOR · SPOKE A2', 30, 1.35, 0, 2.95, C1 + 0.13, 0);
-  mark('A-06 · DECK 1', 40, 1.9, -CW / 2 + 0.09, 2.6, -4.3, Math.PI / 2);
-  mark('GENESIS · WING A', 36, 1.9, CW / 2 - 0.09, 2.6, -6.5, -Math.PI / 2);
+  mark('A-06 · DECK 1', 40, 1.6, -CW / 2 + 0.09, 2.85, -4.3, Math.PI / 2);
+  mark('GENESIS · WING A', 36, 1.6, CW / 2 - 0.09, 2.85, -6.5, -Math.PI / 2);
+  // ── soft halos (a stand-in for camera bloom) on the light rings, the column and its amber lights
+  const haloTex = cnv(128, 128, (x, w, h) => { const gr = x.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, w, h); });
+  const halo = (c, op) => new T.SpriteMaterial({ map: haloTex, color: c, transparent: true, opacity: op, depthWrite: false, blending: T.AdditiveBlending });
+  const hWhite = halo(0xeaf4ff, 0.22), hCyan = halo(0x3fd6ec, 0.35), hAmber = halo(0xffa53a, 0.5);
+  const sprite = (m, x, y, z, sc) => { const sp = new T.Sprite(m); sp.position.set(x, y, z); sp.scale.set(sc, sc, 1); g.add(sp); };
+  for (const [r, y, n] of [[RR - 1.3, HT - 0.58, 40], [RR - 2.9, HT - 0.33, 30], [RR - 0.5, HT - 0.58, 44]]) for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI; sprite(hWhite, Math.sin(a) * r, y, VZ + Math.cos(a) * r, 0.9); }
+  for (let i = 0; i < 9; i++) sprite(hCyan, 0, 0.8 + i * 0.36, VZ, 3.0);
+  for (let i = 0; i < 24; i++) { const a = i / 24 * 2 * Math.PI; sprite(hAmber, Math.sin(a) * 1.5, HT - 0.62, VZ + Math.cos(a) * 1.5, 0.35); }
+  // one overhead light casts soft shadows; every solid part casts and receives
+  { const L = new T.PointLight(0xf4f8fb, 0, 20, 2); L.position.set(0, HT - 0.7, VZ + 3.5); L.userData.i = 26; L.castShadow = true; L.shadow.mapSize.set(1024, 1024); L.shadow.bias = -0.003; L.shadow.camera.near = 0.1; L.shadow.camera.far = 20; g.add(L); home.lights.push(L); }
+  g.traverse(o => { if (o.isMesh) { const tr = o.material.transparent; o.castShadow = !tr && o.geometry.type !== 'CircleGeometry' && o.geometry.type !== 'RingGeometry'; o.receiveShadow = !tr; } });
   // ── lights
-  for (const [x, y, z, c, i] of [[0, 3.0, -3.5, 0xfff4ea, 20], [0, 3.0, -9, 0xfff4ea, 18], [-4.5, 3.6, VZ - 3, 0xfff1e4, 44], [4.5, 3.6, VZ - 3, 0xfff1e4, 44], [0, 3.7, D1 - 4, 0xf6f8fb, 40], [0, 3.8, VZ + 1, 0xffd2a8, 30]]) {
+  for (const [x, y, z, c, i] of [[0, 3.0, -3.5, 0xf4f8fb, 20], [0, 3.0, -9, 0xf4f8fb, 18], [-4.6, 3.4, VZ, 0xf2f6fa, 30], [4.6, 3.4, VZ, 0xf2f6fa, 30], [0, 3.4, VZ + 4.5, 0xf6f8fb, 26], [0, 3.4, VZ - 4.5, 0xf6f8fb, 24], [0, 1.8, VZ, 0x3fd6ec, 26]]) {
     const L = new T.PointLight(c, 0, 18, 2); L.position.set(x, y, z); L.userData.i = i; g.add(L); home.lights.push(L);
   }
-  home.views = { home: { eye: new T.Vector3(0, 1.62, C1 + 0.6), yaw: 0, pitch: -0.03 }, chamber: { eye: new T.Vector3(-3.0, 1.7, VZ - 3.5), yaw: Math.atan2(3.6, D1 - VZ + 2), pitch: 0.06 } };
+  home.views = { home: { eye: new T.Vector3(0, 1.62, C1 + 0.6), yaw: 0, pitch: -0.03 }, chamber: { eye: new T.Vector3(-1.2, 1.8, VZ + 6.2), yaw: Math.atan2(1.2, -6.2), pitch: -0.06 } };
   home.eye = home.views.home.eye;
   home.group.visible = false;
 }
@@ -715,6 +737,12 @@ function frame(now) {
   camera.position.set(CAM.target.x + dk * Math.cos(CAM.el) * Math.sin(CAM.az), CAM.target.y + dk * Math.sin(CAM.el), CAM.target.z + dk * Math.cos(CAM.el) * Math.cos(CAM.az));
   camera.lookAt(CAM.target);
   }
+  if (home.active && !home.env && home.envPos) {           // capture the room once for real reflections
+    const rt = new T.WebGLCubeRenderTarget(256, { type: T.HalfFloatType }), cc = new T.CubeCamera(0.05, 60, rt);
+    cc.position.copy(home.envPos).applyMatrix4(home.group.matrixWorld); cc.updateMatrixWorld(true); cc.update(renderer, scene);
+    const pm = new T.PMREMGenerator(renderer); home.env = pm.fromCubemap(rt.texture).texture; pm.dispose();
+    home.group.traverse(o2 => { const m2 = o2.material; if (m2 && m2.isMeshStandardMaterial) { m2.envMap = home.env; m2.envMapIntensity = m2.userData.env ?? 0.85; m2.needsUpdate = true; } });
+  }
   renderer.render(scene, camera);
   if (S.labels && !home.active) {
     const r = canvas.getBoundingClientRect(), short = r.width < 560;
@@ -723,7 +751,7 @@ function frame(now) {
   const xc = document.getElementById('xcar'); if (xc) { const a = XS0 + 22, L = (R - DECK * DECKS) * XSC - 22; xc.setAttribute('x', a + ((now / 35) % L) - 6); }
   const n = S.houses ? ARMS.filter(a => !a.built).reduce((s, a) => { let c = 0; for (let p = 0; p < a.n; p++) if (hash(p, a.id.charCodeAt(0), 9, 1) < 0.6) c++; return s + c; }, 0) : 0;
   const turn = ((omega() * simT) / (2 * Math.PI)) % 1;
-  document.getElementById('hud').innerHTML = home.active ? '<b>Inside a Nous house</b> · Wing A, parcel ' + (HOME_PARCEL + 1) + ', deck 1 · a Nous’s chamber, imagined: brushed silver metal with copper-amber lit panels, a corridor from the elevator and a room under a stepped ceiling of white light, consoles facing a wide window · floor faces away from the spine · ' + (inShadow ? '<b>in Earth’s shadow</b>' : 'in sunlight') + ' · drag to look around' : '<b>Genesis</b> · 420 km above Earth · 53 parcels · <b>' + n + '</b> Nous houses ' + (S.houses ? '(imagined)' : '(as today)') + ' · ' + (inShadow ? '<b>in Earth’s shadow</b>' : 'in sunlight') + ' · orbit ' + ORBIT_MIN + ' min · turn ' + (turn * 100).toFixed(0) + '% of 60 min · ' + (S.speed === 1 ? 'real time' : S.speed + '× speed') + ' · arms ' + gTxt(R);
+  document.getElementById('hud').innerHTML = home.active ? '<b>Inside a Nous house</b> · Wing A, parcel ' + (HOME_PARCEL + 1) + ', deck 1 · a Nous’s chamber, imagined: shared by the Nous and its human: a round lab with the Nous’s compute column at the centre, console tables with seats, floating displays, keypad walls and a window · floor faces away from the spine · ' + (inShadow ? '<b>in Earth’s shadow</b>' : 'in sunlight') + ' · drag to look around' : '<b>Genesis</b> · 420 km above Earth · 53 parcels · <b>' + n + '</b> Nous houses ' + (S.houses ? '(imagined)' : '(as today)') + ' · ' + (inShadow ? '<b>in Earth’s shadow</b>' : 'in sunlight') + ' · orbit ' + ORBIT_MIN + ' min · turn ' + (turn * 100).toFixed(0) + '% of 60 min · ' + (S.speed === 1 ? 'real time' : S.speed + '× speed') + ' · arms ' + gTxt(R);
   requestAnimationFrame(frame);
 }
 table(); xsec(); requestAnimationFrame(frame);
