@@ -159,8 +159,8 @@ A versioned set of JSON documents in the run repo, each with a schema version:
   **build-yourself** parcel is delivered as an empty shell with its door.
 
 **v1 catalog.** Interior parts are drawn from a small closed list (corridor panel, round wall,
-window, door, compute column, ring desk, desk screen, wall instrument panel, seat, light ring,
-light). Every kind has a function; decoration
+wall rib, window, door, compute column, column platform, console table, display sheet, seat,
+light ring, light). Every kind has a function; decoration
 with no job is not in the list (operator, 2026-11-27: "only actual part show"). This mirrors Noēsis's rule that kinds are closed and forms are open.
 
 ### 5.3 Checker rules (v1)
@@ -222,14 +222,15 @@ From the operator's decisions on 2026-11-27, encoded in the default Genesis brie
 - **A Nous house is a Nous's chamber, shared by the Nous and its human user (operator,
   2026-11-27):** the interior exists for the human's eyes. An entry corridor from the spoke
   elevator door; a round lab-like room with the **Nous's compute column** at the centre (the
-  hardware the Nous runs on), a **ring desk** with screens and seats for the human, instrument
-  panels on the walls, and a window. Only parts with a function. **Interior style: fundamental
-  science** (operator's chosen reference: a round engineering room, "more similar"): gunmetal and
-  silver panelled walls with two rows of instrument screens all round, a tiered ceiling of
-  overhanging rings with white light strips, a dark glossy floor, a bright cyan core column with
-  glowing bands, a glowing ring desk, and cyan rings on the floor **only around the column and
-  desk**. Style only, nothing copied. Cyan anywhere else (corridor, wall bases, open floor) is
-  still refused.
+  hardware the Nous runs on: cyan-lit racks under glass, amber power conduits, a white cap with a
+  ring of amber lights), **console tables** with round gauge tops and a seat for the human,
+  **floating cyan display sheets** between column and tables, and a window. Only parts with a
+  function. **Interior style: fundamental science** (operator's chosen reference, a round
+  engineering room, "more similar"): light panelled walls on slanted white ribs with dark mesh
+  bands and keypad bands, white cove light at the wall top, dark glossy floor plates, a dark
+  ceiling with bright white light rings. Cyan only on instruments and on the one ring at the
+  column platform's edge. Style only, nothing copied (the reference is fan art of another
+  franchise; never its names, insignia or ship).
 - **Who builds what (operator, 2026-11-27):** the builder service's team builds the **structure**.
   Houses belong to **individual Nous**: some parcels are sold **ready-built** (the crew builds the
   chamber), others are sold empty to a Nous that wants to **build its own**. The sale itself
